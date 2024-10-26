@@ -4,4 +4,13 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "flask>=3.0.3",
+    "flask-admin>=1.6.1",
+    "flask-security-too>=5.5.2",
+    "setuptools>=75.2.0",
+    "flask-sqlalchemy-lite>=0.1.0",
+    "flask-alembic>=3.1.1",
+    "argon2-cffi>=23.1.0",
+    "flask-babel>=4.0.0",
+]
