@@ -1,13 +1,7 @@
 {% extends "docdb/base.html" %}
 {% from "bootstrap5/form.html" import render_form, render_field, render_form_row %}
 {% block content %}
-    <form method="post">
-        {{ form.csrf_token() }}
-        {{ render_field(form.email, disabled=True) }}
-        {{ render_form_row([form.first_name, form.last_name]) }}
-        {{ render_form_row([form.submit]) }}
-    </form>
-    <h2 class="mt-4">Your Account</h2>
+    <h2>Your Account</h2>
     <ul>
         {% if security.changeable %}
             <li>
@@ -35,4 +29,11 @@
             </li>
         {% endif %}
     </ul>
+    <h2>Your Profile</h2>
+    <form method="post">
+        {{ form.csrf_token() }}
+        {{ render_field(form.email, disabled=True) }}
+        {{ render_form_row([form.first_name, form.last_name]) }}
+        {{ render_form_row([form.submit]) }}
+    </form>
 {% endblock content %}
