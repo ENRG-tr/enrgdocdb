@@ -26,6 +26,7 @@ def create_app():
             app.register_blueprint(blueprint)
 
         app.config.from_pyfile("settings.py")
+        app.config.from_prefixed_env()
         for plugin in [admin, db, alembic, babel, bootstrap]:
             plugin.init_app(app)
         security.init_app(app, user_datastore)
