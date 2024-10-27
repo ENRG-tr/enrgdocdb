@@ -4,7 +4,7 @@
 {% endblock title %}
 {% block nav %}
     {{ render_nav_item('index.index', _fsdomain('Home') ) }}
-    {{ render_nav_item('user.profile', _fsdomain('Profile') ) }}
     <div class="flex-grow-1 pe-4 ps-4" data-bs-theme="light">{% include "docdb/snippets/search_form.html" %}</div>
+    {{ render_nav_item('user.profile', _fsdomain('Profile') ) }}
     {{ super() }}
 {% endblock nav %}
