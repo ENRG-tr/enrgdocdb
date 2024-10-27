@@ -47,16 +47,18 @@
             <tr>
                 <th>Authors</th>
                 <td>
-                    <ul class="list-group">
-                        {% for author in document.authors %}<li class="list-group-item">{{ author.name }}</li>{% endfor %}
-                    </ul>
+                    {% for doc_author in document.authors %}
+                        <a href="">{{ doc_author.author.first_name }} {{ doc_author.author.last_name }}</a>
+                        {% if not loop.last %},{% endif %}
+                    {% endfor %}
                 </td>
                 <tr>
                     <th>Topics</th>
                     <td>
-                        <ul>
-                            {% for topic in document.topics %}<li>{{ topic.name }}</li>{% endfor %}
-                        </ul>
+                        {% for doc_topic in document.topics %}
+                            <a href="">{{ doc_topic.topic.name }}</a>
+                            {% if not loop.last %},{% endif %}
+                        {% endfor %}
                     </td>
                 </tr>
             </tr>
