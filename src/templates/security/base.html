@@ -6,5 +6,10 @@
   <a class="navbar-brand" href="{{ url_for("index.index") }}">Your ENRG DocDB Account</a>
 {% endblock nav_brand %}
 {% block nav %}
-  {% if current_user.is_authenticated %}{{ render_nav_item('user.profile', _fsdomain('Profile') ) }}{% endif %}
+  {% if current_user.is_authenticated %}
+    {{ render_nav_item('user.profile', _fsdomain('Profile') ) }}
+  {% else %}
+    {{ render_nav_item('security.login', _fsdomain('Login') ) }}
+    {% if security.registerable %}{{ render_nav_item('security.register', _fsdomain('Register') ) }}{% endif %}
+  {% endif %}
 {% endblock nav %}
