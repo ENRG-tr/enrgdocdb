@@ -3,8 +3,7 @@
     ENRG DocDB
 {% endblock title %}
 {% block nav %}
+    {{ render_nav_item('index.index', _fsdomain('Home') ) }}
+    {{ render_nav_item('user.profile', _fsdomain('Profile') ) }}
     {{ super() }}
-    <ul class="navbar-nav">
-        {% if user.is_authenticated %}{{ render_nav_item('security.logout', _fsdomain('Logout') ) }}{% endif %}
-    </ul>
 {% endblock nav %}

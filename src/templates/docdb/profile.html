@@ -1,0 +1,38 @@
+{% extends "docdb/base.html" %}
+{% from "bootstrap5/form.html" import render_form, render_field, render_form_row %}
+{% block content %}
+    <form method="post">
+        {{ form.csrf_token() }}
+        {{ render_field(form.email, disabled=True) }}
+        {{ render_form_row([form.first_name, form.last_name]) }}
+        {{ render_form_row([form.submit]) }}
+    </form>
+    <h2 class="mt-4">Your Account</h2>
+    <ul>
+        {% if security.changeable %}
+            <li>
+                <a href="{{ url_for_security("change_password") }}">{{ _fsdomain("Change Password") }}</a>
+            </li>
+        {% endif %}
+        {% if security.change_email %}
+            <li>
+                <a href="{{ url_for_security("change_email") }}">{{ _fsdomain("Change Registered Email") }}</a>
+            </li>
+        {% endif %}
+        {% if security.two_factor %}
+            <li>
+                <a href="{{ url_for_security("two_factor_setup") }}">{{ _fsdomain("Two Factor Setup") }}</a>
+            </li>
+        {% endif %}
+        {% if security.unified_signin %}
+            <li>
+                <a href="{{ url_for_security("us_setup") }}">{{ _fsdomain("Unified Signin Setup") }}</a>
+            </li>
+        {% endif %}
+        {% if security.webauthn %}
+            <li>
+                <a href="{{ url_for_security("wan_register") }}">{{ _fsdomain("WebAuthn Setup") }}</a>
+            </li>
+        {% endif %}
+    </ul>
+{% endblock content %}
