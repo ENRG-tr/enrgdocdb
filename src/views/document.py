@@ -1,27 +1,30 @@
-from flask import Blueprint, redirect, render_template, request, url_for
-from sqlalchemy import or_
+from os import abort
+
+from flask import Blueprint, render_template, send_from_directory
 
 from database import db
-from models.document import Document
+from models.document import Document, DocumentFile
 
-blueprint = Blueprint("document", __name__)
+blueprint = Blueprint("document", __name__, url_prefix="/documents")
 
 
-@blueprint.route("/quick-search", methods=["GET"])
-def quick_search():
-    query = request.args.get("query", "")
-    if query.strip() == "":
-        return redirect(url_for("index.index"))
+@blueprint.route("/view/<int:document_id>")
+def view(document_id: int):
+    # TODO: Check permissions
+    document = db.session.query(Document).get(document_id)
+    if not document:
+        return abort(404)
 
-    documents = (
-        db.session.query(Document)
-        .filter(
-            or_(
-                Document.title.like(f"%{query}%"),
-            )
-        )
-        .all()
-    )
-    return render_template(
-        "docdb/quick_search.html", documents=documents, search_query=query
-    )
+    return render_template("docdb/document.html", document=document)
+
+
+@blueprint.route("/download-file/<int:file_id>")
+def download_file(file_id: int):
+    # TODO: Check permissions
+    file = db.session.query(DocumentFile).get(file_id)
+    if not file:
+        return abort(404)
+
+    file_path = file.file_name
+
+    return send_from_directory(file_path, file_path, as_attachment=True)

@@ -1,8 +1,35 @@
 {% extends "docdb/base.html" %}
+{% from "docdb/snippets/document.html" import render_document_table %}
 {% block content %}
-    {% if current_user.first_name %}
-        <h2>Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h2>
-    {% else %}
-        <h2>Welcome, {{ current_user.email }}</h2>
-    {% endif %}
+    <div>
+        {% if current_user.first_name %}
+            <h2>Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h2>
+        {% else %}
+            <h2>Welcome, {{ current_user.email }}</h2>
+            <h5 class="text-muted">
+                <i class="fas fa-info-circle"></i>
+                You can set your name using the <a href="{{ url_for("user.profile") }}">Profile</a> page.
+            </h5>
+        {% endif %}
+    </div>
+    <hr>
+    <div>
+        <strong>Documents modified in the last 7 days</strong>
+        {{ render_document_table(documents_last_7_days) }}
+    </div>
+    <hr>
+    <div>
+        See also:
+        <ul>
+            <li>
+                <a href="#">All Documents</a>
+            </li>
+            <li>
+                <a href="#">All Authors</a>
+            </li>
+            <li>
+                <a href="#">All Topics</a>
+            </li>
+        </ul>
+    </div>
 {% endblock content %}
