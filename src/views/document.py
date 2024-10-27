@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, redirect, render_template, request, url_for
 from sqlalchemy import or_
 
 from database import db
@@ -11,17 +11,17 @@ blueprint = Blueprint("document", __name__)
 def quick_search():
     query = request.args.get("query", "")
     if query.strip() == "":
-        documents = None
-    else:
-        documents = (
-            db.session.query(Document)
-            .filter(
-                or_(
-                    Document.title.like(f"%{query}%"),
-                )
+        return redirect(url_for("index.index"))
+
+    documents = (
+        db.session.query(Document)
+        .filter(
+            or_(
+                Document.title.like(f"%{query}%"),
             )
-            .all()
         )
+        .all()
+    )
     return render_template(
         "docdb/quick_search.html", documents=documents, search_query=query
     )

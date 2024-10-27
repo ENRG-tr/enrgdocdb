@@ -1,15 +1,11 @@
 {% extends "docdb/base.html" %}
 {% block content %}
-    {% if documents is not none %}
-        <h1>Search Results</h1>
-        {% if documents %}
-            <ul>
-                {% for result in documents %}<li>{{ result.title }} - {{ result.document_type.name }}</li>{% endfor %}
-            </ul>
-        {% else %}
-            <p>No results found.</p>
-        {% endif %}
+    <h1>Search Results</h1>
+    {% if documents %}
+        <ul>
+            {% for result in documents %}<li>{{ result.title }} - {{ result.document_type.name }}</li>{% endfor %}
+        </ul>
     {% else %}
-        <p>Type in a query to search for documents.</p>
+        <p>No results found.</p>
     {% endif %}
 {% endblock content %}
