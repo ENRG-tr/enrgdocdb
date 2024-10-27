@@ -1,17 +1,6 @@
 {% extends "docdb/base.html" %}
 {% block content %}
-    <div class="input-group mb-3 w-100">
-        <input type="text"
-               class="form-control"
-               placeholder="{{ _fsdomain("Search for Document") }}"
-               aria-label="Search"
-               aria-describedby="button-addon2">
-        <div class="input-group-append">
-            <button class="btn btn-outline-secondary" type="button" id="button-addon2">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>
-    </div>
+    {% include "docdb/snippets/search_form.html" %}
     {% if current_user.first_name %}
         <h2>Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h2>
     {% else %}

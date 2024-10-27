@@ -1,0 +1,16 @@
+{% extends "docdb/base.html" %}
+{% block content %}
+    {% include "docdb/snippets/search_form.html" %}
+    {% if documents is not none %}
+        <h1>Search Results</h1>
+        {% if documents %}
+            <ul>
+                {% for result in documents %}<li>{{ result.title }} - {{ result.document_type.name }}</li>{% endfor %}
+            </ul>
+        {% else %}
+            <p>No results found.</p>
+        {% endif %}
+    {% else %}
+        <p>Type in a query to search for documents.</p>
+    {% endif %}
+{% endblock content %}
