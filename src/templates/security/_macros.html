@@ -1,14 +1,19 @@
 {% from "bootstrap5/form.html" import render_field as bootstrap5_render_field %}
 {% macro render_field_with_errors(field) %}
+    {% if field.type == '_Option' %}
+        {{ render_field_with_errors_legacy(field, **kwargs) }}
+    {% else %}
+        {{ bootstrap5_render_field(field, **kwargs) }}
+    {% endif %}
+{% endmacro %}
+{% macro render_field_with_errors_legacy(field) %}
     <div class="fs-div" id="{{ field.id|default("fs-field") }}">
-        {{ bootstrap5_render_field(field, **kwargs) |safe }}
-        {#
+        {{ field.label }} {{ field(**kwargs) |safe }}
         {% if field.errors %}
             <ul>
                 {% for error in field.errors %}<li class="fs-error-msg">{{ error }}</li>{% endfor %}
             </ul>
         {% endif %}
-        #}
     </div>
 {% endmacro %}
 {% macro render_field(field) %}
