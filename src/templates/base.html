@@ -26,11 +26,18 @@
                 {% block nav_brand %}
                     <a class="navbar-brand" href="{{ url_for("index.index") }}">ENRG DocDB</a>
                 {% endblock nav_brand %}
-                <ul class="navbar-nav">
-                    {% block nav %}
-                        {% if current_user.is_authenticated %}{{ render_nav_item('security.logout', _fsdomain('Sign out') ) }}{% endif %}
-                    {% endblock nav %}
-                </ul>
+                <button class="navbar-toggler"
+                        type="button"
+                        onclick="document.querySelector('.navbar-collapse').classList.toggle('collapse')">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarNav">
+                    <ul class="navbar-nav d-flex w-100 align-items-center">
+                        {% block nav %}
+                            {% if current_user.is_authenticated %}{{ render_nav_item('security.logout', _fsdomain('Sign out') ) }}{% endif %}
+                        {% endblock nav %}
+                    </ul>
+                </div>
             </div>
         </div>
         <div class="container mt-2 mb-2">

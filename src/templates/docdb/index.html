@@ -1,6 +1,5 @@
 {% extends "docdb/base.html" %}
 {% block content %}
-    {% include "docdb/snippets/search_form.html" %}
     {% if current_user.first_name %}
         <h2>Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h2>
     {% else %}

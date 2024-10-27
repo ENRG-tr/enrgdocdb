@@ -1,12 +1,12 @@
 <form action="{{ url_for("document.quick_search") }}" method="get">
-    <div class="input-group mb-3 w-100">
+    <div class="input-group w-100">
         <input type="text"
                class="form-control"
                placeholder="{{ _fsdomain("Search for Document") }}"
                name="query"
                value="{{ search_query }}">
         <div class="input-group-append">
-            <button class="btn btn-outline-secondary" type="button" id="button-addon2">
+            <button class="btn btn-outline-secondary" type="submit">
                 <i class="fas fa-search"></i>
             </button>
         </div>
