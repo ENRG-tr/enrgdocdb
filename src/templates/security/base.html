@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="EnrgDocDB" />
+    <meta name="keywords" content="ENRG, DocDB, Database" />
+    
+    {{ bootstrap.load_css() }}
+    {{ bootstrap.load_js() }}
+    <title>
+      {% block title %}
+      {% endblock title %}
+    </title>
+  </head>
+  <body>
+    <div class="container">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">EnrgDocDB</a>
+        <button class="navbar-toggler"
+                type="button"
+                data-toggle="collapse"
+                data-target="#navbarNav"
+                aria-controls="navbarNav"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            {% if security.registerable or security.recoverable or
+              security.confirmable or security.unified_signin or
+              security.two_factor or security.webauthn %}
+              <hr />
+              {% if _fs_is_user_authenticated(current_user) %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for_security("logout") }}">{{ _fsdomain("Sign out") }}</a>
+                </li>
+                {% if security.changeable %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("change_password") }}">{{ _fsdomain("Change Password") }}</a>
+                  </li>
+                {% endif %}
+                {% if security.change_email %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("change_email") }}">{{ _fsdomain("Change Registered Email") }}</a>
+                  </li>
+                {% endif %}
+                {% if security.two_factor %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("two_factor_setup") }}">{{ _fsdomain("Two Factor Setup") }}</a>
+                  </li>
+                {% endif %}
+                {% if security.unified_signin %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("us_setup") }}">{{ _fsdomain("Unified Signin Setup") }}</a>
+                  </li>
+                {% endif %}
+                {% if security.webauthn %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("wan_register") }}">{{ _fsdomain("WebAuthn Setup") }}</a>
+                  </li>
+                {% endif %}
+              {% else %}
+                {% if not skip_login_menu %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("login") }}{%- if 'next' in request.args -%}?next={{ request.args.next|urlencode }}{%- endif -%}">{{ _fsdomain("Login") }}</a>
+                  </li>
+                {% endif %}
+                {% if security.unified_signin and not skip_login_menu %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("us_signin") }}{%- if 'next' in request.args -%}?next={{ request.args.next|urlencode }}{%- endif -%}">{{ _fsdomain("Unified Sign In") }}</a>
+                  </li>
+                {% endif %}
+                {% if security.registerable %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("register") }}{%- if 'next' in request.args -%}?next={{ request.args.next|urlencode }}{%- endif -%}">{{ _fsdomain("Register") }}</a>
+                  </li>
+                {% endif %}
+                {% if security.recoverable %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("forgot_password") }}">{{ _fsdomain("Forgot password") }}</a>
+                  </li>
+                {% endif %}
+                {% if security.confirmable %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for_security("send_confirmation") }}">{{ _fsdomain("Confirm account") }}</a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          </ul>
+        </div>
+      </nav>
+      {% block content %}
+      {% endblock content %}
+    </div>
+  </body>
+</html>
