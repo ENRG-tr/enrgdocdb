@@ -4,10 +4,12 @@
 {% from "docdb/snippets/topic.html" import render_topic_table %}
 {% from "docdb/snippets/user.html" import render_user_table %}
 {% from "docdb/snippets/file.html" import render_file_table %}
+{% from "docdb/snippets/mark.html" import mark %}
 {% block title %}
     Quick Search - ENRG DocDB
 {% endblock title %}
 {% block content %}
+    {{ mark('td', query) }}
     <h2>Search Results</h2>
     <p class="text-muted">Found {{ result.result_count }} result(s) in {{ result.time_taken }} seconds.</p>
     {% if result.result_count == 0 %}
