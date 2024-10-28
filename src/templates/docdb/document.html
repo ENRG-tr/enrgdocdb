@@ -55,6 +55,14 @@
                     <td>{{ render_document_topics(document.topics) }}</td>
                 </tr>
             </tr>
+            <tr>
+                <th>Created at</th>
+                <td>{{ document.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+            </tr>
+            <tr>
+                <th>Modified at</th>
+                <td>{{ document.modified_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+            </tr>
         </table>
     </div>
 {% endblock content %}
