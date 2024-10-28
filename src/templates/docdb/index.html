@@ -1,6 +1,5 @@
 {% extends "docdb/base.html" %}
-{% from "docdb/snippets/render_map.html" import get_readable_model_name %}s
-{% from "docdb/snippets/document.html" import render_document_table %}
+{% from "docdb/snippets/render_map.html" import get_readable_model_name, render_paginated_result %}
 {% block content %}
     <div class="d-flex justify-content-between align-items-center">
         <div>
@@ -22,7 +21,7 @@
     <hr>
     <div>
         <strong>Documents modified in the last 7 days</strong>
-        {{ render_document_table(documents_last_7_days.result, documents_last_7_days) }}
+        {{ render_paginated_result(documents_last_7_days) }}
     </div>
     <hr>
     <div>

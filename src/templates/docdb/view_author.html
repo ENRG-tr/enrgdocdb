@@ -1,5 +1,5 @@
 {% extends "docdb/base.html" %}
-{% from "docdb/snippets/document.html" import render_document_table %}
+{% from "docdb/snippets/render_map.html" import render_paginated_result %}
 {% block title %}
     {{ author.name }} - ENRG DocDB
 {% endblock title %}
@@ -9,5 +9,5 @@
         Below are the documents authored by <strong class="text-primary">{{ author.name }}</strong>.
     </p>
     <hr>
-    {{ render_document_table(documents.result, documents) }}
+    {{ render_paginated_result(documents) }}
 {% endblock content %}
