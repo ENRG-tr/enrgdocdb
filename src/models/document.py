@@ -22,7 +22,9 @@ class Document(Base, Model):
     authors: Mapped[list["DocumentAuthor"]] = relationship("DocumentAuthor")
     topics: Mapped[list["DocumentTopic"]] = relationship("DocumentTopic")
     document_type: Mapped["DocumentType"] = relationship("DocumentType")
-    files: Mapped[list["DocumentFile"]] = relationship("DocumentFile")
+    files: Mapped[list["DocumentFile"]] = relationship(
+        "DocumentFile", backref="document"
+    )
 
 
 class DocumentAuthor(Base, Model):
