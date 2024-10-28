@@ -1,0 +1,13 @@
+{% extends "docdb/base.html" %}
+{% from "bootstrap5/form.html" import render_form, render_field, render_form_row %}
+{% block content %}
+    <h2>New Document</h2>
+    <form method="post" enctype="multipart/form-data">
+        {{ form.csrf_token() }}
+        {{ render_field(form.title) }}
+        {{ render_field(form.abstract) }}
+        {{ render_form_row([form.authors, form.topics]) }}
+        {{ render_form_row([form.document_type, form.files]) }}
+        {{ render_field(form.submit) }}
+    </form>
+{% endblock content %}

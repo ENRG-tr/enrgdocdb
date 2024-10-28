@@ -15,3 +15,7 @@ class Author(Base, Model):
     phone: Mapped[str] = mapped_column(String(512))
 
     institution: Mapped[str] = mapped_column(String(1024))
+
+    @property
+    def name(self):
+        return f"{self.first_name} {self.last_name}"

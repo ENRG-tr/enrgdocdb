@@ -1,16 +1,22 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/document.html" import render_document_table %}
 {% block content %}
-    <div>
-        {% if current_user.first_name %}
-            <h2>Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h2>
-        {% else %}
-            <h2>Welcome, {{ current_user.email }}</h2>
-            <h5 class="text-muted">
-                <i class="fas fa-info-circle"></i>
-                You can set your name using the <a href="{{ url_for("user.profile") }}">Profile</a> page.
-            </h5>
-        {% endif %}
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            {% if current_user.first_name %}
+                <h2 class="mb-0">Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h2>
+            {% else %}
+                <h2>Welcome, {{ current_user.email }}</h2>
+                <h5 class="text-muted mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    You can set your name using the <a href="{{ url_for("user.profile") }}">Profile</a> page.
+                </h5>
+            {% endif %}
+        </div>
+        <a class="btn btn-primary" href="{{ url_for("document.new") }}">
+            <i class="fas fa-plus"></i>
+            New Document
+        </a>
     </div>
     <hr>
     <div>

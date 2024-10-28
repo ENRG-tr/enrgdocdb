@@ -11,6 +11,7 @@ class Document(Base, Model):
     __tablename__ = "documents"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(1024))
+    abstract: Mapped[str | None] = mapped_column(String(8192))
 
     document_type_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("document_types.id")

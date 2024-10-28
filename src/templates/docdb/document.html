@@ -42,7 +42,8 @@
                                 <i class="fas fa-file"></i>
                             {% endif %}
                         </span>
-                        <a href="{{ url_for("document.download_file", file_id=file.id) }}">{{ file.file_name }}</a>
+                        <a href="{{ url_for("document.download_file", file_id=file.id) }}"
+                           target="_blank">{{ file.file_name }}</a>
                         {% if not loop.last %},{% endif %}
                     {% endfor %}
                 </td>
