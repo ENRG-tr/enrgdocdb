@@ -1,4 +1,6 @@
-{% macro render_document_table(documents) %}
+{% from "docdb/snippets/author.html" import render_author %}
+{% from "docdb/snippets/pagination.html" import render_pagination %}
+{% macro render_document_table(documents, paginated_query) %}
     <table class="table table-striped table-hover">
         <thead>
             <tr>
@@ -37,10 +39,11 @@
             {% endfor %}
         </tbody>
     </table>
+    {{ render_pagination(paginated_query) }}
 {% endmacro %}
 {% macro render_document_authors(authors) %}
     {% for doc_author in authors %}
-        <a href="">{{ doc_author.author.name }}</a>
+        {{ render_author(doc_author.author) }}
         {% if not loop.last %},{% endif %}
     {% endfor %}
 {% endmacro %}

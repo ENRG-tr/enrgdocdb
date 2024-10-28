@@ -1,0 +1,16 @@
+{% from "docdb/snippets/document.html" import render_document_table %}
+{% from "docdb/snippets/author.html" import render_author_table %}
+{% from "docdb/snippets/topic.html" import render_topic_table %}
+{% from "docdb/snippets/user.html" import render_user_table %}
+{% from "docdb/snippets/file.html" import render_file_table %}
+{% set render_func_map = {
+    "Document": render_document_table,
+    "Author": render_author_table,
+    "Topic": render_topic_table,
+    "User": render_user_table,
+    "DocumentFile": render_file_table
+} %}
+{% macro render_paginated_result(paginated) %}
+    {% set render_func = render_func_map[paginated.query_model] %}
+    {{ render_func(paginated.result, paginated) }}
+{% endmacro %}

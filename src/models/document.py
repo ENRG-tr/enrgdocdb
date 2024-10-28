@@ -25,7 +25,7 @@ class Document(Base, Model):
     topics: Mapped[list["DocumentTopic"]] = relationship("DocumentTopic")
     document_type: Mapped["DocumentType"] = relationship("DocumentType")
     files: Mapped[list["DocumentFile"]] = relationship(
-        "DocumentFile", backref="document"
+        "DocumentFile", back_populates="document"
     )
 
 
@@ -59,3 +59,5 @@ class DocumentFile(Base, Model):
     document_id: Mapped[int] = mapped_column(Integer, ForeignKey("documents.id"))
     file_name: Mapped[str] = mapped_column(String(255))
     real_file_name: Mapped[str] = mapped_column(String(512))
+
+    document: Mapped["Document"] = relationship("Document")

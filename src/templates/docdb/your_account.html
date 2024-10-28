@@ -2,7 +2,12 @@
 {% from "bootstrap5/form.html" import render_form, render_field, render_form_row %}
 {% block content %}
     <h2>Your Account</h2>
+    <hr>
     <ul>
+        <li>
+            <i class="fas fa-user"></i>
+            <a href="{{ url_for("user.view", user_id=current_user.id) }}">{{ _fsdomain("View Your Profile") }}</a>
+        </li>
         {% if security.changeable %}
             <li>
                 <a href="{{ url_for_security("change_password") }}">{{ _fsdomain("Change Password") }}</a>
@@ -29,7 +34,8 @@
             </li>
         {% endif %}
     </ul>
-    <h2>Your Profile</h2>
+    <h2>Your Information</h2>
+    <hr>
     <form method="post">
         {{ form.csrf_token() }}
         {{ render_field(form.email, disabled=True) }}

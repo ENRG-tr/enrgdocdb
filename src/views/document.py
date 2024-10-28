@@ -37,7 +37,7 @@ def view(document_id: int):
     if not document:
         return abort(404)
 
-    return render_template("docdb/document.html", document=document)
+    return render_template("docdb/view_document.html", document=document)
 
 
 @blueprint.route("/download-file/<int:file_id>")
@@ -46,6 +46,9 @@ def download_file(file_id: int):
     file = db.session.query(DocumentFile).get(file_id)
     if not file:
         return abort(404)
+
+    if FILE_UPLOAD_FOLDER is None:
+        return abort(500)
 
     return send_from_directory(
         FILE_UPLOAD_FOLDER,
@@ -85,8 +88,10 @@ def new():
         for topic_id in form.topics.data:
             document_topic = DocumentTopic(document_id=document.id, topic_id=topic_id)
             db.session.add(document_topic)
-        print(request.files, request.files.getlist(form.files.name))
+
         for file in request.files.getlist(form.files.name):
+            if file.filename is None:
+                continue
             file_extension = file.filename.split(".")[-1]
             file_name = f"doc_{document.id}"
             file_name_extra = 0
@@ -99,6 +104,7 @@ def new():
                 )
 
             def construct_file_path():
+                assert FILE_UPLOAD_FOLDER is not None
                 return os.path.join(FILE_UPLOAD_FOLDER, get_full_file_name())
 
             while os.path.exists(construct_file_path()):

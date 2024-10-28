@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>
             {% if current_user.first_name %}
-                <h2 class="mb-0">Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h2>
+                <h2 class="mb-0">Welcome, {{ current_user.name }}</h2>
             {% else %}
                 <h2>Welcome, {{ current_user.email }}</h2>
                 <h5 class="text-muted mb-0">
@@ -21,7 +21,7 @@
     <hr>
     <div>
         <strong>Documents modified in the last 7 days</strong>
-        {{ render_document_table(documents_last_7_days) }}
+        {{ render_document_table(documents_last_7_days.result, documents_last_7_days) }}
     </div>
     <hr>
     <div>
