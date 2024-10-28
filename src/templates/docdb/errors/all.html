@@ -1,0 +1,8 @@
+{% extends "docdb/base.html" %}
+{% block title %}
+    Error - ENRG DocDB
+{% endblock title %}
+{% block content %}
+    <h1>Error - {{ exception.name or exception.__class__.__name__ }}</h1>
+    <p>{{ exception.description or exception.args[0] or "An unknown error has occurred" }}</p>
+{% endblock content %}

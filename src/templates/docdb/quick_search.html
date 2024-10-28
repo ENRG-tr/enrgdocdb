@@ -1,11 +1,34 @@
 {% extends "docdb/base.html" %}
+{% from "docdb/snippets/document.html" import render_document_table %}
+{% from "docdb/snippets/author.html" import render_author_table %}
+{% from "docdb/snippets/topic.html" import render_topic_table %}
+{% from "docdb/snippets/user.html" import render_user_table %}
+{% from "docdb/snippets/file.html" import render_file_table %}
+{% block title %}
+    Quick Search - ENRG DocDB
+{% endblock title %}
 {% block content %}
-    <h2>Search Results ({{ documents | length }})</h2>
-    {% if documents %}
-        <ul>
-            {% for result in documents %}<li>{{ result.title }} - {{ result.document_type.name }}</li>{% endfor %}
-        </ul>
-    {% else %}
+    <h2>Search Results</h2>
+    <p class="text-muted">Found {{ result.result_count }} result(s) in {{ result.time_taken }} seconds.</p>
+    {% if result.result_count == 0 %}
         <p>No results found.</p>
+    {% else %}
+        {% set result_to_render_func_map = {
+                    "documents": render_document_table,
+                    "authors": render_author_table,
+                    "topics": render_topic_table,
+                    "users": render_user_table,
+                    "files": render_file_table
+                } %}
+        {% for result_type, render_func in result_to_render_func_map.items() %}
+            {% set result_list = result[result_type] %}
+            {% if result_list %}
+                <div class="d-flex align-items-end gap-2 mb-2">
+                    <h3 class="m-0">{{ result_type | capitalize }}</h3>
+                    <strong>({{ result_list | length }})</strong>
+                </div>
+                {{ render_func(result_list) }}
+            {% endif %}
+        {% endfor %}
     {% endif %}
 {% endblock content %}

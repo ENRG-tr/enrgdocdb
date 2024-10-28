@@ -1,5 +1,8 @@
 {% extends "docdb/base.html" %}
-{% from "docdb/snippets/document.html" import render_document_table %}
+{% from "docdb/snippets/document.html" import render_document_table, render_document_authors, render_document_topics %}
+{% block title %}
+    {{ document.title }} - ENRG DocDB
+{% endblock title %}
 {% block content %}
     <h2>Document Details</h2>
     <div class="document-details">
@@ -46,20 +49,10 @@
             </tr>
             <tr>
                 <th>Authors</th>
-                <td>
-                    {% for doc_author in document.authors %}
-                        <a href="">{{ doc_author.author.first_name }} {{ doc_author.author.last_name }}</a>
-                        {% if not loop.last %},{% endif %}
-                    {% endfor %}
-                </td>
+                <td>{{ render_document_authors(document.authors) }}</td>
                 <tr>
                     <th>Topics</th>
-                    <td>
-                        {% for doc_topic in document.topics %}
-                            <a href="">{{ doc_topic.topic.name }}</a>
-                            {% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    </td>
+                    <td>{{ render_document_topics(document.topics) }}</td>
                 </tr>
             </tr>
         </table>

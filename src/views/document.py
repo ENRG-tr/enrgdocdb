@@ -3,8 +3,10 @@ from flask import Blueprint, abort, render_template, send_from_directory
 from database import db
 from models.document import Document, DocumentFile
 from settings import FILE_UPLOAD_FOLDER
+from utils.security import secure_blueprint
 
 blueprint = Blueprint("document", __name__, url_prefix="/documents")
+secure_blueprint(blueprint)
 
 
 @blueprint.route("/view/<int:document_id>")
@@ -30,3 +32,8 @@ def download_file(file_id: int):
         as_attachment=True,
         download_name=file.file_name,
     )
+
+
+@blueprint.route("/test", methods=["POST"])
+def test():
+    pass
