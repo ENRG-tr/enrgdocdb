@@ -39,7 +39,6 @@
             {% endfor %}
         </tbody>
     </table>
-    {{ render_pagination(paginated_query) }}
 {% endmacro %}
 {% macro render_document_authors(authors) %}
     {% for doc_author in authors %}

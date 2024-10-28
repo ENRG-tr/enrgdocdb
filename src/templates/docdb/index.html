@@ -1,4 +1,5 @@
 {% extends "docdb/base.html" %}
+{% from "docdb/snippets/render_map.html" import get_readable_model_name %}s
 {% from "docdb/snippets/document.html" import render_document_table %}
 {% block content %}
     <div class="d-flex justify-content-between align-items-center">
@@ -27,15 +28,11 @@
     <div>
         See also:
         <ul>
-            <li>
-                <a href="#">All Documents</a>
-            </li>
-            <li>
-                <a href="#">All Authors</a>
-            </li>
-            <li>
-                <a href="#">All Topics</a>
-            </li>
+            {% for model_name in view_all_allowed_models %}
+                <li>
+                    <a href="{{ url_for("view_all.view_all", model_name=model_name) }}">All {{ get_readable_model_name(model_name) }}s</a>
+                </li>
+            {% endfor %}
         </ul>
     </div>
 {% endblock content %}

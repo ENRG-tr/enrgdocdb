@@ -13,7 +13,7 @@
         <p>No results found.</p>
     {% else %}
         {% for result_type, result_list in search.result.items() %}
-            {% if result_list %}
+            {% if result_list.result | length %}
                 <div class="d-flex align-items-end gap-2 mb-2">
                     <h3 class="m-0">{{ result_type | capitalize }}</h3>
                     <strong>({{ result_list.result | length }})</strong>

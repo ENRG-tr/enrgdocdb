@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlencode
 
-from flask import Request, url_for
+from flask import Request
 from sqlalchemy.orm import Query
 
 
@@ -15,12 +16,10 @@ class PaginatedQueryResult:
 
     def build_url(self, page: int, request: Request) -> str:
         query_dict: Any = dict(request.args)
-        # Query name should not start with _ because then it can alter internal
-        # variables of url_for
-        assert not self.query_name.startswith("_"), "Query name cannot start with _"
         query_dict[self.query_name] = str(page)
-        assert request.endpoint
-        return url_for(request.endpoint, **query_dict)
+        # convert query_dict to url params
+        query_dict = urlencode(query_dict)
+        return f"{request.base_url}?{query_dict}"
 
 
 def paginate(

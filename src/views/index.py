@@ -7,6 +7,7 @@ from sqlalchemy import or_
 from database import db
 from models.document import Document
 from utils.pagination import paginate
+from views.view_all import VIEW_ALL_ALLOWED_MODELS
 
 blueprint = Blueprint("index", __name__)
 
@@ -23,6 +24,9 @@ def index():
         ),
         request,
     )
+    view_all_allowed_models = [model.__name__ for model in VIEW_ALL_ALLOWED_MODELS]
     return render_template(
-        "docdb/index.html", documents_last_7_days=documents_last_7_days
+        "docdb/index.html",
+        documents_last_7_days=documents_last_7_days,
+        view_all_allowed_models=view_all_allowed_models,
     )
