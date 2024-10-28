@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask import Blueprint, redirect, render_template, request, url_for
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 
 from database import db
 from models.author import Author
@@ -19,6 +19,14 @@ def index():
     query = request.args.get("query", "")
     if query.strip() == "":
         return redirect(url_for("index.index"))
+
+    def filter_query(query: str, fields):
+        query = query.split(" ")
+        res = []
+        for word in query:
+            res.append(or_(field.ilike(f"%{word}%") for field in fields))
+        return and_(*res)
+
     search_start = datetime.now()
     result = {
         "documents": (
@@ -26,10 +34,13 @@ def index():
             .join(Document.authors)
             .join(DocumentAuthor.author)
             .filter(
-                or_(
-                    Document.title.ilike(f"%{query}%"),
-                    Author.first_name.ilike(f"%{query}%"),
-                    Author.last_name.ilike(f"%{query}%"),
+                filter_query(
+                    query,
+                    [
+                        Document.title,
+                        Author.first_name,
+                        Author.last_name,
+                    ],
                 )
             )
             .all()
@@ -37,9 +48,12 @@ def index():
         "authors": (
             db.session.query(Author)
             .filter(
-                or_(
-                    Author.first_name.ilike(f"%{query}%"),
-                    Author.last_name.ilike(f"%{query}%"),
+                filter_query(
+                    query,
+                    [
+                        Author.first_name,
+                        Author.last_name,
+                    ],
                 )
             )
             .all()
@@ -47,8 +61,11 @@ def index():
         "topics": (
             db.session.query(Topic)
             .filter(
-                or_(
-                    Topic.name.ilike(f"%{query}%"),
+                filter_query(
+                    query,
+                    [
+                        Topic.name,
+                    ],
                 )
             )
             .all()
@@ -56,10 +73,13 @@ def index():
         "users": (
             db.session.query(User)
             .filter(
-                or_(
-                    User.first_name.ilike(f"%{query}%"),
-                    User.last_name.ilike(f"%{query}%"),
-                    User.email.ilike(f"%{query}%"),
+                filter_query(
+                    query,
+                    [
+                        User.first_name,
+                        User.last_name,
+                        User.email,
+                    ],
                 )
             )
             .all()
@@ -67,8 +87,11 @@ def index():
         "files": (
             db.session.query(DocumentFile)
             .filter(
-                or_(
-                    DocumentFile.file_name.ilike(f"%{query}%"),
+                filter_query(
+                    query,
+                    [
+                        DocumentFile.file_name,
+                    ],
                 )
             )
             .all()
