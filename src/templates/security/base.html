@@ -7,7 +7,7 @@
 {% endblock nav_brand %}
 {% block nav %}
   {% if current_user.is_authenticated %}
-    {{ render_nav_item('user.profile', _fsdomain('Return to Profile') ) }}
+    {{ render_nav_item('user.your_account', _fsdomain('Return to Your Account') ) }}
   {% else %}
     {{ render_nav_item('security.login', _fsdomain('Login') ) }}
     {% if security.registerable %}{{ render_nav_item('security.register', _fsdomain('Register') ) }}{% endif %}
