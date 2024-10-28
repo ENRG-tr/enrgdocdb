@@ -53,3 +53,4 @@ class DocumentFile(Base, Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     document_id: Mapped[int] = mapped_column(Integer, ForeignKey("documents.id"))
     file_name: Mapped[str] = mapped_column(String(255))
+    real_file_name: Mapped[str] = mapped_column(String(512))

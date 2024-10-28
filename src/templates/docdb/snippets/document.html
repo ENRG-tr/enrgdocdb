@@ -42,7 +42,7 @@
                             {% if not loop.last %},{% endif %}
                         {% endfor %}
                     </td>
-                    <td>{{ (document.updated_at or document.created_at).strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                    <td>{{ document.modified_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
                 </tr>
             {% endfor %}
         </tbody>

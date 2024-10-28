@@ -1,9 +1,8 @@
-from os import abort
-
-from flask import Blueprint, render_template, send_from_directory
+from flask import Blueprint, abort, render_template, send_from_directory
 
 from database import db
 from models.document import Document, DocumentFile
+from settings import FILE_UPLOAD_FOLDER
 
 blueprint = Blueprint("document", __name__, url_prefix="/documents")
 
@@ -25,6 +24,9 @@ def download_file(file_id: int):
     if not file:
         return abort(404)
 
-    file_path = file.file_name
-
-    return send_from_directory(file_path, file_path, as_attachment=True)
+    return send_from_directory(
+        FILE_UPLOAD_FOLDER,
+        file.real_file_name,
+        as_attachment=True,
+        download_name=file.file_name,
+    )
