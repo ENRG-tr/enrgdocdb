@@ -40,7 +40,7 @@
 {% endmacro %}
 {% macro render_document_authors(authors) %}
     {% for doc_author in authors %}
-        <a href="">{{ doc_author.author.first_name }} {{ doc_author.author.last_name }}</a>
+        <a href="">{{ doc_author.author.name }}</a>
         {% if not loop.last %},{% endif %}
     {% endfor %}
 {% endmacro %}

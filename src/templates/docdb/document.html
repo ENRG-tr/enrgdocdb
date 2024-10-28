@@ -1,5 +1,7 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/document.html" import render_document_table, render_document_authors, render_document_topics %}
+{% from "docdb/snippets/user.html" import render_user %}
+{% from "docdb/snippets/file.html" import render_files %}
 {% block title %}
     {{ document.title }} - ENRG DocDB
 {% endblock title %}
@@ -8,11 +10,7 @@
     <div class="document-details">
         <table class="table table-striped table-bordered">
             <tr>
-                <th style="width: 25%">ID</th>
-                <td>{{ document.id }}</td>
-            </tr>
-            <tr>
-                <th>Title</th>
+                <th style="width: 25%">Title</th>
                 <td>{{ document.title }}</td>
             </tr>
             <tr>
@@ -25,28 +23,11 @@
             </tr>
             <tr>
                 <th>Files</th>
-                <td>
-                    {% for file in document.files %}
-                        <span class="badge bg-primary">
-                            {% if file.file_name.endswith(".pdf") %}
-                                <i class="fas fa-file-pdf"></i>
-                            {% elif file.file_name.endswith(".docx") %}
-                                <i class="fas fa-file-word"></i>
-                            {% elif file.file_name.endswith(".pptx") %}
-                                <i class="fas fa-file-powerpoint"></i>
-                            {% elif file.file_name.endswith(".xlsx") %}
-                                <i class="fas fa-file-excel"></i>
-                            {% elif file.file_name.endswith(".zip") %}
-                                <i class="fas fa-file-archive"></i>
-                            {% else %}
-                                <i class="fas fa-file"></i>
-                            {% endif %}
-                        </span>
-                        <a href="{{ url_for("document.download_file", file_id=file.id) }}"
-                           target="_blank">{{ file.file_name }}</a>
-                        {% if not loop.last %},{% endif %}
-                    {% endfor %}
-                </td>
+                <td>{{ render_files(document.files) }}</td>
+            </tr>
+            <tr>
+                <th>Uploaded By</th>
+                <td>{{ render_user(document.user) }}</td>
             </tr>
             <tr>
                 <th>Authors</th>

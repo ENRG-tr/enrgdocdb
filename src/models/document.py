@@ -5,6 +5,7 @@ from database import Model
 from models.author import Author
 from models.base import Base
 from models.topic import Topic
+from models.user import User
 
 
 class Document(Base, Model):
@@ -19,6 +20,7 @@ class Document(Base, Model):
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"))
 
+    user: Mapped[User] = relationship("User")
     authors: Mapped[list["DocumentAuthor"]] = relationship("DocumentAuthor")
     topics: Mapped[list["DocumentTopic"]] = relationship("DocumentTopic")
     document_type: Mapped["DocumentType"] = relationship("DocumentType")
