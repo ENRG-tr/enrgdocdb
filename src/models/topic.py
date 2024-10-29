@@ -9,3 +9,6 @@ class Topic(Base, Model):
     __tablename__ = "topics"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255))
+
+    def __repr__(self) -> str:
+        return self.name

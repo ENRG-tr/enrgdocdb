@@ -32,7 +32,7 @@ def index():
     result_initial = {
         "documents": (
             db.session.query(Document)
-            .join(Document.authors)
+            .join(Document.document_authors)
             .join(DocumentAuthor.author)
             .filter(
                 filter_query(

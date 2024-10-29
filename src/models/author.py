@@ -19,3 +19,6 @@ class Author(Base, Model):
     @property
     def name(self):
         return f"{self.first_name} {self.last_name}"
+
+    def __repr__(self) -> str:
+        return self.name

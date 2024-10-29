@@ -42,13 +42,13 @@
 {% endmacro %}
 {% macro render_document_authors(authors) %}
     {% for doc_author in authors %}
-        {{ render_author(doc_author.author) }}
+        {{ render_author(doc_author) }}
         {% if not loop.last %},{% endif %}
     {% endfor %}
 {% endmacro %}
 {% macro render_document_topics(topics) %}
     {% for doc_topic in topics %}
-        <a href="">{{ doc_topic.topic.name }}</a>
+        <a href="">{{ doc_topic.name }}</a>
         {% if not loop.last %},{% endif %}
     {% endfor %}
 {% endmacro %}

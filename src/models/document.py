@@ -1,4 +1,5 @@
 from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Model
@@ -21,12 +22,25 @@ class Document(Base, Model):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"))
 
     user: Mapped[User] = relationship("User")
-    authors: Mapped[list["DocumentAuthor"]] = relationship("DocumentAuthor")
-    topics: Mapped[list["DocumentTopic"]] = relationship("DocumentTopic")
-    document_type: Mapped["DocumentType"] = relationship("DocumentType")
-    files: Mapped[list["DocumentFile"]] = relationship(
-        "DocumentFile", back_populates="document"
+    document_authors: Mapped[list["DocumentAuthor"]] = relationship(
+        "DocumentAuthor", back_populates="document", cascade="all, delete-orphan"
     )
+    document_topics: Mapped[list["DocumentTopic"]] = relationship(
+        "DocumentTopic", back_populates="document", cascade="all, delete-orphan"
+    )
+    files: Mapped[list["DocumentFile"]] = relationship(
+        "DocumentFile", back_populates="document", cascade="all, delete-orphan"
+    )
+    document_type: Mapped["DocumentType"] = relationship("DocumentType")
+
+    topics: Mapped[list["Topic"]] = association_proxy(
+        "document_topics", "topic", creator=lambda topic: DocumentTopic(topic=topic)
+    )  #  type: ignore
+    authors: Mapped[list["Author"]] = association_proxy(
+        "document_authors",
+        "author",
+        creator=lambda author: DocumentAuthor(author=author),
+    )  #  type: ignore
 
 
 class DocumentAuthor(Base, Model):
@@ -36,6 +50,7 @@ class DocumentAuthor(Base, Model):
     author_id: Mapped[int] = mapped_column(Integer, ForeignKey("authors.id"))
 
     author: Mapped[Author] = relationship("Author")
+    document: Mapped[Document] = relationship()
 
 
 class DocumentTopic(Base, Model):
@@ -45,6 +60,7 @@ class DocumentTopic(Base, Model):
     topic_id: Mapped[int] = mapped_column(Integer, ForeignKey("topics.id"))
 
     topic: Mapped[Topic] = relationship("Topic")
+    document: Mapped[Document] = relationship()
 
 
 class DocumentType(Base, Model):
@@ -60,4 +76,7 @@ class DocumentFile(Base, Model):
     file_name: Mapped[str] = mapped_column(String(255))
     real_file_name: Mapped[str] = mapped_column(String(512))
 
-    document: Mapped["Document"] = relationship("Document")
+    document: Mapped["Document"] = relationship()
+
+    def __repr__(self) -> str:
+        return self.file_name

@@ -17,7 +17,7 @@ def view(topic_id: int):
         return abort(404)
 
     documents = paginate(
-        db.session.query(Document).filter(Document.topics.any(id=topic_id)),
+        db.session.query(Document).filter(Document.document_topics.any(id=topic_id)),
         request,
     )
 
