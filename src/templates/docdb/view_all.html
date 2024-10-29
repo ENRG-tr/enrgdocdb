@@ -12,8 +12,8 @@
         Below are the all <strong class="text-primary">{{ model_name }}s</strong> in the database.
     </p>
     <hr>
-    {% if original_model_name in ["Topic", "Author", "Institution"] %}
-        <a class="btn btn-primary"
+    {% if original_model_name in ["Topic", "Author", "Institution", "DocumentType"] %}
+        <a class="btn btn-primary mb-2"
            href="{{ url_for('view_all.proxy_new', model_name=original_model_name, url=request.path) }}">
             <i class="fas fa-plus"></i>
             New {{ model_name }}

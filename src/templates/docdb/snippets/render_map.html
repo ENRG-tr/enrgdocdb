@@ -1,5 +1,5 @@
 {% from "docdb/snippets/pagination.html" import render_pagination %}
-{% from "docdb/snippets/document.html" import render_document_table %}
+{% from "docdb/snippets/document.html" import render_document_table, render_document_type_table %}
 {% from "docdb/snippets/author.html" import render_author_table, render_institution_table %}
 {% from "docdb/snippets/topic.html" import render_topic_table %}
 {% from "docdb/snippets/user.html" import render_user_table %}
@@ -11,11 +11,12 @@
     "Topic": render_topic_table,
     "User": render_user_table,
     "DocumentFile": render_file_table,
+    "DocumentType": render_document_type_table,
 } %}
-{% set model_name_override_map = {"DocumentFile": "File"} %}
+{% set model_name_override_map = {"DocumentFile": "File", "DocumentType": "Document Type"} %}
 {% macro render_paginated_result(paginated) %}
     {% set render_func = render_func_map[paginated.query_model] %}
-    {{ render_func(paginated.result, paginated) }}
+    {{ render_func(paginated.result) }}
     {{ render_pagination(paginated) }}
 {% endmacro %}
 {% macro get_readable_model_name(model_name) %}

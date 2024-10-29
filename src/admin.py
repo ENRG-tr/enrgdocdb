@@ -6,7 +6,7 @@ from wtforms import TextAreaField
 
 from database import db
 from models.author import Author, Institution
-from models.document import Document
+from models.document import Document, DocumentType
 from models.topic import Topic
 
 admin = Admin(
@@ -49,6 +49,10 @@ class InstitutionAdminView(AdminView):
     form_columns = ["name"]
 
 
+class DocumentTypeAdminView(AdminView):
+    form_columns = ["name"]
+
+
 def get_admin_view_endpoint(model):
     return f"admin_{model.__name__}"
 
@@ -59,5 +63,8 @@ views = [
     AuthorAdminView(Author, db.session, endpoint=get_admin_view_endpoint(Author)),
     InstitutionAdminView(
         Institution, db.session, endpoint=get_admin_view_endpoint(Institution)
+    ),
+    DocumentTypeAdminView(
+        DocumentType, db.session, endpoint=get_admin_view_endpoint(DocumentType)
     ),
 ]

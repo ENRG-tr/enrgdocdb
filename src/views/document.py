@@ -24,6 +24,7 @@ from models.document import (
 )
 from models.topic import Topic
 from settings import FILE_UPLOAD_FOLDER
+from utils.pagination import paginate
 from utils.security import secure_blueprint
 
 blueprint = Blueprint("document", __name__, url_prefix="/documents")
@@ -38,6 +39,27 @@ def view(document_id: int):
         return abort(404)
 
     return render_template("docdb/view_document.html", document=document)
+
+
+@blueprint.route("/view-topic/<int:document_type_id>")
+def view_document_type(document_type_id: int):
+    # TODO: Check permissions
+    document_type = db.session.query(DocumentType).get(document_type_id)
+    if not document_type:
+        return abort(404)
+
+    documents = paginate(
+        db.session.query(Document)
+        .join(DocumentType, Document.document_type_id == DocumentType.id)
+        .filter(DocumentType.id == document_type_id),
+        request,
+    )
+
+    return render_template(
+        "docdb/view_document_type.html",
+        document_type=document_type,
+        documents=documents,
+    )
 
 
 @blueprint.route("/download-file/<int:file_id>")

@@ -2,19 +2,14 @@
 {% from "docdb/snippets/document.html" import render_document_table, render_document_authors, render_document_topics %}
 {% from "docdb/snippets/user.html" import render_user %}
 {% from "docdb/snippets/file.html" import render_files %}
+{% from "docdb/snippets/moderation.html" import render_moderation_options %}
 {% block title %}
     {{ document.title }} - ENRG DocDB
 {% endblock title %}
 {% block content %}
     <h2>Document Details</h2>
     <hr>
-    <div class="mb-2">
-        <a href="{{ url_for('admin_Document.edit_view', id=document.id, url=request.path) }}"
-           class="btn btn-primary">
-            <i class="fas fa-edit"></i>
-            Edit Document
-        </a>
-    </div>
+    {{ render_moderation_options(document) }}
     <div class="document-details">
         <table class="table table-striped table-bordered">
             <tr>

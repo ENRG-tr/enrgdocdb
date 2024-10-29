@@ -2,7 +2,7 @@ from flask import Blueprint, abort, redirect, render_template, request, url_for
 
 from database import db
 from models.author import Author, Institution
-from models.document import Document, DocumentFile
+from models.document import Document, DocumentFile, DocumentType
 from models.topic import Topic
 from models.user import User
 from utils.pagination import paginate
@@ -12,7 +12,15 @@ blueprint = Blueprint("view_all", __name__, url_prefix="/view_all")
 secure_blueprint(blueprint)
 
 
-VIEW_ALL_ALLOWED_MODELS = [Document, DocumentFile, Author, Institution, Topic, User]
+VIEW_ALL_ALLOWED_MODELS = [
+    Document,
+    DocumentType,
+    DocumentFile,
+    Author,
+    Institution,
+    Topic,
+    User,
+]
 
 
 @blueprint.route("/<string:model_name>")

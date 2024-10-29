@@ -33,7 +33,7 @@
     </table>
 {% endmacro %}
 {% macro render_institution(institution) %}
-    <a href="">{{ institution.name }}</a>
+    <a href="{{ url_for('institution.view', institution_id=institution.id) }}">{{ institution.name }}</a>
 {% endmacro %}
 {% macro render_institution_table(institutions, paginated_query) %}
     <table class="table table-striped table-hover">

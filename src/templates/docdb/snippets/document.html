@@ -40,6 +40,30 @@
         </tbody>
     </table>
 {% endmacro %}
+{% macro render_document_type_table(document_types) %}
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <tr>
+                    <th style="min-width: 200px;">
+                        <i class="fas fa-file"></i> Document Type
+                    </th>
+                    <th>
+                        <i class="fas fa-calendar-alt"></i> Date Modified
+                    </th>
+                </tr>
+            </tr>
+        </thead>
+        <tbody>
+            {% for document_type in document_types %}
+                <tr>
+                    <td>{{ render_document_type(document_type) }}</td>
+                    <td>{{ document_type.modified_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
 {% macro render_document_authors(authors) %}
     {% for doc_author in authors %}
         {{ render_author(doc_author) }}
@@ -48,7 +72,10 @@
 {% endmacro %}
 {% macro render_document_topics(topics) %}
     {% for doc_topic in topics %}
-        <a href="">{{ doc_topic.name }}</a>
+        <a href="{{ url_for('topic.view', topic_id=doc_topic.id) }}">{{ doc_topic.name }}</a>
         {% if not loop.last %},{% endif %}
     {% endfor %}
+{% endmacro %}
+{% macro render_document_type(document_type) %}
+    <a href="{{ url_for('document.view_document_type', document_type_id=document_type.id) }}">{{ document_type.name }}</a>
 {% endmacro %}
