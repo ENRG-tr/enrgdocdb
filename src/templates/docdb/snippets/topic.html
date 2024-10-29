@@ -23,12 +23,16 @@
             {% endif %}
             {% for topic in topics %}
                 <tr>
-                    <td>
-                        <a href="">{{ topic.name }}</a>
-                    </td>
+                    <td>{{ render_topics([topic]) }}</td>
                     <td>{{ topic.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+{% endmacro %}
+{% macro render_topics(topics) %}
+    {% for topic in topics %}
+        <a href="{{ url_for('topic.view', topic_id=topic.id) }}">{{ topic.name }}</a>
+        {% if not loop.last %},{% endif %}
+    {% endfor %}
 {% endmacro %}

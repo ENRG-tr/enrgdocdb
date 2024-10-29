@@ -1,6 +1,6 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/mark.html" import mark %}
-{% from "docdb/snippets/render_map.html" import render_paginated_result %}
+{% from "docdb/snippets/render_map.html" import render_paginated_result, get_readable_model_name %}
 {% block title %}
     Quick Search - ENRG DocDB
 {% endblock title %}
@@ -12,13 +12,13 @@
     {% if search.result_count == 0 %}
         <p>No results found.</p>
     {% else %}
-        {% for result_type, result_list in search.result.items() %}
-            {% if result_list.result | length %}
+        {% for result in search.result %}
+            {% if result.total_count %}
                 <div class="d-flex align-items-end gap-2 mb-2">
-                    <h3 class="m-0">{{ result_type | capitalize }}</h3>
-                    <strong>({{ result_list.result | length }})</strong>
+                    <h3 class="m-0">{{ get_readable_model_name(result.query_model) }}</h3>
+                    <strong>({{ result.total_count }})</strong>
                 </div>
-                {{ render_paginated_result(result_list) }}
+                {{ render_paginated_result(result) }}
             {% endif %}
         {% endfor %}
     {% endif %}

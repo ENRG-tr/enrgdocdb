@@ -11,6 +11,7 @@ class PaginatedQueryResult:
     result: list
     page: int
     total_pages: int
+    total_count: int
     query_name: str
     query_model: str
 
@@ -36,6 +37,7 @@ def paginate(
     return PaginatedQueryResult(
         result=query.all(),
         page=page,
+        total_count=query_count,
         total_pages=query_count // per_page,
         query_name=query_name,
         query_model=query_model.__name__,

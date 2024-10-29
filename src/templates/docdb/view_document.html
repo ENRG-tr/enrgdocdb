@@ -3,6 +3,8 @@
 {% from "docdb/snippets/user.html" import render_user %}
 {% from "docdb/snippets/file.html" import render_files %}
 {% from "docdb/snippets/moderation.html" import render_moderation_options %}
+{% from "docdb/snippets/topic.html" import render_topics %}
+{% from "docdb/snippets/author.html" import render_authors %}
 {% block title %}
     {{ document.title }} - ENRG DocDB
 {% endblock title %}
@@ -34,10 +36,10 @@
             </tr>
             <tr>
                 <th>Authors</th>
-                <td>{{ render_document_authors(document.authors) }}</td>
+                <td>{{ render_authors(document.authors) }}</td>
                 <tr>
                     <th>Topics</th>
-                    <td>{{ render_document_topics(document.topics) }}</td>
+                    <td>{{ render_topics(document.topics) }}</td>
                 </tr>
             </tr>
             <tr>
