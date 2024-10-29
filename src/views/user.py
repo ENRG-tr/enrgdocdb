@@ -1,15 +1,21 @@
 from flask import Blueprint, abort, flash, render_template, request
+from flask import current_app as app
 from flask_login import current_user
 
 from database import db
 from forms.user import EditUserProfileForm
 from models.document import Document, DocumentFile
-from models.user import User
+from models.user import RolePermission, User
 from utils.pagination import paginate
-from utils.security import secure_blueprint
+from utils.security import permission_check, secure_blueprint
 
 blueprint = Blueprint("user", __name__, url_prefix="/user")
 secure_blueprint(blueprint)
+
+
+@app.context_processor
+def inject_permission_check():
+    return dict(permission_check=permission_check, RolePermission=RolePermission)
 
 
 @blueprint.route("/your_account", methods=["GET", "POST"])

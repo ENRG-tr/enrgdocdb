@@ -1,6 +1,6 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/render_map.html" import render_paginated_result %}
-{% from "docdb/snippets/moderation.html" import render_moderation_options %}
+{% from "docdb/snippets/moderation.html" import render_moderation_options with context %}
 {% block title %}
     {{ topic.name }} - ENRG DocDB
 {% endblock title %}

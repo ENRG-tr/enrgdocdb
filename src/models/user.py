@@ -10,21 +10,21 @@ from models.base import Base
 
 
 class RolePermission(str, Enum):
-    view = "VIEW"
-    add = "ADD"
-    edit_self = "EDIT_SELF"
-    edit = "EDIT"
-    remove = "REMOVE"
+    VIEW = "VIEW"
+    ADD = "ADD"
+    EDIT_SELF = "EDIT_SELF"
+    EDIT = "EDIT"
+    REMOVE = "REMOVE"
 
 
 ROLES_PERMISSIONS = {
-    "user": [RolePermission.view, RolePermission.add, RolePermission.edit_self],
+    "user": [RolePermission.VIEW, RolePermission.ADD, RolePermission.EDIT_SELF],
     "admin": [
-        RolePermission.view,
-        RolePermission.add,
-        RolePermission.edit_self,
-        RolePermission.edit,
-        RolePermission.remove,
+        RolePermission.VIEW,
+        RolePermission.ADD,
+        RolePermission.EDIT_SELF,
+        RolePermission.EDIT,
+        RolePermission.REMOVE,
     ],
 }
 
