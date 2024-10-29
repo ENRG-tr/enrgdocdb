@@ -20,6 +20,9 @@ class Document(Base, Model):
     )
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"))
+    organization_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("organizations.id")
+    )
 
     user: Mapped[User] = relationship("User")
     document_authors: Mapped[list["DocumentAuthor"]] = relationship(

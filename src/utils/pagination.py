@@ -3,7 +3,12 @@ from typing import Any
 from urllib.parse import urlencode
 
 from flask import Request
-from sqlalchemy.orm import Query
+from flask_login import current_user
+from sqlalchemy.orm import Query, Session
+
+from database import db
+from models.document import Document
+from models.user import RolePermission
 
 
 @dataclass
@@ -23,12 +28,42 @@ class PaginatedQueryResult:
         return f"{request.base_url}?{query_dict}"
 
 
+def secure_query(query: Query, query_model: Any, user: Any, session: Session) -> Query:
+    # Poison the query if the user does not exist
+    if user is None or not user.is_authenticated:
+        return query.filter(query_model.id == -1)
+
+    user_organizations = [
+        role.organization_id
+        for role in user.roles
+        if RolePermission.VIEW in role.permissions
+    ]
+
+    if hasattr(query_model, "organization_id"):
+        query = query.filter(query_model.organization_id.in_(user_organizations))
+    if hasattr(query_model, "document") or hasattr(query_model, "document_id"):
+        document_id = (
+            getattr(query_model, "document_id", None) or query_model.document.id
+        )
+        if (
+            not isinstance(query_model, Document)
+            and hasattr(query, "_last_joined_entity")
+            and hasattr(query._last_joined_entity, "name")
+            and "documents" not in query._last_joined_entity.name  # type: ignore
+        ):
+            query = query.join(Document, Document.id == document_id)
+        query = query.filter(Document.organization_id.in_(user_organizations))
+
+    return query
+
+
 def paginate(
     query: Query, request: Request, per_page: int = 50, query_name: str | None = None
 ) -> PaginatedQueryResult:
-    query_count = query.count()
     query_model: Any = query.column_descriptions[0]["entity"]
 
+    query = secure_query(query, query_model, current_user, db.session)
+    query_count = query.count()
     query = query.limit(per_page)
     if query_name is None:
         query_name = f"{query_model.__tablename__}_page"

@@ -30,5 +30,11 @@ class DocumentForm(FlaskForm):
             FileAllowed(["pdf", "doc", "docx", "xls", "xlsx", "mp4", "avi"]),
         ],
     )
+    organization = SelectField(
+        "Organization",
+        coerce=int,
+        choices=[],
+        validators=[DataRequired()],
+    )
     files = MultipleFileField("File(s)")
     submit = SubmitField("Submit")

@@ -92,6 +92,12 @@ def new():
         (document_type.id, document_type.name)
         for document_type in db.session.query(DocumentType).distinct().all()
     ]
+    form.organization.choices = list(
+        {
+            (organization.id, organization.name)
+            for organization in [x.organization for x in current_user.roles]
+        }
+    )
 
     if form.validate_on_submit():
         document = Document(
@@ -99,6 +105,7 @@ def new():
             abstract=form.abstract.data,
             user_id=current_user.id,
             document_type_id=form.document_type.data,
+            organization_id=form.organization.data,
         )
         db.session.add(document)
         db.session.commit()

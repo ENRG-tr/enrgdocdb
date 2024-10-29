@@ -6,7 +6,7 @@
         {{ form.csrf_token() }}
         {{ render_field(form.title) }}
         {{ render_field(form.abstract) }}
-        {{ render_form_row([form.authors, form.topics]) }}
+        {{ render_form_row([form.authors, form.topics, form.organization]) }}
         {{ render_form_row([form.document_type, form.files]) }}
         {{ render_field(form.submit) }}
     </form>
