@@ -5,7 +5,9 @@ from flask_admin.theme import Bootstrap4Theme
 from wtforms import TextAreaField
 
 from database import db
+from models.author import Author, Institution
 from models.document import Document
+from models.topic import Topic
 
 admin = Admin(
     name="ENRG DocDB Admin",
@@ -17,9 +19,6 @@ admin = Admin(
 class AdminView(ModelView):
     # disable edit for created_at, updated_at, deleted_at
     form_excluded_columns = ["created_at", "updated_at", "deleted_at"]
-
-    # disable list view and create view
-    can_create = False
 
     def is_accessible(self):
         return True  # current_user.has_role("admin")
@@ -35,6 +34,19 @@ class DocumentAdminView(AdminView):
     form_extra_fields = {
         "abstract": TextAreaField("Abstract"),
     }
+    can_create = False
+
+
+class TopicAdminView(AdminView):
+    form_columns = ["name"]
+
+
+class AuthorAdminView(AdminView):
+    form_columns = ["first_name", "last_name", "email", "phone", "institution"]
+
+
+class InstitutionAdminView(AdminView):
+    form_columns = ["name"]
 
 
 def get_admin_view_endpoint(model):
@@ -42,5 +54,10 @@ def get_admin_view_endpoint(model):
 
 
 views = [
-    DocumentAdminView(Document, db.session, endpoint=get_admin_view_endpoint(Document))
+    DocumentAdminView(Document, db.session, endpoint=get_admin_view_endpoint(Document)),
+    TopicAdminView(Topic, db.session, endpoint=get_admin_view_endpoint(Topic)),
+    AuthorAdminView(Author, db.session, endpoint=get_admin_view_endpoint(Author)),
+    InstitutionAdminView(
+        Institution, db.session, endpoint=get_admin_view_endpoint(Institution)
+    ),
 ]

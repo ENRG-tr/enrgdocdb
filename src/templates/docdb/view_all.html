@@ -1,6 +1,7 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/document.html" import render_document_table %}
 {% from "docdb/snippets/render_map.html" import render_paginated_result, get_readable_model_name %}
+{% set original_model_name = model_name %}
 {% set model_name = get_readable_model_name(model_name) %}
 {% block title %}
     All {{ model_name }}s - ENRG DocDB
@@ -11,5 +12,12 @@
         Below are the all <strong class="text-primary">{{ model_name }}s</strong> in the database.
     </p>
     <hr>
+    {% if original_model_name in ["Topic", "Author", "Institution"] %}
+        <a class="btn btn-primary"
+           href="{{ url_for('view_all.proxy_new', model_name=original_model_name, url=request.path) }}">
+            <i class="fas fa-plus"></i>
+            New {{ model_name }}
+        </a>
+    {% endif %}
     {{ render_paginated_result(models) }}
 {% endblock content %}

@@ -1,7 +1,7 @@
-from flask import Blueprint, abort, render_template, request
+from flask import Blueprint, abort, redirect, render_template, request, url_for
 
 from database import db
-from models.author import Author
+from models.author import Author, Institution
 from models.document import Document, DocumentFile
 from models.topic import Topic
 from models.user import User
@@ -12,7 +12,7 @@ blueprint = Blueprint("view_all", __name__, url_prefix="/view_all")
 secure_blueprint(blueprint)
 
 
-VIEW_ALL_ALLOWED_MODELS = [Document, DocumentFile, Author, Topic, User]
+VIEW_ALL_ALLOWED_MODELS = [Document, DocumentFile, Author, Institution, Topic, User]
 
 
 @blueprint.route("/<string:model_name>")
@@ -26,4 +26,14 @@ def view_all(model_name: str):
     models = paginate(db.session.query(model), request)
     return render_template(
         "docdb/view_all.html", model_name=model.__name__, models=models
+    )
+
+
+@blueprint.route("/new/<string:model_name>")
+def proxy_new(model_name: str):
+    if model_name not in [model.__name__ for model in VIEW_ALL_ALLOWED_MODELS]:
+        return abort(404)
+
+    return redirect(
+        url_for(f"admin_{model_name}.create_view", url=request.args.get("url"))
     )

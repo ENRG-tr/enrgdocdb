@@ -1,15 +1,16 @@
 {% from "docdb/snippets/pagination.html" import render_pagination %}
 {% from "docdb/snippets/document.html" import render_document_table %}
-{% from "docdb/snippets/author.html" import render_author_table %}
+{% from "docdb/snippets/author.html" import render_author_table, render_institution_table %}
 {% from "docdb/snippets/topic.html" import render_topic_table %}
 {% from "docdb/snippets/user.html" import render_user_table %}
 {% from "docdb/snippets/file.html" import render_file_table %}
 {% set render_func_map = {
     "Document": render_document_table,
     "Author": render_author_table,
+    "Institution": render_institution_table,
     "Topic": render_topic_table,
     "User": render_user_table,
-    "DocumentFile": render_file_table
+    "DocumentFile": render_file_table,
 } %}
 {% set model_name_override_map = {"DocumentFile": "File"} %}
 {% macro render_paginated_result(paginated) %}
