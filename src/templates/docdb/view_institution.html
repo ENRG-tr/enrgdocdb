@@ -1,5 +1,6 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/render_map.html" import render_paginated_result %}
+{% from "docdb/snippets/moderation.html" import render_moderation_options %}
 {% block title %}
     {{ institution.name }} - ENRG DocDB
 {% endblock title %}
@@ -8,6 +9,7 @@
     <p class="text-muted">
         Below are the documents associated with <strong class="text-primary">{{ institution.name }}</strong>.
     </p>
+    {{ render_moderation_options(institution) }}
     <hr>
     {{ render_paginated_result(documents) }}
 {% endblock content %}
