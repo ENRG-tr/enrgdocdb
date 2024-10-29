@@ -4,7 +4,7 @@ from database import db
 from models.author import Author, Institution
 from models.document import Document, DocumentFile, DocumentType
 from models.topic import Topic
-from models.user import User
+from models.user import Organization, Role, User
 from utils.pagination import paginate
 from utils.security import secure_blueprint
 
@@ -20,6 +20,8 @@ VIEW_ALL_ALLOWED_MODELS = [
     Institution,
     Topic,
     User,
+    Role,
+    Organization,
 ]
 
 

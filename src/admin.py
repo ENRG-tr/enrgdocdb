@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import redirect, url_for
 from flask_admin import Admin, expose
 from flask_admin.contrib.sqla import ModelView
@@ -8,6 +10,7 @@ from database import db
 from models.author import Author, Institution
 from models.document import Document, DocumentType
 from models.topic import Topic
+from models.user import ROLES_PERMISSIONS, Organization, Role, User
 
 admin = Admin(
     name="ENRG DocDB Admin",
@@ -53,6 +56,31 @@ class DocumentTypeAdminView(AdminView):
     form_columns = ["name"]
 
 
+class OrganizationAdminView(AdminView):
+    form_columns = ["name"]
+
+    # after committing the form, create new roles based on organization
+    def after_model_change(self, form, model, is_created):
+        if not is_created:
+            return
+        for sample_role, sample_role_permissions in ROLES_PERMISSIONS.items():
+            role = Role(name=sample_role, organization_id=model.id)
+            role.permissions = []
+            role.permissions.extend([x.value for x in sample_role_permissions])
+            db.session.add(role)
+        db.session.commit()
+
+
+class UserAdminView(AdminView):
+    form_columns = ["first_name", "last_name", "email", "roles"]
+
+    def delete_model(self, model: User):
+        model = db.session.query(User).filter(User.id == model.id).one()
+        model.deleted_at = datetime.now()
+        db.session.commit()
+        return True
+
+
 def get_admin_view_endpoint(model):
     return f"admin_{model.__name__}"
 
@@ -67,4 +95,8 @@ views = [
     DocumentTypeAdminView(
         DocumentType, db.session, endpoint=get_admin_view_endpoint(DocumentType)
     ),
+    OrganizationAdminView(
+        Organization, db.session, endpoint=get_admin_view_endpoint(Organization)
+    ),
+    UserAdminView(User, db.session, endpoint=get_admin_view_endpoint(User)),
 ]

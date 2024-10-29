@@ -16,6 +16,16 @@ babel = Babel()
 bootstrap = Bootstrap5()
 
 
+def monkeypatch_user_loader(user_loader):
+    def _user_loader(*args, **kwargs):
+        user = user_loader(*args, **kwargs)
+        if user and user.deleted_at:
+            return None
+        return user
+
+    return _user_loader
+
+
 def create_app():
     app = Flask(__name__)
     with app.app_context():
@@ -34,6 +44,8 @@ def create_app():
 
         admin.init_app(app)
         security.init_app(app, user_datastore)
+
+        user_datastore.find_user = monkeypatch_user_loader(user_datastore.find_user)
 
         for view in admin_views:
             admin.add_view(view)

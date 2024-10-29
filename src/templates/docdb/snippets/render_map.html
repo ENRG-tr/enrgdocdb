@@ -2,7 +2,7 @@
 {% from "docdb/snippets/document.html" import render_document_table, render_document_type_table %}
 {% from "docdb/snippets/author.html" import render_author_table, render_institution_table %}
 {% from "docdb/snippets/topic.html" import render_topic_table %}
-{% from "docdb/snippets/user.html" import render_user_table %}
+{% from "docdb/snippets/user.html" import render_user_table, render_role_table, render_organization_table %}
 {% from "docdb/snippets/file.html" import render_file_table %}
 {% set render_func_map = {
     "Document": render_document_table,
@@ -12,6 +12,8 @@
     "User": render_user_table,
     "DocumentFile": render_file_table,
     "DocumentType": render_document_type_table,
+    "Role": render_role_table,
+    "Organization": render_organization_table
 } %}
 {% set model_name_override_map = {"DocumentFile": "File", "DocumentType": "Document Type"} %}
 {% macro render_paginated_result(paginated) %}
