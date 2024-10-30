@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+from flask import current_app as app
 from flask import redirect, request, url_for
 from flask_admin import Admin, expose
 from flask_admin.contrib.sqla import ModelView
@@ -38,7 +39,9 @@ class AdminView(ModelView):
             id = request.args.get("id")
             if id is None:
                 return redirect(return_url)
+            print("get model")
             model = self.get_one(id)
+            print(model)
             return permission_check(model, RolePermission.EDIT)
         return permission_check(None, RolePermission.ADMIN)
 
@@ -109,18 +112,29 @@ def get_admin_view_endpoint(model):
     return f"admin_{model.__name__}"
 
 
+class SessionProxy:
+    def __getattr__(self, name):
+        with app.test_request_context():
+            session = db.session
+            return getattr(session, name)
+
+
+session_proxy = SessionProxy()
+
 views = [
-    DocumentAdminView(Document, db.session, endpoint=get_admin_view_endpoint(Document)),
-    TopicAdminView(Topic, db.session, endpoint=get_admin_view_endpoint(Topic)),
-    AuthorAdminView(Author, db.session, endpoint=get_admin_view_endpoint(Author)),
+    DocumentAdminView(
+        Document, session_proxy, endpoint=get_admin_view_endpoint(Document)
+    ),
+    TopicAdminView(Topic, session_proxy, endpoint=get_admin_view_endpoint(Topic)),
+    AuthorAdminView(Author, session_proxy, endpoint=get_admin_view_endpoint(Author)),
     InstitutionAdminView(
-        Institution, db.session, endpoint=get_admin_view_endpoint(Institution)
+        Institution, session_proxy, endpoint=get_admin_view_endpoint(Institution)
     ),
     DocumentTypeAdminView(
-        DocumentType, db.session, endpoint=get_admin_view_endpoint(DocumentType)
+        DocumentType, session_proxy, endpoint=get_admin_view_endpoint(DocumentType)
     ),
     OrganizationAdminView(
-        Organization, db.session, endpoint=get_admin_view_endpoint(Organization)
+        Organization, session_proxy, endpoint=get_admin_view_endpoint(Organization)
     ),
-    UserAdminView(User, db.session, endpoint=get_admin_view_endpoint(User)),
+    UserAdminView(User, session_proxy, endpoint=get_admin_view_endpoint(User)),
 ]
