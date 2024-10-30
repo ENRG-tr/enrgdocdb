@@ -9,6 +9,7 @@ from sqlalchemy.orm import Query, Session
 from database import db
 from models.document import Document
 from models.user import RolePermission
+from utils.security import _is_super_admin
 from utils.url import get_request_base_url
 
 
@@ -33,6 +34,8 @@ def secure_query(query: Query, query_model: Any, user: Any, session: Session) ->
     # Poison the query if the user does not exist
     if user is None or not user.is_authenticated:
         return query.filter(query_model.id == -1)
+    if _is_super_admin(user):
+        return query
 
     user_organizations = [
         role.organization_id
