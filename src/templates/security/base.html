@@ -10,8 +10,6 @@
     {{ render_nav_item('user.your_account', _fsdomain('Return to Your Account') ) }}
   {% else %}
     {{ render_nav_item('security.login', _fsdomain('Login') ) }}
-    {% if security.registerable %}
-      {{ render_nav_item('security.register', _fsdomain('Register') , next=url_for('index.index')) }}
-    {% endif %}
+    {% if security.registerable %}{{ render_nav_item('security.register', _fsdomain('Register') ) }}{% endif %}
   {% endif %}
 {% endblock nav %}
