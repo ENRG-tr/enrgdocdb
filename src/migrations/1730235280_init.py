@@ -11,6 +11,9 @@ from typing import Sequence, Union
 import flask_security
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.orm import Session
+
+from models.user import ADMIN_PERMISSIONS, Role
 
 # revision identifiers, used by Alembic.
 revision: str = "1730235280"
@@ -269,6 +272,18 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("user_id", "role_id"),
     )
     # ### end Alembic commands ###
+
+    # Insert admin role
+    session = Session(bind=op.get_bind())
+    session.add(
+        Role(
+            name="Super Admin",
+            description="Super Admin Role, has all permissions for all organizations",
+            organization_id=None,
+            permissions=ADMIN_PERMISSIONS,
+        )
+    )
+    session.commit()
 
 
 def downgrade() -> None:

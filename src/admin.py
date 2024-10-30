@@ -1,5 +1,4 @@
 from datetime import datetime
-from inspect import isclass
 
 from flask import redirect, request, url_for
 from flask_admin import Admin, expose
@@ -9,9 +8,15 @@ from wtforms import TextAreaField
 
 from database import db
 from models.author import Author, Institution
-from models.document import Document, DocumentFile, DocumentType
+from models.document import Document, DocumentType
 from models.topic import Topic
-from models.user import ROLES_PERMISSIONS, Organization, Role, RolePermission, User
+from models.user import (
+    ROLES_PERMISSIONS_BY_ORGANIZATION,
+    Organization,
+    Role,
+    RolePermission,
+    User,
+)
 from utils.security import permission_check
 
 admin = Admin(
@@ -72,7 +77,10 @@ class OrganizationAdminView(AdminView):
     def after_model_change(self, form, model, is_created):
         if not is_created:
             return
-        for sample_role, sample_role_permissions in ROLES_PERMISSIONS.items():
+        for (
+            sample_role,
+            sample_role_permissions,
+        ) in ROLES_PERMISSIONS_BY_ORGANIZATION.items():
             role = Role(name=sample_role, organization_id=model.id)
             role.permissions = []
             role.permissions.extend([x.value for x in sample_role_permissions])

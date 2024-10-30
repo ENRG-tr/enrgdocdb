@@ -19,18 +19,19 @@ class RolePermission(str, Enum):
     ADMIN = "ADMIN"
 
 
-ROLES_PERMISSIONS = {
+ROLES_PERMISSIONS_BY_ORGANIZATION = {
     "guest": [RolePermission.VIEW],
     "user": [RolePermission.VIEW, RolePermission.ADD, RolePermission.EDIT_SELF],
-    "admin": [
+    "moderator": [
         RolePermission.VIEW,
         RolePermission.ADD,
         RolePermission.EDIT_SELF,
         RolePermission.EDIT,
         RolePermission.REMOVE,
-        RolePermission.ADMIN,
     ],
 }
+
+ADMIN_PERMISSIONS = [p.value for p in RolePermission]
 
 
 class Role(Model, sqla.FsRoleMixin):
