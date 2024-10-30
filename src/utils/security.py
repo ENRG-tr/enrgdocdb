@@ -37,10 +37,20 @@ def _roles_have_permission(
     return False
 
 
+def _is_super_admin(user: User):
+    for role in user.roles:
+        if role.organization_id is None and role.permissions == [RolePermission.ADMIN]:
+            return True
+    return False
+
+
 def permission_check(model: Any, action: RolePermission):
     user: User | None = current_user  # type: ignore
     if not user or not user.is_authenticated:
         return False
+    if _is_super_admin(user):
+        return True
+
     organization_id = None
 
     # Try to get the organization_id from the model
