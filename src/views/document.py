@@ -101,7 +101,7 @@ def new():
             for organization in [
                 x.organization
                 for x in current_user.roles
-                if RolePermission.ADD in x.permissions
+                if RolePermission.ADD in x.permissions and x.organization
             ]
         }
     )
