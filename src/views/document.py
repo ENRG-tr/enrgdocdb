@@ -1,4 +1,5 @@
 import os
+from typing import cast
 
 from flask import (
     Blueprint,
@@ -23,10 +24,10 @@ from models.document import (
     DocumentType,
 )
 from models.topic import Topic
-from models.user import RolePermission
+from models.user import Organization, RolePermission, User
 from settings import FILE_UPLOAD_FOLDER
 from utils.pagination import paginate
-from utils.security import permission_check, secure_blueprint
+from utils.security import _is_super_admin, permission_check, secure_blueprint
 
 blueprint = Blueprint("document", __name__, url_prefix="/documents")
 secure_blueprint(blueprint)
@@ -104,6 +105,11 @@ def new():
             ]
         }
     )
+    if _is_super_admin(cast(User, current_user)):
+        form.organization.choices = [
+            (organization.id, organization.name)
+            for organization in db.session.query(Organization).all()
+        ]
 
     if form.validate_on_submit():
         document = Document(
