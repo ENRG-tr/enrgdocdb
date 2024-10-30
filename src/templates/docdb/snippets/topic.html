@@ -33,6 +33,6 @@
 {% macro render_topics(topics) %}
     {% for topic in topics %}
         <a href="{{ url_for('topic.view', topic_id=topic.id) }}">{{ topic.name }}</a>
-        {% if not loop.last %},{% endif %}
+        {% if not loop.last %}·{% endif %}
     {% endfor %}
 {% endmacro %}

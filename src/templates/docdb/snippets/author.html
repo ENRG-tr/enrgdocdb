@@ -68,6 +68,6 @@
 {% macro render_authors(authors) %}
     {% for author in authors %}
         {{ render_author(author) }}
-        {% if not loop.last %},{% endif %}
+        {% if not loop.last %}·{% endif %}
     {% endfor %}
 {% endmacro %}

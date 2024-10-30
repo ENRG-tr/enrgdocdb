@@ -73,8 +73,8 @@
                     <td>
                         <ul class="ps-1">
                             {% for permission in role.permissions %}
-                                <strong>{{- permission -}}</strong>
-                                {%- if not loop.last -%},{% endif %}
+                                <strong>{{ permission }}</strong>
+                                {% if not loop.last %}·{% endif %}
                             {% endfor %}
                         </ul>
                     </td>
