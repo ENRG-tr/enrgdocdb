@@ -12,4 +12,9 @@
     {{ render_moderation_options(institution) }}
     <hr>
     {{ render_paginated_result(documents) }}
+    <p class="text-muted">
+        Below are the authors associated with <strong class="text-primary">{{ institution.name }}</strong>.
+    </p>
+    <hr>
+    {{ render_paginated_result(authors) }}
 {% endblock content %}

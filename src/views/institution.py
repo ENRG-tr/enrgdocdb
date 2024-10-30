@@ -1,7 +1,7 @@
 from flask import Blueprint, abort, render_template, request
 
 from database import db
-from models.author import Institution
+from models.author import Author, Institution
 from models.document import Document, DocumentAuthor
 from utils.pagination import paginate
 from utils.security import secure_blueprint
@@ -19,8 +19,13 @@ def view(institution_id: int):
     documents = paginate(
         db.session.query(Document)
         .join(DocumentAuthor, Document.id == DocumentAuthor.document_id)
-        .join(Institution, DocumentAuthor.author_id == Institution.id)
-        .filter(Institution.id == institution_id),
+        .join(Author, DocumentAuthor.author_id == Author.id)
+        .filter(Author.institution_id == institution_id),
+        request,
+    )
+
+    authors = paginate(
+        db.session.query(Author).filter(Author.institution_id == institution_id),
         request,
     )
 
@@ -28,4 +33,5 @@ def view(institution_id: int):
         "docdb/view_institution.html",
         institution=institution,
         documents=documents,
+        authors=authors,
     )
