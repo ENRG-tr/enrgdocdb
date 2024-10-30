@@ -39,7 +39,7 @@ def _roles_have_permission(
 
 def _is_super_admin(user: User):
     for role in user.roles:
-        if role.organization_id is None and role.permissions == [RolePermission.ADMIN]:
+        if role.organization_id is None and RolePermission.ADMIN in role.permissions:
             return True
     return False
 
