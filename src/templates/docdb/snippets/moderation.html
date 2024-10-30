@@ -4,7 +4,7 @@
     <div class="d-flex gap-2" role="group">
         {% if permission_check(model, RolePermission.EDIT) %}
             <a class="btn btn-secondary"
-               href="{{ url_for('admin_' ~ model_name ~ '.edit_view', id=model.id, url=request.full_path) }}">
+               href="{{ url_for('admin_' ~ model_name ~ '.edit_view', id=model.id, url=request.url) }}">
                 <i class="fas fa-edit"></i>
                 Edit {{ get_readable_model_name(model_name) }}
             </a>

@@ -13,7 +13,7 @@
     </p>
     {% if original_model_name in ["Topic", "Author", "Institution", "DocumentType", "Organization"] and permission_check(None, RolePermission.ADMIN) %}
         <a class="btn btn-primary"
-           href="{{ url_for('view_all.proxy_new', model_name=original_model_name, url=request.path) }}">
+           href="{{ url_for('view_all.proxy_new', model_name=original_model_name, url=request.url) }}">
             <i class="fas fa-plus"></i>
             New {{ model_name }}
         </a>
