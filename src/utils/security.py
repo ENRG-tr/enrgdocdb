@@ -16,7 +16,6 @@ def secure_blueprint(blueprint: Blueprint):
 
     @blueprint.before_request
     def __():
-        print(current_user.roles)
         if not len(current_user.roles) and request.endpoint != "index.no_role":
             return redirect(url_for("index.no_role"))
 
