@@ -9,6 +9,7 @@ from sqlalchemy.orm import Query, Session
 from database import db
 from models.document import Document
 from models.user import RolePermission
+from utils.url import get_request_base_url
 
 
 @dataclass
@@ -25,7 +26,7 @@ class PaginatedQueryResult:
         query_dict[self.query_name] = str(page)
         # convert query_dict to url params
         query_dict = urlencode(query_dict)
-        return f"{request.base_url}?{query_dict}"
+        return f"{get_request_base_url()}?{query_dict}"
 
 
 def secure_query(query: Query, query_model: Any, user: Any, session: Session) -> Query:
