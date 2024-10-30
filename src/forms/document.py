@@ -13,17 +13,19 @@ from wtforms.validators import DataRequired
 
 
 class DocumentForm(FlaskForm):
-    title = StringField("Title", validators=[])
+    title = StringField("Title", validators=[DataRequired()])
     abstract = TextAreaField("Abstract")
-    authors = SelectMultipleField("Authors", coerce=int, choices=[], validators=[])
-    topics = SelectMultipleField("Topics", coerce=int, choices=[], validators=[])
+    authors = SelectMultipleField(
+        "Authors", coerce=int, choices=[], validators=[DataRequired()]
+    )
+    topics = SelectMultipleField(
+        "Topics", coerce=int, choices=[], validators=[DataRequired()]
+    )
     document_type = SelectField(
         "Document Type",
         coerce=int,
         choices=[],
-        validators=[
-            FileAllowed(["pdf", "doc", "docx", "xls", "xlsx", "mp4", "avi"]),
-        ],
+        validators=[DataRequired()],
     )
     organization = SelectField(
         "Organization",
