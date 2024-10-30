@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from flask import redirect, request, url_for
@@ -17,6 +18,7 @@ from models.user import (
     RolePermission,
     User,
 )
+from settings import FILE_UPLOAD_FOLDER
 from utils.security import permission_check
 
 admin = Admin(
@@ -52,6 +54,11 @@ class DocumentAdminView(AdminView):
         "abstract": TextAreaField("Abstract"),
     }
     can_create = False
+
+    def on_model_delete(self, model: Document):
+        # Delete files of documents from disk
+        for file in model.files:
+            os.remove(os.path.join(FILE_UPLOAD_FOLDER, file.real_file_name))
 
 
 class TopicAdminView(AdminView):
