@@ -39,9 +39,7 @@ class AdminView(ModelView):
             id = request.args.get("id")
             if id is None:
                 return redirect(return_url)
-            print("get model")
             model = self.get_one(id)
-            print(model)
             return permission_check(model, RolePermission.EDIT)
         return permission_check(None, RolePermission.ADMIN)
 
@@ -51,7 +49,7 @@ class AdminView(ModelView):
 
 
 class DocumentAdminView(AdminView):
-    form_columns = ["title", "abstract", "topics"]
+    form_columns = ["title", "abstract", "topics", "document_type", "authors"]
     # make abstract a textarea
     form_extra_fields = {
         "abstract": TextAreaField("Abstract"),
