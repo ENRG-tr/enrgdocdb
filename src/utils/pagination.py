@@ -45,15 +45,27 @@ def secure_query(query: Query, query_model: Any, user: Any, session: Session) ->
         document_id = (
             getattr(query_model, "document_id", None) or query_model.document.id
         )
+        # Don't join Document if it's already joined
         if (
             not isinstance(query_model, Document)
             and hasattr(query, "_last_joined_entity")
-            and hasattr(query._last_joined_entity, "name")
-            and "documents" not in query._last_joined_entity.name  # type: ignore
+            and (
+                query._last_joined_entity is None  # type: ignore
+                or (
+                    hasattr(query._last_joined_entity, "name")
+                    and "documents" not in query._last_joined_entity.name  # type: ignore
+                )
+            )
         ):
             query = query.join(Document, Document.id == document_id)
         query = query.filter(Document.organization_id.in_(user_organizations))
 
+    return query
+
+
+def _filter_query(query: Query, query_model: Any) -> Query:
+    if hasattr(query_model, "deleted_at"):
+        query = query.filter(query_model.deleted_at == None)  # noqa: E711
     return query
 
 
@@ -63,6 +75,7 @@ def paginate(
     query_model: Any = query.column_descriptions[0]["entity"]
 
     query = secure_query(query, query_model, current_user, db.session)
+    query = _filter_query(query, query_model)
     query_count = query.count()
     query = query.limit(per_page)
     if query_name is None:

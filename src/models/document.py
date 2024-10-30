@@ -6,7 +6,7 @@ from database import Model
 from models.author import Author
 from models.base import Base
 from models.topic import Topic
-from models.user import User
+from models.user import Organization, User
 
 
 class Document(Base, Model):
@@ -44,6 +44,7 @@ class Document(Base, Model):
         "author",
         creator=lambda author: DocumentAuthor(author=author),
     )  #  type: ignore
+    organization: Mapped[Organization] = relationship("Organization")
 
 
 class DocumentAuthor(Base, Model):

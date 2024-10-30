@@ -8,16 +8,16 @@
 {% endblock title %}
 {% block content %}
     <h2>View All</h2>
-    <p class="text-muted">
+    <p class="text-muted mb-2">
         Below are the all <strong class="text-primary">{{ model_name }}s</strong> in the database.
     </p>
-    <hr>
-    {% if original_model_name in ["Topic", "Author", "Institution", "DocumentType", "Organization"] %}
-        <a class="btn btn-primary mb-2"
+    {% if original_model_name in ["Topic", "Author", "Institution", "DocumentType", "Organization"] and permission_check(None, RolePermission.ADMIN) %}
+        <a class="btn btn-primary"
            href="{{ url_for('view_all.proxy_new', model_name=original_model_name, url=request.path) }}">
             <i class="fas fa-plus"></i>
             New {{ model_name }}
         </a>
     {% endif %}
+    <hr>
     {{ render_paginated_result(models) }}
 {% endblock content %}

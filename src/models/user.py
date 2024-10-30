@@ -3,7 +3,8 @@ from enum import Enum
 
 from flask_security.models import sqla as sqla
 from sqlalchemy import ForeignKey, String, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
 
 from database import Model
 from models.base import Base
@@ -15,9 +16,11 @@ class RolePermission(str, Enum):
     EDIT_SELF = "EDIT_SELF"
     EDIT = "EDIT"
     REMOVE = "REMOVE"
+    ADMIN = "ADMIN"
 
 
 ROLES_PERMISSIONS = {
+    "guest": [RolePermission.VIEW],
     "user": [RolePermission.VIEW, RolePermission.ADD, RolePermission.EDIT_SELF],
     "admin": [
         RolePermission.VIEW,
@@ -25,6 +28,7 @@ ROLES_PERMISSIONS = {
         RolePermission.EDIT_SELF,
         RolePermission.EDIT,
         RolePermission.REMOVE,
+        RolePermission.ADMIN,
     ],
 }
 
@@ -64,6 +68,8 @@ class User(Model, sqla.FsUserMixin):
 
     @property
     def name(self):
+        if self.deleted_at:
+            return "Deleted User"
         if self.first_name:
             return f"{self.first_name} {self.last_name or ''}"
         return self.email

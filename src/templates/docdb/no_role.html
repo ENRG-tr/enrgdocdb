@@ -1,0 +1,13 @@
+{% extends "docdb/base.html" %}
+{% from "docdb/snippets/render_map.html" import get_readable_model_name, render_paginated_result %}
+{% block content %}
+    <h2>Welcome, {{ current_user.name }}</h2>
+    <hr>
+    <p>Welcome to ENRG DocDB!</p>
+    <ul>
+        <li>
+            You currently have <strong>no roles</strong>, which means you are not authorized to access any organizations.
+        </li>
+        <li>Please contact your administrator to grant you access.</li>
+    </ul>
+{% endblock content %}

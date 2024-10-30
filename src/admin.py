@@ -1,6 +1,7 @@
 from datetime import datetime
+from inspect import isclass
 
-from flask import redirect, url_for
+from flask import redirect, request, url_for
 from flask_admin import Admin, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.theme import Bootstrap4Theme
@@ -8,9 +9,10 @@ from wtforms import TextAreaField
 
 from database import db
 from models.author import Author, Institution
-from models.document import Document, DocumentType
+from models.document import Document, DocumentFile, DocumentType
 from models.topic import Topic
-from models.user import ROLES_PERMISSIONS, Organization, Role, User
+from models.user import ROLES_PERMISSIONS, Organization, Role, RolePermission, User
+from utils.security import permission_check
 
 admin = Admin(
     name="ENRG DocDB Admin",
@@ -24,7 +26,14 @@ class AdminView(ModelView):
     form_excluded_columns = ["created_at", "updated_at", "deleted_at"]
 
     def is_accessible(self):
-        return True  # current_user.has_role("admin")
+        return_url = request.args.get("url") or url_for("index.index")
+        if request.path.endswith("/edit/"):
+            id = request.args.get("id")
+            if id is None:
+                return redirect(return_url)
+            model = self.get_one(id)
+            return permission_check(model, RolePermission.EDIT)
+        return permission_check(None, RolePermission.ADMIN)
 
     @expose("/")
     def index_view(self):
@@ -32,7 +41,7 @@ class AdminView(ModelView):
 
 
 class DocumentAdminView(AdminView):
-    form_columns = ["title", "abstract", "topics", "files"]
+    form_columns = ["title", "abstract", "topics"]
     # make abstract a textarea
     form_extra_fields = {
         "abstract": TextAreaField("Abstract"),

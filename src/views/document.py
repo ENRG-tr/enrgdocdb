@@ -23,9 +23,10 @@ from models.document import (
     DocumentType,
 )
 from models.topic import Topic
+from models.user import RolePermission
 from settings import FILE_UPLOAD_FOLDER
 from utils.pagination import paginate
-from utils.security import secure_blueprint
+from utils.security import permission_check, secure_blueprint
 
 blueprint = Blueprint("document", __name__, url_prefix="/documents")
 secure_blueprint(blueprint)
@@ -33,17 +34,17 @@ secure_blueprint(blueprint)
 
 @blueprint.route("/view/<int:document_id>")
 def view(document_id: int):
-    # TODO: Check permissions
     document = db.session.query(Document).get(document_id)
     if not document:
         return abort(404)
+    if not permission_check(document, RolePermission.VIEW):
+        return abort(403)
 
     return render_template("docdb/view_document.html", document=document)
 
 
 @blueprint.route("/view-topic/<int:document_type_id>")
 def view_document_type(document_type_id: int):
-    # TODO: Check permissions
     document_type = db.session.query(DocumentType).get(document_type_id)
     if not document_type:
         return abort(404)
@@ -64,10 +65,11 @@ def view_document_type(document_type_id: int):
 
 @blueprint.route("/download-file/<int:file_id>")
 def download_file(file_id: int):
-    # TODO: Check permissions
     file = db.session.query(DocumentFile).get(file_id)
     if not file:
         return abort(404)
+    if not permission_check(file, RolePermission.VIEW):
+        return abort(403)
 
     if FILE_UPLOAD_FOLDER is None:
         return abort(500)
@@ -95,7 +97,11 @@ def new():
     form.organization.choices = list(
         {
             (organization.id, organization.name)
-            for organization in [x.organization for x in current_user.roles]
+            for organization in [
+                x.organization
+                for x in current_user.roles
+                if RolePermission.ADD in x.permissions
+            ]
         }
     )
 
@@ -119,7 +125,7 @@ def new():
             db.session.add(document_topic)
 
         for file in request.files.getlist(form.files.name):
-            if file.filename is None:
+            if not file.filename:
                 continue
             file_extension = file.filename.split(".")[-1]
             file_name = f"doc_{document.id}"

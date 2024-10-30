@@ -69,7 +69,7 @@
             {% for role in roles %}
                 <tr>
                     <td>{{ role.name }}</td>
-                    <td>{{ role.description }}</td>
+                    <td>{{ role.organization.name }}</td>
                     <td>
                         <ul class="ps-1">
                             {% for permission in role.permissions %}

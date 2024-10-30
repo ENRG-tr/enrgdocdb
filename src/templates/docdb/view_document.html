@@ -10,8 +10,8 @@
 {% endblock title %}
 {% block content %}
     <h2>Document Details</h2>
-    <hr>
     {{ render_moderation_options(document) }}
+    <hr>
     <div class="document-details">
         <table class="table table-striped table-bordered">
             <tr>
@@ -41,6 +41,10 @@
                     <th>Topics</th>
                     <td>{{ render_topics(document.topics) }}</td>
                 </tr>
+            </tr>
+            <tr>
+                <th>Organization</th>
+                <td>{{ document.organization.name }}</td>
             </tr>
             <tr>
                 <th>Created at</th>
