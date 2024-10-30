@@ -44,10 +44,11 @@
                         alert("This new document form has expired, please refresh the page and try again.");
                     }
                     else {
-                        alert(`Upload of ${file.name} failed, please try again.`);
+                        throw new Error();
                     }
                 }).catch(() => {
                     alert(`Upload of ${file.name} failed, please try again.`);
+                    updateForm(true);
                 });
             
             };
@@ -61,11 +62,13 @@
         const uploadedFiles = new Set();
         const submitButton = document.querySelector("#new-document-form [type='submit']");
         
-        function updateForm() {
-            const disabled = uploadedFileCount < Object.keys(tokenToFile).length;
+        function updateForm(failed = false) {
+            const disabled = uploadedFileCount < Object.keys(tokenToFile).length || failed;
             submitButton.disabled = disabled;
-            if (disabled) {
-                submitButton.value = `Uploading ${uploadedFileCount} of ${Object.keys(tokenToFile).length}...`;
+            if (failed) {
+                submitButton.value = "Upload failed, please refresh the page";
+            } else if (disabled) {
+                submitButton.value = `Uploading ${uploadedFileCount + 1} of ${Object.keys(tokenToFile).length}...`;
             } else {
                 submitButton.value = "Submit";
             }
