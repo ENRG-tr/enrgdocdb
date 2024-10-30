@@ -162,33 +162,37 @@ def new():
             )
         except Exception:
             return abort(410)
-        document_tokens = file_token["document_tokens"]
-        token_to_file_json = json.loads(form.token_to_file.data)
-        for uploaded_token, uploaded_file_name in token_to_file_json.items():
-            if uploaded_token not in document_tokens:
-                continue
-            files_with_uploaded_token = glob(
-                os.path.join(FILE_UPLOAD_TEMP_FOLDER, f"*{uploaded_token}*")
-            )
-            if len(files_with_uploaded_token) != 1:
-                continue
-            file_path = os.path.join(
-                FILE_UPLOAD_TEMP_FOLDER, files_with_uploaded_token[0]
-            )
-            # skip if file doesn't exist
-            if not os.path.exists(file_path):
-                continue
+        try:
+            document_tokens = file_token["document_tokens"]
+            token_to_file_json = json.loads(form.token_to_file.data)
+        except Exception:
+            pass
+        else:
+            for uploaded_token, uploaded_file_name in token_to_file_json.items():
+                if uploaded_token not in document_tokens:
+                    continue
+                files_with_uploaded_token = glob(
+                    os.path.join(FILE_UPLOAD_TEMP_FOLDER, f"*{uploaded_token}*")
+                )
+                if len(files_with_uploaded_token) != 1:
+                    continue
+                file_path = os.path.join(
+                    FILE_UPLOAD_TEMP_FOLDER, files_with_uploaded_token[0]
+                )
+                # skip if file doesn't exist
+                if not os.path.exists(file_path):
+                    continue
 
-            # Move folder out of temp folder
-            shutil.move(file_path, FILE_UPLOAD_FOLDER)
-            file_path = os.path.basename(file_path)
+                # Move folder out of temp folder
+                shutil.move(file_path, FILE_UPLOAD_FOLDER)
+                file_path = os.path.basename(file_path)
 
-            document_file = DocumentFile(
-                document_id=document.id,
-                file_name=os.path.basename(uploaded_file_name),
-                real_file_name=os.path.basename(file_path),
-            )
-            db.session.add(document_file)
+                document_file = DocumentFile(
+                    document_id=document.id,
+                    file_name=os.path.basename(uploaded_file_name),
+                    real_file_name=os.path.basename(file_path),
+                )
+                db.session.add(document_file)
         db.session.commit()
 
         flash("Document was uploaded successfully")
