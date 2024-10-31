@@ -1,7 +1,9 @@
 {% extends "docdb/base.html" %}
+{% from "docdb/snippets/user_files.html" import initialize_user_files %}
 {% from "bootstrap5/form.html" import render_form, render_field, render_form_row %}
 {% block content %}
     <h2>New Document</h2>
+    <hr>
     <form id="new-document-form" method="post">
         {{ form.csrf_token() }}
         {{ render_field(form.title) }}
@@ -9,108 +11,6 @@
         {{ render_form_row([form.authors, form.topics, form.organization]) }}
         {{ render_form_row([form.document_type, form.files]) }}
         {{ render_field(form.submit) }}
-        {{ render_field(form.token_to_file) }}
-        <input type="hidden" name="file_token" value="{{ file_token }}">
     </form>
-    <script>
-        function uploadFileChunk(file, chunkIndex, documentToken, callback) {
-            const formData = new FormData();
-            formData.append("file_name", file.name);
-            formData.append("file_token", "{{ file_token }}");
-            formData.append("document_token", documentToken);
-            // Slice file into chunks
-            const chunkSize = 1024 * 1024 * 0.5; // 1 MB
-            const fileSlice = file.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize);
-            // Convert fileSlice to base64
-            const reader = new FileReader();
-            reader.readAsDataURL(fileSlice);
-            reader.onloadend = () => {
-                const base64 = reader.result.split(",")[1];
-                console.log(chunkIndex, base64.length)
-                if (!base64.length) {
-                    // Upload has finished, no more chunks to upload
-                    callback();
-                    return;
-                }
-                formData.append("file", base64);
-                // Send the form data
-                fetch("{{ url_for('document.upload_file') }}", {
-                    method: "POST",
-                    body: formData
-                }).then(response => {
-                    if (response.status === 204) {
-                        uploadFileChunk(file, chunkIndex + 1, documentToken, callback);
-                    } else if (response.status === 410) {
-                        alert("This new document form has expired, please refresh the page and try again.");
-                    }
-                    else {
-                        throw new Error();
-                    }
-                }).catch(() => {
-                    alert(`Upload of ${file.name} failed, please try again.`);
-                    updateForm(true);
-                });
-            
-            };
-        }
-        
-        let tokenToFile = {};
-        let documentTokens = JSON.parse(`{{ document_tokens | tojson }}`);
-        let documentTokenIndex = 0;
-        let uploadedFileCount = 0;
-
-        const uploadedFiles = new Set();
-        const submitButton = document.querySelector("#new-document-form [type='submit']");
-        
-        function updateForm(failed = false) {
-            const disabled = uploadedFileCount < Object.keys(tokenToFile).length || failed;
-            submitButton.disabled = disabled;
-            if (failed) {
-                submitButton.value = "Upload failed, please refresh the page";
-            } else if (disabled) {
-                submitButton.value = `Uploading ${uploadedFileCount + 1} of ${Object.keys(tokenToFile).length}...`;
-            } else {
-                submitButton.value = "Submit";
-            }
-        }
-
-        function fileUploadCallback() {
-            uploadedFileCount++;
-            updateForm();
-        }
-        
-        document.querySelector("#files").name = "";
-        document.querySelector("#files").addEventListener("change", (event) => {
-            const files = Array.from(event.target.files);
-            // For each file selected, convert them to base64 and add them to the form
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (uploadedFiles.has(file.name)) {
-                    continue;
-                }
-                if (documentTokenIndex >= 10) {
-                    alert("Can't upload more files.");
-                    break;
-                }
-                // Skip files that are already added
-                if (document.querySelector(`[data-file-name='${file.name}']`)) {
-                    continue;
-                }
-
-                const documentToken = documentTokens[documentTokenIndex];
-                tokenToFile[documentToken] = file.name;
-
-                uploadFileChunk(file, 0, documentTokens[documentTokenIndex], fileUploadCallback);
-                documentTokenIndex++;
-                uploadedFiles.add(file.name);
-                updateForm();
-            }
-            document.querySelector("[name='token_to_file']").value = JSON.stringify(tokenToFile);
-        });
-
-        document.querySelector("#new-document-form").addEventListener("submit", (event) => {
-            // Remove files from the form
-            document.querySelector("#files").value = "";
-        });
-    </script>
+    {{ initialize_user_files(user_files) }}
 {% endblock content %}

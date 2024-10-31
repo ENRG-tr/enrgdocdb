@@ -1,0 +1,15 @@
+{% macro initialize_user_files(user_files) %}
+    <script src="{{ url_for('static', filename='user_files.js') }}"></script>
+    <style>
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+    <script>
+        initializeUserFiles("new-document-form", 
+            "{{ user_files.file_token }}", 
+            JSON.parse(`{{ user_files.document_tokens | tojson }}`), 
+            "{{ url_for('file.upload_file') }}"
+        ); 
+    </script>
+{% endmacro %}

@@ -1,18 +1,10 @@
-import base64
 import os
-import secrets
-import shutil
-from datetime import datetime, timedelta
-from glob import glob
-from pathlib import Path
 from typing import cast
 
-import jwt
 from flask import (
     Blueprint,
     abort,
     flash,
-    json,
     redirect,
     render_template,
     request,
@@ -33,7 +25,8 @@ from models.document import (
 )
 from models.topic import Topic
 from models.user import Organization, RolePermission, User
-from settings import FILE_UPLOAD_FOLDER, SECRET_KEY
+from settings import FILE_UPLOAD_FOLDER
+from utils.file import handle_user_file_upload
 from utils.pagination import paginate
 from utils.security import _is_super_admin, permission_check, secure_blueprint
 
@@ -108,8 +101,6 @@ def new():
     associated with a file, and if so, move the file to the right place and associate
     it with the document.
     """
-    document_tokens = [secrets.token_urlsafe(16) for _ in range(10)]
-
     form = DocumentForm()
     form.authors.choices = [
         (author.id, author.name) for author in db.session.query(Author).all()
@@ -131,6 +122,9 @@ def new():
             ]
         }
     )
+
+    user_files_result = handle_user_file_upload(request)
+
     if _is_super_admin(cast(User, current_user)):
         form.organization.choices = [
             (organization.id, organization.name)
@@ -146,7 +140,9 @@ def new():
             organization_id=form.organization.data,
         )
         db.session.add(document)
+        # Commit document in order to get the document id
         db.session.commit()
+
         for author_id in form.authors.data:
             document_author = DocumentAuthor(
                 document_id=document.id, author_id=author_id
@@ -156,41 +152,13 @@ def new():
             document_topic = DocumentTopic(document_id=document.id, topic_id=topic_id)
             db.session.add(document_topic)
 
-        try:
-            file_token = jwt.decode(
-                form.file_token.data, SECRET_KEY, algorithms=["HS256"]
-            )
-        except Exception:
-            return abort(410)
-        try:
-            document_tokens = file_token["document_tokens"]
-            token_to_file_json = json.loads(form.token_to_file.data)
-        except Exception:
-            pass
-        else:
-            for uploaded_token, uploaded_file_name in token_to_file_json.items():
-                if uploaded_token not in document_tokens:
-                    continue
-                files_with_uploaded_token = glob(
-                    os.path.join(FILE_UPLOAD_TEMP_FOLDER, f"*{uploaded_token}*")
-                )
-                if len(files_with_uploaded_token) != 1:
-                    continue
-                file_path = os.path.join(
-                    FILE_UPLOAD_TEMP_FOLDER, files_with_uploaded_token[0]
-                )
-                # skip if file doesn't exist
-                if not os.path.exists(file_path):
-                    continue
-
-                # Move folder out of temp folder
-                shutil.move(file_path, FILE_UPLOAD_FOLDER)
-                file_path = os.path.basename(file_path)
-
+        # Handle user files
+        if user_files_result.user_files:
+            for user_file in user_files_result.user_files:
                 document_file = DocumentFile(
                     document_id=document.id,
-                    file_name=os.path.basename(uploaded_file_name),
-                    real_file_name=os.path.basename(file_path),
+                    file_name=user_file.uploaded_file_name,
+                    real_file_name=user_file.file_path,
                 )
                 db.session.add(document_file)
         db.session.commit()
@@ -201,44 +169,5 @@ def new():
     return render_template(
         "docdb/new_document.html",
         form=form,
-        file_token=jwt.encode(
-            {
-                "document_tokens": document_tokens,
-                "exp": datetime.now() + timedelta(minutes=30),
-            },
-            SECRET_KEY,
-        ),
-        document_tokens=document_tokens,
+        user_files=user_files_result.template_args,
     )
-
-
-@blueprint.route("/upload-file", methods=["POST"])
-def upload_file():
-    data_base64 = request.form.get("file")
-    file_name = request.form.get("file_name")
-    file_token = request.form.get("file_token")
-    document_token = request.form.get("document_token")
-    if not data_base64 or not file_name or not file_token:
-        return abort(400)
-    try:
-        file_token = jwt.decode(file_token, SECRET_KEY, algorithms=["HS256"])
-    except Exception:
-        return abort(410)
-    if document_token not in file_token["document_tokens"]:
-        return abort(400)
-
-    file_extension = file_name.split(".")[-1]
-    save_file_name = f"doc_{document_token}.{file_extension}"
-    save_file_path = os.path.join(FILE_UPLOAD_TEMP_FOLDER, save_file_name)
-
-    # Create temp folder if it doesn't exist
-    Path(FILE_UPLOAD_TEMP_FOLDER).mkdir(parents=True, exist_ok=True)
-
-    # Create file if it doesn't exist
-    Path(save_file_path).touch(exist_ok=True)
-
-    # Append to save_file_path
-    with open(save_file_path, "ab") as f:
-        f.write(base64.b64decode(data_base64))
-
-    return "OK", 204

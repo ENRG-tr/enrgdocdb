@@ -1,8 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed
 from wtforms import (
-    HiddenField,
-    MultipleFileField,
     SelectField,
     SelectMultipleField,
     StringField,
@@ -11,8 +8,10 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired
 
+from forms.file import FileForm
 
-class DocumentForm(FlaskForm):
+
+class DocumentForm(FileForm, FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
     abstract = TextAreaField("Abstract")
     authors = SelectMultipleField(
@@ -33,7 +32,4 @@ class DocumentForm(FlaskForm):
         choices=[],
         validators=[DataRequired()],
     )
-    files = MultipleFileField("File(s)")
-    token_to_file = HiddenField()
-    file_token = HiddenField()
     submit = SubmitField("Submit")
