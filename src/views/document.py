@@ -1,4 +1,4 @@
-import os
+import tempfile
 from typing import cast
 
 from flask import (
@@ -33,7 +33,7 @@ from utils.security import _is_super_admin, permission_check, secure_blueprint
 blueprint = Blueprint("document", __name__, url_prefix="/documents")
 secure_blueprint(blueprint)
 
-FILE_UPLOAD_TEMP_FOLDER = os.path.join(FILE_UPLOAD_FOLDER, "temp")
+FILE_UPLOAD_TEMP_FOLDER = tempfile.mkdtemp()
 
 
 @blueprint.route("/view/<int:document_id>")
