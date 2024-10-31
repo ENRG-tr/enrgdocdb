@@ -1,3 +1,4 @@
+import tempfile
 from os import environ
 
 from dotenv import load_dotenv
@@ -32,6 +33,6 @@ SECURITY_POST_REGISTER_VIEW = "index.index"
 BOOTSTRAP_BOOTSWATCH_THEME = "pulse"
 
 FILE_UPLOAD_FOLDER = environ["FILE_UPLOAD_FOLDER"]
-
 FILE_UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 50
 FILE_UPLOAD_TEMP_CLEAR_INTERVAL_HOURS = 4
+FILE_UPLOAD_TEMP_FOLDER = tempfile.mkdtemp()

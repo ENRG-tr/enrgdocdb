@@ -22,8 +22,7 @@ class UserFileUploadResult:
 
 
 def handle_user_file_upload(request: Request) -> UserFileUploadResult:
-    from settings import FILE_UPLOAD_FOLDER, SECRET_KEY
-    from views.document import FILE_UPLOAD_TEMP_FOLDER
+    from settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_TEMP_FOLDER, SECRET_KEY
 
     """
     Handles file upload for user.
@@ -78,12 +77,8 @@ def handle_user_file_upload(request: Request) -> UserFileUploadResult:
         except Exception:
             return _get_result()
 
-        print(token_to_file_json.items())
-
         for uploaded_token, uploaded_file_name in token_to_file_json.items():
-            print(uploaded_token, uploaded_file_name)
             if uploaded_token not in document_tokens:
-                print(f"Token {uploaded_token} not in document_tokens", document_tokens)
                 continue
 
             # Search for file with uploaded_token in temp folder
@@ -93,10 +88,6 @@ def handle_user_file_upload(request: Request) -> UserFileUploadResult:
 
             # Skip if no file found or more than one file found (which shouldn't happen)
             if len(files_with_uploaded_token) != 1:
-                print(
-                    f"No file found with token {uploaded_token}",
-                    files_with_uploaded_token,
-                )
                 continue
 
             # Get real file path
@@ -106,14 +97,12 @@ def handle_user_file_upload(request: Request) -> UserFileUploadResult:
 
             # Skip if file doesn't exist (which also shouldn't happen)
             if not os.path.exists(file_path):
-                print(f"File {file_path} doesn't exist")
                 continue
 
             # Move folder out of temp folder to upload folder
             shutil.move(file_path, FILE_UPLOAD_FOLDER)
             file_path = os.path.basename(file_path)
             uploaded_file_paths.append(UserFile(file_path, uploaded_file_name))
-            print(f"Uploaded file {file_path}")
 
         return _get_result(uploaded_file_paths)
 

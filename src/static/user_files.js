@@ -69,7 +69,6 @@ function initializeUserFiles(formId, fileToken, documentTokens, uploadUrl) {
         reader.readAsDataURL(fileSlice);
         reader.onloadend = () => {
             const base64 = reader.result.split(",")[1];
-            console.log(chunkIndex, base64.length)
             if (!base64.length) {
                 // Upload has finished, no more chunks to upload
                 callback();
