@@ -55,7 +55,8 @@ def create_app():
             @app.context_processor
             def inject_oauth_start_url():
                 def get_slack_oauth_url():
-                    return security.oauthglue.get_redirect("Slack").location  # type: ignore
+                    loc = security.oauthglue.get_redirect("Slack").location  # type: ignore
+                    return loc.replace("http", "https")
 
                 return dict(
                     get_slack_oauth_url=get_slack_oauth_url,
