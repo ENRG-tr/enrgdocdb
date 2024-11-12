@@ -1,5 +1,9 @@
 from os import environ
+from secrets import token_urlsafe
 
+from argon2 import hash_password
+from flask import after_this_request
+from flask_security.datastore import UserDatastore
 from flask_security.oauth_provider import FsOAuthProvider
 
 
@@ -23,6 +27,26 @@ def normalize_userinfo(client, data):
     return params
 
 
+def _monkeypatch_user_datastore_for_oauth(user_datastore: UserDatastore, email: str):
+    org_find_user = user_datastore.find_user
+
+    def restore_datastore(response=None):
+        user_datastore.find_user = org_find_user
+        return response
+
+    def find_user(*args, **kwargs):
+        user = org_find_user(*args, **kwargs)
+        if user is None and email == kwargs.get("email"):
+            user = user_datastore.create_user(
+                email=email, password=hash_password(token_urlsafe().encode())
+            )
+        return user
+
+    user_datastore.find_user = find_user
+
+    return restore_datastore
+
+
 class SlackFsOauthProvider(FsOAuthProvider):
     def authlib_config(self):
         return {
@@ -39,5 +63,9 @@ class SlackFsOauthProvider(FsOAuthProvider):
         }
 
     def fetch_identity_cb(self, oauth, token):  # pragma no cover
+        from app import user_datastore
+
         profile = token["user"]
+        email = profile["email"]
+        after_this_request(_monkeypatch_user_datastore_for_oauth(user_datastore, email))
         return "email", profile["email"]

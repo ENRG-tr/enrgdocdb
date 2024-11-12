@@ -7,8 +7,8 @@ from flask_security.datastore import FSQLALiteUserDatastore
 
 from database import Model, db
 from models.user import Role, User
+from oauth.slack import SlackFsOauthProvider
 from settings import SECURITY_OAUTH_ENABLE_SLACK
-from slack import SlackFsOauthProvider
 
 alembic = Alembic(metadatas=Model.metadata)
 user_datastore = FSQLALiteUserDatastore(db, User, Role)
