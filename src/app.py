@@ -7,6 +7,8 @@ from flask_security.datastore import FSQLALiteUserDatastore
 
 from database import Model, db
 from models.user import Role, User
+from settings import SECURITY_OAUTH_ENABLE_SLACK
+from slack import SlackFsOauthProvider
 
 alembic = Alembic(metadatas=Model.metadata)
 user_datastore = FSQLALiteUserDatastore(db, User, Role)
@@ -46,6 +48,9 @@ def create_app():
         security.init_app(app, user_datastore)
 
         user_datastore.find_user = monkeypatch_user_loader(user_datastore.find_user)
+
+        if SECURITY_OAUTH_ENABLE_SLACK and security.oauthglue:
+            security.oauthglue.register_provider_ext(SlackFsOauthProvider("Slack"))
 
         for view in admin_views:
             admin.add_view(view)
