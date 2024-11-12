@@ -1,5 +1,3 @@
-from nt import environ
-
 from flask_security.oauth_provider import FsOAuthProvider
 
 
