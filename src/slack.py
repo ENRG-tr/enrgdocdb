@@ -39,5 +39,5 @@ class SlackFsOauthProvider(FsOAuthProvider):
         }
 
     def fetch_identity_cb(self, oauth, token):  # pragma no cover
-        profile = token["userinfo"]
+        profile = token["user"]
         return "email", profile["email"]
