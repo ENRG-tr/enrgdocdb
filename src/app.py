@@ -52,6 +52,15 @@ def create_app():
         if SECURITY_OAUTH_ENABLE_SLACK and security.oauthglue:
             security.oauthglue.register_provider_ext(SlackFsOauthProvider("Slack"))
 
+            @app.context_processor
+            def inject_oauth_start_url():
+                def get_slack_oauth_url():
+                    return security.oauthglue.get_redirect("Slack").location  # type: ignore
+
+                return dict(
+                    get_slack_oauth_url=get_slack_oauth_url,
+                )
+
         for view in admin_views:
             admin.add_view(view)
 
