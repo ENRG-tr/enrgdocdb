@@ -1,4 +1,4 @@
-from nt import environ
+from os import environ
 
 from flask_security.oauth_provider import FsOAuthProvider
 
