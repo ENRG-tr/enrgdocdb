@@ -9,7 +9,8 @@
         <a href="{{ get_slack_oauth_url() }}" class="btn btn-primary">
             <img src="{{ url_for('static', filename='images/slack-logo.png') }}"
                  alt="Slack"
-                 style="width: 1.5rem; height: 1.5rem;">
+                 style="width: 1.5rem;
+                        height: 1.5rem">
             Sign In Using Slack
         </a>
     {% endif %}
@@ -40,6 +41,6 @@
                        formaction="{{ url_for_security("wan_signin") }}{{ prop_next() }}">
             </form>
         </div>
-    {% endif %} 
+    {% endif %}
     {% include "security/_menu.html" %}
 {% endblock content %}
