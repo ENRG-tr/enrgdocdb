@@ -39,7 +39,17 @@
     <form method="post">
         {{ form.csrf_token() }}
         {{ render_field(form.email, disabled=True) }}
-        {{ render_form_row([form.first_name, form.last_name]) }}
+        {% if not form.first_name.data or not form.last_name.data %}
+            <div class="border border-dashed border-2 border-warning  p-2 mb-2">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Fill your name in here.
+                </div>
+                {{ render_form_row([form.first_name, form.last_name]) }}
+            </div>
+        {% else %}
+            {{ render_form_row([form.first_name, form.last_name]) }}
+        {% endif %}
         {{ render_form_row([form.submit]) }}
     </form>
 {% endblock content %}

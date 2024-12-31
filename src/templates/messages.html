@@ -1,11 +1,19 @@
 {%- with messages = get_flashed_messages(with_categories=true) -%}
     {% set alert_to_bootstrap = {"message": "primary", "error": "danger", "warning": "warning", "success": "success"} %}
-    {% set alert_class = alert_to_bootstrap.get(category, "primary") %}
+    {% set alert_to_fas_icon = {
+        "message": "info-circle",
+        "error": "exclamation-circle",
+        "warning": "exclamation-triangle",
+        "success": "check-circle"
+    } %}
     {% if messages %}
         <div class="flashes">
             {% for category, message in messages %}
+                {% set alert_class = alert_to_bootstrap.get(category, "primary") %}
+                {% set alert_icon = alert_to_fas_icon.get(category, "info-circle") %}
                 <div class="alert alert-{{ alert_class }} alert-dismissible fade show"
                      role="alert">
+                    <i class="fas fa-{{ alert_icon }}"></i>
                     {{ message }}
                     <button type="button"
                             class="btn-close"

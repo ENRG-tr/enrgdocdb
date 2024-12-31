@@ -1,6 +1,6 @@
 from typing import Any
 
-from flask import Blueprint, redirect, request, url_for
+from flask import Blueprint, flash, redirect, request, url_for
 from flask_login import current_user, login_required
 
 from database import db
@@ -18,6 +18,16 @@ def secure_blueprint(blueprint: Blueprint):
     def __():
         if not len(current_user.roles) and request.endpoint != "index.no_role":
             return redirect(url_for("index.no_role"))
+
+    @blueprint.before_request
+    def ___():
+        if (
+            len(current_user.roles)
+            and request.endpoint != "user.your_account"
+            and (not current_user.first_name or not current_user.last_name)
+        ):
+            flash("You must fill your name in to use ENRG DocDB!", "error")
+            return redirect(url_for("user.your_account"))
 
 
 def _roles_have_permission(
