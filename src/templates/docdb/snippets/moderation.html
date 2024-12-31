@@ -1,12 +1,13 @@
 {% from "docdb/snippets/render_map.html" import get_readable_model_name %}
 {% macro render_moderation_options(model) %}
     {% set model_name = model.__class__.__name__ %}
+    {% set readable_model_name = get_readable_model_name(model_name) %}
     <div class="d-flex gap-2" role="group">
         {% if permission_check(model, RolePermission.EDIT) %}
             <a class="btn btn-secondary"
                href="{{ url_for('admin_' ~ model_name ~ '.edit_view', id=model.id, url=get_request_url() ) }}">
                 <i class="fas fa-edit"></i>
-                Edit {{ get_readable_model_name(model_name) }}
+                Edit {{ readable_model_name }}
             </a>
         {% endif %}
         {% if permission_check(model, RolePermission.REMOVE) %}
@@ -15,7 +16,7 @@
                   method="post">
                 <button class="btn btn-danger" type="submit">
                     <i class="fas fa-trash"></i>
-                    Delete {{ get_readable_model_name(model_name) }}
+                    Delete {{ readable_model_name }}
                 </button>
             </form>
         {% endif %}
