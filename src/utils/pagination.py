@@ -73,6 +73,14 @@ def _filter_query(query: Query, query_model: Any) -> Query:
     return query
 
 
+def _sort_query(query: Query, query_model: Any) -> Query:
+    if hasattr(query_model, "updated_at"):
+        query = query.order_by(query_model.updated_at.desc())
+    if hasattr(query_model, "created_at"):
+        query = query.order_by(query_model.created_at.desc())
+    return query
+
+
 def paginate(
     query: Query, request: Request, per_page: int = 50, query_name: str | None = None
 ) -> PaginatedQueryResult:
@@ -80,6 +88,7 @@ def paginate(
 
     query = secure_query(query, query_model, current_user, db.session)
     query = _filter_query(query, query_model)
+    query = _sort_query(query, query_model)
     query_count = query.count()
     query = query.limit(per_page)
     if query_name is None:
