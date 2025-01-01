@@ -11,6 +11,30 @@ function getTimezoneOffsetHours() {
     return -offsetHours;
 }
 
+function getFormDateInputs() {
+    return document.querySelectorAll("input[type='date'], input[data-role='datetimepicker'], input[data-role='datepicker']");
+}
+
+function correctDateInputValue(dateInput, isSubmit) {
+    const date = dateInput.value;
+    const parsedDate = moment(date);
+    const offsetHours = getTimezoneOffsetHours();
+    // Subtract if we submit to convert back to UTC
+    // Add to convert from UTC to local time
+    const correctedDate = parsedDate.add(isSubmit ? -offsetHours : offsetHours, "hours");
+    if (correctedDate.toString() === "Invalid date") {
+        return;
+    }
+    const targetDateFormat = dateInput.getAttribute("data-date-format") || "YYYY-MM-DD HH:mm:ss";
+    dateInput.value = correctedDate.format(targetDateFormat);
+}
+
+function correctDateInputValues(isSubmit) {
+    const dateInputs = getFormDateInputs();
+    dateInputs.forEach(dateInput => {
+        correctDateInputValue(dateInput, isSubmit);
+    });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("td").forEach(date => {
@@ -22,4 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         date.innerText = correctedDate.format("DD-MM-YYYY HH:mm:ss");
     });
+    correctDateInputValues();
+});
+
+document.addEventListener("submit", event => {
+    correctDateInputValues(true);
 });
