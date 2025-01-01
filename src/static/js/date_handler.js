@@ -1,8 +1,22 @@
+/**
+ * Gets the timezone offset in hours.
+ * @returns {number} The timezone offset in hours.
+ */
+function getTimezoneOffsetHours() {
+    const today = new Date();
+    const timezoneOffset = today.getTimezoneOffset();
+
+    // Calculate offset hours
+    const offsetHours = timezoneOffset / 60;
+    return -offsetHours;
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("td").forEach(date => {
         const parsedDate = moment(date.innerHTML);
-        // Add 3 hours to the date to account for the time zone difference
-        const correctedDate = parsedDate.add(3, "hours");
+        // Add timezone offset hours to parsed date
+        const correctedDate = parsedDate.add(getTimezoneOffsetHours(), "hours");
         if (correctedDate.toString() === "Invalid date") {
             return;
         }

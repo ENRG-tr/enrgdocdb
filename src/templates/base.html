@@ -13,9 +13,10 @@
               integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
               crossorigin="anonymous"
               referrerpolicy="no-referrer" />
-        <link rel="icon" href="{{ url_for('static', filename='images/favicon.jpg') }}">
+        <link rel="icon"
+              href="{{ url_for('static', filename='images/favicon.jpg') }}">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
-        <script src="{{ url_for('static', filename='js/date_handler.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/date_handler.js') }}?v=2"></script>
         <title>
             {% block title %}
             {% endblock title %}
