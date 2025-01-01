@@ -7,6 +7,7 @@
 {% endblock title %}
 {% block content %}
     <h2>View Author</h2>
+    {{ render_moderation_options(author) }}
     <hr>
     <table class="table table-striped table-hover">
         <tr>
@@ -33,7 +34,6 @@
     <p class="text-muted">
         Below are the documents authored by <strong class="text-primary">{{ author.name }}</strong>.
     </p>
-    {{ render_moderation_options(author) }}
     <hr>
     {{ render_paginated_result(documents) }}
 {% endblock content %}
