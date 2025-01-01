@@ -11,16 +11,16 @@ from models.user import RolePermission, User
 def secure_blueprint(blueprint: Blueprint):
     @blueprint.before_request
     @login_required
-    def _():
+    def ensure_user_logged_in():
         pass
 
     @blueprint.before_request
-    def __():
+    def ensure_user_has_roles():
         if not len(current_user.roles) and request.endpoint != "index.no_role":
             return redirect(url_for("index.no_role"))
 
     @blueprint.before_request
-    def ___():
+    def ensure_user_has_filled_name():
         if (
             len(current_user.roles)
             and request.endpoint != "user.your_account"
