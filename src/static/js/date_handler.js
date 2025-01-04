@@ -18,7 +18,7 @@ function getFormDateInputs() {
 function correctDateInputValue(dateInput, isSubmit) {
     const date = dateInput.value;
     const parsedDate = moment(date);
-    if (correctedDate.toString() === "Invalid date") {
+    if (parsedDate.toString() === "Invalid date") {
         return;
     }
     const offsetHours = getTimezoneOffsetHours();
