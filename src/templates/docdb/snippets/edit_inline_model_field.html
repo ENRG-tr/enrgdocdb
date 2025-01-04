@@ -5,7 +5,7 @@
         <i class="fas fa-edit"></i>
         {{ label or "Edit" }}
     </button>
-    <span class="d-none" data-edit-warning-id="{{ random_id }}">
+    <span data-edit-warning-id="{{ random_id }}">
         <i class="fas fa-exclamation-triangle"></i>
         Please create it first to edit.
     </span>
@@ -22,7 +22,7 @@
                 });
           } else {
                 const warning = document.querySelector(`[data-edit-warning-id="{{ random_id }}"]`);
-                warning.classList.remove("d-none");
+                warning.classList.add("d-none");
           }
      });
 </script>
