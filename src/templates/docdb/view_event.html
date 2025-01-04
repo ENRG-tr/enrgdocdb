@@ -65,13 +65,17 @@
             </th>
         </thead>
         <tbody>
-            {% set is_even = False %}
+            {% set ns = namespace(is_even=False) %}
             {% for session in event.event_sessions %}
-                {% set is_even = not is_even %}
-                <tr class="{% if is_even %}light{% else %}{% endif %}"
+                {% set ns.is_even = not ns.is_even %}
+                <tr class="{% if ns.is_even %}light{% else %}{% endif %} border-bottom-0"
                     style="border-color: inherit">
                     <td>{{ session.session_time }}</td>
-                    <td>{{ session.session_name }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_EventSession.edit_view', id=session.id, url=get_request_url() ) }}">
+                            {{ session.session_name }}
+                        </a>
+                    </td>
                     <td>{{ session.location }}</td>
                     <td>
                         <a href="{{ session.event_url }}" target="_blank">{{ session.event_url }}</a>
@@ -83,8 +87,8 @@
                         {% endfor %}
                     </td>
                 </tr>
-                <tr>
-                    <td colspan="5" class="{% if is_even %}light{% else %}{% endif %}">
+                <tr class="border-top-0">
+                    <td colspan="5" class="{% if ns.is_even %}light{% else %}{% endif %}">
                         {% if not session.talk_notes %}
                             <i class="fas fa-info-circle"></i> No talks found for this session.
                             {% if permission_check(session, RolePermission.EDIT) %}

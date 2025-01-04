@@ -1,20 +1,28 @@
-<button data-edit-id="{{ random_id }}"
-        class="btn btn-primary d-block"
-        style="width: 14rem"
-        disabled>
-    <i class="fas fa-edit"></i>
-    {{ label or "Edit" }}
-</button>
+<div class="d-flex gap-2 align-items-center">
+    <button data-edit-id="{{ random_id }}"
+            class="btn btn-primary d-block"
+            disabled>
+        <i class="fas fa-edit"></i>
+        {{ label or "Edit" }}
+    </button>
+    <span class="d-none" data-edit-warning-id="{{ random_id }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        Please create it first to edit.
+    </span>
+</div>
 <script>
      document.addEventListener("DOMContentLoaded", function () {
           const editButton = document.querySelector(`[data-edit-id="{{ random_id }}"]`);
-          const hiddenIdInput = editButton.parentElement.parentElement.querySelector("input[type='hidden'][name$='-id']");
+          const hiddenIdInput = editButton.closest("form").querySelector("input[type='hidden'][name$='-id']");
           if (hiddenIdInput) {
                 editButton.disabled = false;
                 editButton.addEventListener('click', event => {
                     event.preventDefault();
                     window.location.href = `{{ edit_view_url }}?id=${hiddenIdInput.value}&url=${encodeURIComponent(window.location.href)}`;
                 });
+          } else {
+                const warning = document.querySelector(`[data-edit-warning-id="{{ random_id }}"]`);
+                warning.classList.remove("d-none");
           }
      });
 </script>

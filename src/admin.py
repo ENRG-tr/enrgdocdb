@@ -128,7 +128,7 @@ class EventAdminView(AdminView):
                     # Show a link anchor to edit the session
                     "edit_session": EditInlineModelField(
                         edit_view="admin_EventSession.edit_view",
-                        label="Edit Session Talks",
+                        label="Edit Session",
                     ),
                 },
             },
@@ -137,7 +137,13 @@ class EventAdminView(AdminView):
 
 
 class EventSessionAdminView(AdminView):
-    form_columns = ["session_time", "external_url", "topics", "moderators"]
+    form_columns = [
+        "session_name",
+        "session_time",
+        "external_url",
+        "topics",
+        "moderators",
+    ]
 
     inline_models = [
         (
