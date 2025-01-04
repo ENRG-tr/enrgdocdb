@@ -67,7 +67,6 @@ def upgrade() -> None:
         sa.Column("session_name", sa.String(length=1024), nullable=True),
         sa.Column("external_url", sa.String(length=2048), nullable=True),
         sa.Column("session_time", sa.DateTime(), nullable=False),
-        sa.Column("start_time", sa.Time(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(),
@@ -157,6 +156,7 @@ def upgrade() -> None:
         sa.Column("session_id", sa.Integer(), nullable=False),
         sa.Column("talk_title", sa.Text(), nullable=False),
         sa.Column("document_id", sa.Integer(), nullable=True),
+        sa.Column("start_time", sa.Time(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(),
