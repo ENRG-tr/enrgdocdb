@@ -18,13 +18,13 @@ VIEW_ALL_ALLOWED_MODELS = [
     Document,
     DocumentType,
     DocumentFile,
+    Event,
     Author,
     Institution,
     Topic,
     User,
     Role,
     Organization,
-    Event,
 ]
 
 

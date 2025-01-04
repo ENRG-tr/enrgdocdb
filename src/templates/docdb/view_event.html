@@ -83,60 +83,62 @@
                         {% endfor %}
                     </td>
                 </tr>
-                <td colspan="5" class="{% if is_even %}light{% else %}{% endif %}">
-                    {% if not session.talk_notes %}
-                        <i class="fas fa-info-circle"></i> No talks found for this session.
-                        {% if permission_check(session, RolePermission.EDIT) %}
-                            <a href="{{ url_for('admin_EventSession.edit_view', id=session.id, url=get_request_url() ) }}">
-                                Consider adding some talks.
-                            </a>
+                <tr>
+                    <td colspan="5" class="{% if is_even %}light{% else %}{% endif %}">
+                        {% if not session.talk_notes %}
+                            <i class="fas fa-info-circle"></i> No talks found for this session.
+                            {% if permission_check(session, RolePermission.EDIT) %}
+                                <a href="{{ url_for('admin_EventSession.edit_view', id=session.id, url=get_request_url() ) }}">
+                                    Consider adding some talks.
+                                </a>
+                            {% endif %}
                         {% endif %}
-                    {% endif %}
-                    {% if session.talk_notes %}
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>
-                                        <i class="fas fa-calendar-alt"></i> Start Time
-                                    </th>
-                                    <th style="width: 25%">
-                                        <i class="fas fa-comment"></i>
-                                        Title
-                                    </th>
-                                    <th>
-                                        <i class="fas fa-file"></i> Document
-                                    </th>
-                                    <th>
-                                        <i class="fas fa-user"></i> Moderators
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for note in session.talk_notes %}
+                        {% if session.talk_notes %}
+                            <table class="table table-bordered">
+                                <thead>
                                     <tr>
-                                        <td>{{ note.start_time.strftime("%H:%M") }}</td>
-                                        <td>{{ note.talk_title }}</td>
-                                        <td>
-                                            {% if note.document %}
-                                                <a href="{{ url_for('document.view', document_id=note.document.id) }}">{{ note.document.title }}</a>
-                                            {% else %}
-                                                <i class="fas fa-info-circle"></i>
-                                                No document attached.
-                                                <a href="{{ url_for("document.new", attach_talk_note_id=note.id, url=get_request_url() ) }}">Create and attach document.</a>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% for moderator in note.document.authors %}
-                                                {{ render_user(moderator) }}
-                                                {% if not loop.last %},{% endif %}
-                                            {% endfor %}
-                                        </td>
+                                        <th>
+                                            <i class="fas fa-calendar-alt"></i> Start Time
+                                        </th>
+                                        <th style="width: 25%">
+                                            <i class="fas fa-comment"></i>
+                                            Title
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-file"></i> Document
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-user"></i> Moderators
+                                        </th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% endif %}
-                </td>
+                                </thead>
+                                <tbody>
+                                    {% for note in session.talk_notes %}
+                                        <tr>
+                                            <td>{{ note.start_time.strftime("%H:%M") }}</td>
+                                            <td>{{ note.talk_title }}</td>
+                                            <td>
+                                                {% if note.document %}
+                                                    <a href="{{ url_for('document.view', document_id=note.document.id) }}">{{ note.document.title }}</a>
+                                                {% else %}
+                                                    <i class="fas fa-info-circle"></i>
+                                                    No document attached.
+                                                    <a href="{{ url_for("document.new", attach_talk_note_id=note.id, url=get_request_url() ) }}">Create and attach document.</a>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% for moderator in note.document.authors %}
+                                                    {{ render_user(moderator) }}
+                                                    {% if not loop.last %},{% endif %}
+                                                {% endfor %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endif %}
+                    </td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>

@@ -1,0 +1,9 @@
+{% extends "docdb/base.html" %}
+{% from "docdb/snippets/event.html" import render_event_calendar %}
+{% block title %}
+    Event Calendar - ENRG DocDB
+{% endblock title %}
+{% block content %}
+    <h2>Event Calendar</h2>
+    {{ render_event_calendar(events) }}
+{% endblock content %}

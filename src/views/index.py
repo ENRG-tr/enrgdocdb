@@ -6,6 +6,7 @@ from sqlalchemy import or_
 
 from database import db
 from models.document import Document
+from models.event import Event
 from utils.pagination import paginate
 from utils.security import secure_blueprint
 from views.view_all import VIEW_ALL_ALLOWED_MODELS
@@ -26,10 +27,12 @@ def index():
         ),
         request,
     )
+    last_events = db.session.query(Event).order_by(Event.date.desc()).limit(300).all()
     view_all_allowed_models = [model.__name__ for model in VIEW_ALL_ALLOWED_MODELS]
     return render_template(
         "docdb/index.html",
         documents_last_7_days=documents_last_7_days,
+        events=last_events,
         view_all_allowed_models=view_all_allowed_models,
     )
 

@@ -1,5 +1,6 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/render_map.html" import get_readable_model_name, render_paginated_result %}
+{% from "docdb/snippets/event.html" import render_event_calendar %}
 {% block content %}
     <div class="d-flex justify-content-between align-items-center">
         <div>
@@ -22,6 +23,12 @@
     <div>
         <strong>Documents modified in the last 7 days</strong>
         {{ render_paginated_result(documents_last_7_days) }}
+    </div>
+    <hr>
+    <div>
+        <strong class="d-block">Events</strong>
+        <i class="fas fa-calendar-alt"></i>
+        <a href="{{ url_for("event.calendar") }}">Click to see event calendar</a>
     </div>
     <hr>
     <div>

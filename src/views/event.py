@@ -18,3 +18,9 @@ def view(event_id: int):
         return abort(403)
 
     return render_template("docdb/view_event.html", event=event)
+
+
+@blueprint.route("/calendar")
+def calendar():
+    events = db.session.query(Event).order_by(Event.date.desc()).limit(300).all()
+    return render_template("docdb/event_calendar.html", events=events)

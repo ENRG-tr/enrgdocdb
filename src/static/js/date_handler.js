@@ -18,13 +18,13 @@ function getFormDateInputs() {
 function correctDateInputValue(dateInput, isSubmit) {
     const date = dateInput.value;
     const parsedDate = moment(date);
+    if (correctedDate.toString() === "Invalid date") {
+        return;
+    }
     const offsetHours = getTimezoneOffsetHours();
     // Subtract if we submit to convert back to UTC
     // Add to convert from UTC to local time
     const correctedDate = parsedDate.add(isSubmit ? -offsetHours : offsetHours, "hours");
-    if (correctedDate.toString() === "Invalid date") {
-        return;
-    }
     const targetDateFormat = dateInput.getAttribute("data-date-format") || "YYYY-MM-DD HH:mm:ss";
     dateInput.value = correctedDate.format(targetDateFormat);
 }
@@ -38,12 +38,12 @@ function correctDateInputValues(isSubmit) {
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("td").forEach(date => {
-        const parsedDate = moment(date.innerHTML);
-        // Add timezone offset hours to parsed date
-        const correctedDate = parsedDate.add(getTimezoneOffsetHours(), "hours");
-        if (correctedDate.toString() === "Invalid date") {
+        const parsedDate = moment(date.innerHTML, "YYYY-MM-DD HH:mm:ss", true);
+        if (parsedDate.toString().includes("Invalid date")) {
             return;
         }
+        // Add timezone offset hours to parsed date
+        const correctedDate = parsedDate.add(getTimezoneOffsetHours(), "hours");
         date.innerText = correctedDate.format("DD-MM-YYYY HH:mm:ss");
     });
     correctDateInputValues();
