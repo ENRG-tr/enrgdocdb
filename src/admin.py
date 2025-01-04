@@ -109,14 +109,7 @@ class UserAdminView(AdminView):
 
 
 class EventAdminView(AdminView):
-    form_columns = [
-        "title",
-        "location",
-        "event_url",
-        "session_time",
-        "topics",
-        "moderators",
-    ]
+    form_columns = ["title", "location", "event_url", "date", "topics", "moderators"]
 
     inline_models = [
         (
