@@ -113,7 +113,7 @@ class TalkNote(Base, Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     session_id: Mapped[int] = mapped_column(Integer, ForeignKey("event_sessions.id"))
     talk_title: Mapped[str] = mapped_column(Text)
-    start_time: Mapped[time] = mapped_column(Time, nullable=False)
+    start_time: Mapped[time] = mapped_column(Time, nullable=True)
 
     session: Mapped[EventSession] = relationship()
     document_id: Mapped[int] = mapped_column(

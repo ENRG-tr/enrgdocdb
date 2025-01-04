@@ -115,7 +115,11 @@
                                 <tbody>
                                     {% for note in session.talk_notes %}
                                         <tr>
-                                            <td>{{ note.start_time.strftime("%H:%M") }}</td>
+                                            <td>
+                                                {% if note.start_time %}
+                                                    {{ note.start_time.strftime("%H:%M") }}
+                                                {% endif %}
+                                            </td>
                                             <td>{{ note.talk_title }}</td>
                                             <td>
                                                 {% if note.document %}
