@@ -4,6 +4,7 @@ from flask_login import current_user
 from database import db
 from models.author import Author, Institution
 from models.document import Document, DocumentFile, DocumentType
+from models.event import Event
 from models.topic import Topic
 from models.user import Organization, Role, User
 from utils.pagination import paginate
@@ -23,6 +24,7 @@ VIEW_ALL_ALLOWED_MODELS = [
     User,
     Role,
     Organization,
+    Event,
 ]
 
 

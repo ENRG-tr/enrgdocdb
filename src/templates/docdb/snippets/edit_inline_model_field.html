@@ -1,0 +1,20 @@
+<button data-edit-id="{{ random_id }}"
+        class="btn btn-primary d-block"
+        style="width: 14rem"
+        disabled>
+    <i class="fas fa-edit"></i>
+    {{ label or "Edit" }}
+</button>
+<script>
+     document.addEventListener("DOMContentLoaded", function () {
+          const editButton = document.querySelector(`[data-edit-id="{{ random_id }}"]`);
+          const hiddenIdInput = editButton.parentElement.parentElement.querySelector("input[type='hidden'][name$='-id']");
+          if (hiddenIdInput) {
+                editButton.disabled = false;
+                editButton.addEventListener('click', event => {
+                    event.preventDefault();
+                    window.location.href = `{{ edit_view_url }}?id=${hiddenIdInput.value}&url=${encodeURIComponent(window.location.href)}`;
+                });
+          }
+     });
+</script>

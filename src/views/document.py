@@ -22,6 +22,7 @@ from models.document import (
     DocumentTopic,
     DocumentType,
 )
+from models.event import TalkNote
 from models.topic import Topic
 from models.user import Organization, RolePermission, User
 from settings import FILE_UPLOAD_FOLDER
@@ -121,6 +122,7 @@ def new():
     )
 
     user_files_result = handle_user_file_upload(request)
+    url = request.args.get("url")
 
     if _is_super_admin(cast(User, current_user)):
         form.organization.choices = [
@@ -139,6 +141,15 @@ def new():
         db.session.add(document)
         # Commit document in order to get the document id
         db.session.commit()
+
+        # Attach talk note to document if requested
+        attach_talk_note_id = request.args.get("attach_talk_note_id")
+        if attach_talk_note_id:
+            talk_note = db.session.query(TalkNote).get(attach_talk_note_id)
+            if talk_note.document_id:
+                flash("Talk note already has an attached document.", "error")
+            else:
+                talk_note.document_id = document.id
 
         for author_id in form.authors.data:
             document_author = DocumentAuthor(
@@ -160,8 +171,10 @@ def new():
                 db.session.add(document_file)
         db.session.commit()
 
-        flash("Document was uploaded successfully")
-        return redirect(url_for("document.view", document_id=document.id))
+        flash("Document was uploaded successfully!", "success")
+        if not url:
+            url = url_for("document.view", document_id=document.id)
+        return redirect(url)
 
     return render_template(
         "docdb/new_document.html",

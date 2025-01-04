@@ -11,7 +11,7 @@
     <p class="text-muted mb-2">
         Below are the all <strong class="text-primary">{{ model_name }}s</strong> in the database.
     </p>
-    {% if original_model_name in ["Topic", "Author", "Institution", "DocumentType", "Organization"] and permission_check(None, RolePermission.ADMIN) %}
+    {% if original_model_name in ["Topic", "Author", "Institution", "DocumentType", "Organization", "Event"] and permission_check(None, RolePermission.ADMIN) %}
         <a class="btn btn-primary"
            href="{{ url_for('view_all.proxy_new', model_name=original_model_name, url=get_request_url() ) }}">
             <i class="fas fa-plus"></i>

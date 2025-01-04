@@ -46,6 +46,9 @@ class Document(Base, Model):
     )  #  type: ignore
     organization: Mapped[Organization] = relationship("Organization")
 
+    def __repr__(self) -> str:
+        return self.title
+
 
 class DocumentAuthor(Base, Model):
     __tablename__ = "document_authors"

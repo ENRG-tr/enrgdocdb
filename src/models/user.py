@@ -3,8 +3,7 @@ from enum import Enum
 
 from flask_security.models import sqla as sqla
 from sqlalchemy import ForeignKey, String, func
-from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Model
 from models.base import Base
@@ -74,6 +73,9 @@ class User(Model, sqla.FsUserMixin):
         if self.first_name:
             return f"{self.first_name} {self.last_name or ''}"
         return self.email
+
+    def __repr__(self):
+        return self.name
 
 
 class Organization(Base, Model):

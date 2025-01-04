@@ -11,6 +11,7 @@ from wtforms import TextAreaField
 from database import db
 from models.author import Author, Institution
 from models.document import Document, DocumentType
+from models.event import Event, EventSession, TalkNote
 from models.topic import Topic
 from models.user import (
     ROLES_PERMISSIONS_BY_ORGANIZATION,
@@ -20,6 +21,7 @@ from models.user import (
     User,
 )
 from settings import FILE_UPLOAD_FOLDER
+from utils.admin import EditInlineModelField
 from utils.security import permission_check
 
 admin = Admin(
@@ -106,6 +108,58 @@ class UserAdminView(AdminView):
         return True
 
 
+class EventAdminView(AdminView):
+    form_columns = ["title", "location", "event_url", "date", "topics", "moderators"]
+
+    inline_models = [
+        (
+            EventSession,
+            {
+                "form_columns": [
+                    "id",
+                    "edit_session",
+                    "session_name",
+                    "session_time",
+                    "external_url",
+                    "topics",
+                    "moderators",
+                ],
+                "form_extra_fields": {
+                    # Show a link anchor to edit the session
+                    "edit_session": EditInlineModelField(
+                        edit_view="admin_EventSession.edit_view",
+                        label="Edit Session Talks",
+                    ),
+                },
+            },
+        )
+    ]
+
+
+class EventSessionAdminView(AdminView):
+    form_columns = ["session_time", "external_url", "topics", "moderators"]
+
+    inline_models = [
+        (
+            TalkNote,
+            {
+                "form_columns": [
+                    "id",
+                    "start_time",
+                    "talk_title",
+                    "document",
+                ],
+                "form_extra_fields": {
+                    # Show a link anchor to edit the session
+                    "edit_session": EditInlineModelField(
+                        edit_view="admin_TalkNote.edit_view"
+                    ),
+                },
+            },
+        )
+    ]
+
+
 def get_admin_view_endpoint(model):
     return f"admin_{model.__name__}"
 
@@ -135,4 +189,8 @@ views = [
         Organization, session_proxy, endpoint=get_admin_view_endpoint(Organization)
     ),
     UserAdminView(User, session_proxy, endpoint=get_admin_view_endpoint(User)),
+    EventAdminView(Event, session_proxy, endpoint=get_admin_view_endpoint(Event)),
+    EventSessionAdminView(
+        EventSession, session_proxy, endpoint=get_admin_view_endpoint(EventSession)
+    ),
 ]
