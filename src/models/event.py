@@ -16,8 +16,8 @@ class Event(Base, Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(1024))
     date: Mapped[datetime] = mapped_column(DateTime)
-    location: Mapped[str] = mapped_column(String(1024))
-    event_url: Mapped[str] = mapped_column(String(2048))
+    location: Mapped[str] = mapped_column(String(1024), nullable=True)
+    event_url: Mapped[str] = mapped_column(String(2048), nullable=True)
 
     event_topics: Mapped[list["EventTopic"]] = relationship(
         "EventTopic", back_populates="event", cascade="all, delete-orphan"

@@ -25,8 +25,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("title", sa.String(length=1024), nullable=False),
         sa.Column("date", sa.DateTime(), nullable=False),
-        sa.Column("location", sa.String(length=1024), nullable=False),
-        sa.Column("event_url", sa.String(length=2048), nullable=False),
+        sa.Column("location", sa.String(length=1024), nullable=True),
+        sa.Column("event_url", sa.String(length=2048), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(),
