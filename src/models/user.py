@@ -5,7 +5,7 @@ from flask_security.models import sqla as sqla
 from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database import Model
+from database import Model, db
 from models.base import Base
 
 
@@ -76,6 +76,17 @@ class User(Model, sqla.FsUserMixin):
 
     def __repr__(self):
         return self.name
+
+    def get_organizations(self):
+        from utils.security import _is_super_admin
+
+        if _is_super_admin(self):
+            return db.session.query(Organization).all()
+        return [
+            x.organization
+            for x in self.roles
+            if RolePermission.ADD in x.permissions and x.organization
+        ]
 
 
 class Organization(Base, Model):

@@ -21,12 +21,12 @@
             </tr>
             <tr>
                 <th>Location</th>
-                <td>{{ event.location }}</td>
+                <td>{{ event.location or "" }}</td>
             </tr>
             <tr>
                 <th>Event URL</th>
                 <td>
-                    <a href="{{ event.event_url }}">{{ event.event_url }}</a>
+                    <a href="{{ event.event_url or "" }}">{{ event.event_url or "" }}</a>
                 </td>
             </tr>
             <tr>
@@ -45,7 +45,6 @@
         </table>
     </div>
     <hr>
-    {% if not event.event_sessions %}<p class="text-muted">No sessions found.</p>{% endif %}
     <table class="table table-bordered">
         <thead>
             <th>
@@ -65,6 +64,14 @@
             </th>
         </thead>
         <tbody>
+            {% if not event.event_sessions %}
+                <tr>
+                    <td colspan="5" class="light">
+                        <i class="fas fa-info-circle"></i>
+                        No sessions found.
+                    </td>
+                </tr>
+            {% endif %}
             {% set ns = namespace(is_even=False) %}
             {% for session in event.event_sessions %}
                 {% set ns.is_even = not ns.is_even %}

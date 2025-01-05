@@ -113,22 +113,12 @@ def new():
     form.organization.choices = list(
         {
             (organization.id, organization.name)
-            for organization in [
-                x.organization
-                for x in current_user.roles
-                if RolePermission.ADD in x.permissions and x.organization
-            ]
+            for organization in current_user.get_organizations()
         }
     )
 
     user_files_result = handle_user_file_upload(request)
     url = request.args.get("url")
-
-    if _is_super_admin(cast(User, current_user)):
-        form.organization.choices = [
-            (organization.id, organization.name)
-            for organization in db.session.query(Organization).all()
-        ]
 
     if form.validate_on_submit():
         document = Document(

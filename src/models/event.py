@@ -8,7 +8,7 @@ from database import Model
 from models.base import Base
 from models.document import Document
 from models.topic import Topic
-from models.user import User
+from models.user import Organization, User
 
 
 class Event(Base, Model):
@@ -18,6 +18,10 @@ class Event(Base, Model):
     date: Mapped[datetime] = mapped_column(DateTime)
     location: Mapped[str] = mapped_column(String(1024), nullable=True)
     event_url: Mapped[str] = mapped_column(String(2048), nullable=True)
+    organization_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("organizations.id")
+    )
+    organization: Mapped[Organization] = relationship("Organization")
 
     event_topics: Mapped[list["EventTopic"]] = relationship(
         "EventTopic", back_populates="event", cascade="all, delete-orphan"

@@ -4,7 +4,14 @@
     Event Calendar - ENRG DocDB
 {% endblock title %}
 {% block content %}
-    <h2>Event Calendar</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Event Calendar</h2>
+        <a href="{{ url_for("admin_Event.create_view", url=get_request_url() ) }}"
+           class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            New Event
+        </a>
+    </div>
     <hr>
     <div class="alert alert-primary" role="alert">
         <i class="fas fa-info-circle"></i>

@@ -6,6 +6,7 @@ from flask import redirect, request, url_for
 from flask_admin import Admin, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.theme import Bootstrap4Theme
+from flask_login import current_user
 from wtforms import TextAreaField
 
 from database import db
@@ -109,7 +110,19 @@ class UserAdminView(AdminView):
 
 
 class EventAdminView(AdminView):
-    form_columns = ["title", "location", "event_url", "date", "topics", "moderators"]
+    form_columns = [
+        "title",
+        "date",
+        "organization",
+        "location",
+        "event_url",
+        "topics",
+        "moderators",
+    ]
+
+    column_labels = {
+        "event_sessions": "Session",
+    }
 
     inline_models = [
         (
@@ -134,6 +147,20 @@ class EventAdminView(AdminView):
             },
         )
     ]
+
+    def _modify_form_query(self, form):
+        form.organization.query = db.session.query(Organization).filter(
+            Organization.id.in_([x.id for x in current_user.get_organizations()])
+        )
+        return form
+
+    def create_form(self, obj=None):
+        form = super(EventAdminView, self).create_form(obj)
+        return self._modify_form_query(form)
+
+    def edit_form(self, obj=None):
+        form = super(EventAdminView, self).edit_form(obj)
+        return self._modify_form_query(form)
 
 
 class EventSessionAdminView(AdminView):
