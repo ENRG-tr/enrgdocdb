@@ -152,7 +152,7 @@ class EventAdminView(AdminView):
         form.organization.query = db.session.query(Organization).filter(
             Organization.id.in_([x.id for x in current_user.get_organizations()])
         )
-        form.moderators.query = db.session.query(User).filter(User.deleted_at is None)
+        form.moderators.query = db.session.query(User).filter(User.deleted_at == None)  # noqa: E711
         return form
 
     def create_form(self, obj=None):
