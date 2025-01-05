@@ -6,5 +6,26 @@
 {% block content %}
     <h2>Event Calendar</h2>
     <hr>
+    <div class="alert alert-primary" role="alert">
+        <i class="fas fa-info-circle"></i>
+        <strong>Note:</strong> You can import this calendar to your Google Calendar or
+        any other calendar application using the URL below:
+        <input type="text"
+               value="{{ icalendar_url }}"
+               readonly
+               class="form-control"
+               onclick="copyToClipboard(this)" />
+    </div>
     {{ render_event_calendar(events) }}
+    <script>
+        function copyToClipboard(element) {
+            const range = document.createRange();
+            range.selectNode(element);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand("copy");
+            window.getSelection().removeAllRanges();
+            alert("Copied to clipboard!");
+        }
+    </script>
 {% endblock content %}
