@@ -28,7 +28,7 @@ def view(event_id: int):
 
 @blueprint.route("/calendar")
 def calendar():
-    events = db.session.query(Event).order_by(Event.date.desc()).limit(300).all()
+    events = db.session.query(Event).all()
     jwt_token = jwt.encode({"user_id": current_user.id}, app.config["SECRET_KEY"])
     icalendar_url = url_for("icalendar_all", jwt_token=jwt_token, _external=True)
     return render_template(
@@ -40,7 +40,7 @@ def calendar():
 def icalendar_all(jwt_token: str):
     try:
         decoded = jwt.decode(jwt_token, app.config["SECRET_KEY"], algorithms=["HS256"])
-    except Exception as e:
+    except Exception:
         return abort(403)
 
     user = decoded["user_id"]
@@ -56,9 +56,12 @@ def icalendar_all(jwt_token: str):
         ical_event.add("summary", event.title)
         utc_date = event.date.replace(tzinfo=pytz.UTC)
         ical_event.add("dtstart", utc_date)
-        description = "\n".join([event.location or "", event.event_url or ""])
+        description = "Topics: " + (", ".join([str(x) for x in event.topics]))
         ical_event.add("description", description)
-        ical_event.add("location", event.location)
+        if event.location:
+            ical_event.add("location", event.location)
+        if event.event_url:
+            ical_event.add("url", event.event_url)
         cal.add_component(ical_event)
 
     response = Response(cal.to_ical(), mimetype="text/calendar")
