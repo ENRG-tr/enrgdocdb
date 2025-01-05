@@ -56,7 +56,8 @@ def icalendar_all(jwt_token: str):
         ical_event.add("summary", event.title)
         utc_date = event.date.replace(tzinfo=pytz.UTC)
         ical_event.add("dtstart", utc_date)
-        ical_event.add("description", event.location + "\n" + event.event_url)
+        description = "\n".join([event.location or "", event.event_url or ""])
+        ical_event.add("description", description)
         ical_event.add("location", event.location)
         cal.add_component(ical_event)
 
