@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, Time
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -35,12 +35,12 @@ class Event(Base, Model):
 
     topics: Mapped[list["Topic"]] = association_proxy(
         "event_topics", "topic", creator=lambda topic: EventTopic(topic=topic)
-    )  # type: ignore
+    )
     moderators: Mapped[list["User"]] = association_proxy(
         "event_moderators",
         "moderator",
         creator=lambda moderator: EventModerator(moderator=moderator),
-    )  # type: ignore
+    )
 
 
 class EventTopic(Base, Model):
@@ -83,12 +83,12 @@ class EventSession(Base, Model):
 
     topics: Mapped[list["Topic"]] = association_proxy(
         "session_topics", "topic", creator=lambda topic: SessionTopic(topic=topic)
-    )  # type: ignore
+    )
     moderators: Mapped[list["User"]] = association_proxy(
         "session_moderators",
         "moderator",
         creator=lambda moderator: SessionModerator(moderator=moderator),
-    )  # type: ignore
+    )
     event: Mapped[Event] = relationship()
 
 
