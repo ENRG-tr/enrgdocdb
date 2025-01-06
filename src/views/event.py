@@ -15,6 +15,15 @@ blueprint = Blueprint("event", __name__, url_prefix="/events")
 secure_blueprint(blueprint)
 
 
+def _get_user_events(user: User):
+    user_organizations = [x.id for x in user.get_organizations()]
+    return (
+        db.session.query(Event)
+        .filter(Event.organization_id.in_(user_organizations))
+        .all()
+    )
+
+
 @blueprint.route("/view/<int:event_id>")
 def view(event_id: int):
     event = db.session.query(Event).get(event_id)
@@ -28,11 +37,12 @@ def view(event_id: int):
 
 @blueprint.route("/calendar")
 def calendar():
-    events = db.session.query(Event).all()
     jwt_token = jwt.encode({"user_id": current_user.id}, app.config["SECRET_KEY"])
     icalendar_url = url_for("icalendar_all", jwt_token=jwt_token, _external=True)
     return render_template(
-        "docdb/event_calendar.html", events=events, icalendar_url=icalendar_url
+        "docdb/event_calendar.html",
+        events=_get_user_events(current_user),
+        icalendar_url=icalendar_url,
     )
 
 
@@ -46,9 +56,9 @@ def icalendar_all(jwt_token: str):
     user = decoded["user_id"]
     user: User = db.session.query(User).get(user)
     if not user or not user.is_active:
-        return abort(403)
+        return abort(404)
 
-    events = db.session.query(Event).all()
+    events = _get_user_events(user)
     cal = Calendar()
 
     for event in events:
