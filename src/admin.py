@@ -81,7 +81,11 @@ class TopicAdminView(AdminView):
 
     def _modify_form_query(self, form, obj, is_create):
         if not is_create:
-            form.parent_topic.query = db.session.query(Topic).filter(Topic.id != obj.id)
+            form.parent_topic.query = (
+                db.session.query(Topic)
+                .filter(Topic.id != obj.id)
+                .filter(Topic.parent_topic.is_(None))
+            )
         return form
 
 
