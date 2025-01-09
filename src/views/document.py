@@ -101,10 +101,10 @@ def new():
     """
     form = DocumentForm()
     form.authors.choices = [
-        (author.id, author.name) for author in db.session.query(Author).all()
+        (author.id, str(author)) for author in db.session.query(Author).all()
     ]
     form.topics.choices = [
-        (topic.id, topic.name) for topic in db.session.query(Topic).all()
+        (topic.id, str(topic)) for topic in db.session.query(Topic).all()
     ]
     form.document_type.choices = [
         (document_type.id, document_type.name)
