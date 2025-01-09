@@ -8,6 +8,7 @@ from sqlalchemy.orm import Query, Session
 
 from database import db
 from models.document import Document
+from models.topic import Topic
 from models.user import RolePermission
 from utils.security import _is_super_admin
 from utils.url import get_request_base_url
@@ -78,6 +79,8 @@ def _sort_query(query: Query, query_model: Any) -> Query:
         query = query.order_by(query_model.updated_at.desc())
     if hasattr(query_model, "created_at"):
         query = query.order_by(query_model.created_at.desc())
+    if isinstance(query_model, Topic):
+        query = query.order_by(Topic.parent_topic_id)
     return query
 
 

@@ -32,6 +32,7 @@
 {% endmacro %}
 {% macro render_topics(topics) %}
     {% for topic in topics %}
+        {% if topic.parent_topic %}{{ topic.parent_topic.name }} :{% endif %}
         <a href="{{ url_for('topic.view', topic_id=topic.id) }}">{{ topic.name }}</a>
         {% if not loop.last %}·{% endif %}
     {% endfor %}

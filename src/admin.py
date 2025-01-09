@@ -50,6 +50,17 @@ class AdminView(ModelView):
     def index_view(self):
         return redirect(url_for("index.index"))
 
+    def _modify_form_query(self, form, obj, is_create):
+        return form
+
+    def create_form(self, obj=None):
+        form = super().edit_form(obj)
+        return self._modify_form_query(form, obj, True)
+
+    def edit_form(self, obj=None):
+        form = super().edit_form(obj)
+        return self._modify_form_query(form, obj, False)
+
 
 class DocumentAdminView(AdminView):
     form_columns = ["title", "abstract", "topics", "document_type", "authors"]
@@ -66,7 +77,12 @@ class DocumentAdminView(AdminView):
 
 
 class TopicAdminView(AdminView):
-    form_columns = ["name"]
+    form_columns = ["name", "parent_topic"]
+
+    def _modify_form_query(self, form, obj, is_create):
+        if not is_create:
+            form.parent_topic.query = db.session.query(Topic).filter(Topic.id != obj.id)
+        return form
 
 
 class AuthorAdminView(AdminView):
@@ -148,20 +164,12 @@ class EventAdminView(AdminView):
         )
     ]
 
-    def _modify_form_query(self, form):
+    def _modify_form_query(self, form, obj, is_create):
         form.organization.query = db.session.query(Organization).filter(
             Organization.id.in_([x.id for x in current_user.get_organizations()])
         )
         form.moderators.query = db.session.query(User).filter(User.deleted_at == None)  # noqa: E711
         return form
-
-    def create_form(self, obj=None):
-        form = super(EventAdminView, self).create_form(obj)
-        return self._modify_form_query(form)
-
-    def edit_form(self, obj=None):
-        form = super(EventAdminView, self).edit_form(obj)
-        return self._modify_form_query(form)
 
 
 class EventSessionAdminView(AdminView):
