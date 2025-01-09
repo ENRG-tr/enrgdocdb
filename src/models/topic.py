@@ -18,4 +18,6 @@ class Topic(Base, Model):
     )
 
     def __repr__(self) -> str:
+        if self.parent_topic:
+            return f"{self.parent_topic.name} : {self.name}"
         return self.name
