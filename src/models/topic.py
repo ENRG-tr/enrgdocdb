@@ -13,6 +13,9 @@ class Topic(Base, Model):
         Integer, ForeignKey("topics.id"), nullable=True
     )
     parent_topic: Mapped["Topic"] = relationship("Topic", remote_side=[id])
+    child_topics: Mapped[list["Topic"]] = relationship(
+        "Topic", back_populates="parent_topic", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return self.name

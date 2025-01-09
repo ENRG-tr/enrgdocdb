@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 
 from flask import Request
 from flask_login import current_user
+from sqlalchemy import nulls_last, nullslast
 from sqlalchemy.orm import Query, Session
 
 from database import db
@@ -75,8 +76,10 @@ def _filter_query(query: Query, query_model: Any) -> Query:
 
 
 def _sort_query(query: Query, query_model: Any) -> Query:
-    if isinstance(query_model, Topic):
-        query = query.order_by(Topic.parent_topic_id, Topic.id)
+    if query_model == Topic:
+        query = query.order_by(
+            Topic.parent_topic_id.is_(None), Topic.parent_topic_id.asc()
+        )
         return query
 
     if hasattr(query_model, "updated_at"):
