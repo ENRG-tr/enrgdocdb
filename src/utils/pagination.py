@@ -77,9 +77,7 @@ def _filter_query(query: Query, query_model: Any) -> Query:
 
 def _sort_query(query: Query, query_model: Any) -> Query:
     if query_model == Topic:
-        query = query.order_by(
-            Topic.parent_topic_id.is_(None), Topic.parent_topic_id.asc()
-        )
+        query = query.order_by(Topic.parent_topic_id.is_(None))
         return query
 
     if hasattr(query_model, "updated_at"):
