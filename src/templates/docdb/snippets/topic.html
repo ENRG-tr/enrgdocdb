@@ -7,9 +7,6 @@
                 <th style="min-width: 200px;">
                     <i class="fas fa-tag"></i> Topic
                 </th>
-                <th>
-                    <i class="fas fa-calendar-alt"></i> Date Registered
-                </th>
             </tr>
         </thead>
         <tbody>
@@ -24,7 +21,6 @@
             {% for topic in topics %}
                 <tr>
                     <td>{{ render_topics([topic]) }}</td>
-                    <td>{{ topic.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
                 </tr>
             {% endfor %}
         </tbody>

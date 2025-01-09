@@ -75,12 +75,14 @@ def _filter_query(query: Query, query_model: Any) -> Query:
 
 
 def _sort_query(query: Query, query_model: Any) -> Query:
+    if isinstance(query_model, Topic):
+        query = query.order_by(Topic.parent_topic_id, Topic.id)
+        return query
+
     if hasattr(query_model, "updated_at"):
         query = query.order_by(query_model.updated_at.desc())
     if hasattr(query_model, "created_at"):
         query = query.order_by(query_model.created_at.desc())
-    if isinstance(query_model, Topic):
-        query = query.order_by(Topic.parent_topic_id)
     return query
 
 
