@@ -1,6 +1,7 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/moderation.html" import render_moderation_options with context %}
 {% from "docdb/snippets/render_map.html" import render_paginated_result %}
+{% from "docdb/snippets/user.html" import render_user_roles %}
 {% block title %}
     {{ user.name }} - ENRG DocDB
 {% endblock title %}
@@ -25,6 +26,10 @@
             <tr>
                 <th>Last Name</th>
                 <td>{{ user.last_name }}</td>
+            </tr>
+            <tr>
+                <th>Roles</th>
+                <td>{{ render_user_roles(user) }}</td>
             </tr>
             <tr>
                 <th>Date Registered</th>
