@@ -1,4 +1,13 @@
 {% from "docdb/snippets/pagination.html" import render_pagination %}
+{% macro _render_topic_table_tr(topic, render_children=False) %}
+    {% if render_children or topic.parent_topic %}
+        <tr>
+            <td>
+                <a href="{{ url_for('topic.view', topic_id=topic.id) }}">{{ topic.name }}</a>
+            </td>
+        </tr>
+    {% endif %}
+{% endmacro %}
 {% macro render_topic_table(topics, paginated_query) %}
     {% from "docdb/snippets/pagination.html" import render_pagination %}
     <table class="table table-hover">
@@ -18,21 +27,36 @@
                     </td>
                 </tr>
             {% endif %}
+            {#  We create a dict of topics that are not rendered to render them later
+                This is done to be able to render the children of a topic when parent 
+                topic is not present in the list of topics  #}
+            {% set topics_not_rendered = {} %}
+            {% for topic in topics %}
+                {% do topics_not_rendered.update({topic.id: topic}) %}
+            {% endfor %}
             {% for topic in topics %}
                 {% if not topic.parent_topic %}
                     <tr class="border-top-0 light">
                         <td>{{ render_topics([topic]) }}</td>
                     </tr>
                     {% for child_topic in topic.child_topics %}
-                        <tr>
-                            <td>
-                                <i class="fas fa-chevron-right"></i>
-                                {{ render_topics([child_topic]) }}
-                            </td>
-                        </tr>
+                        {# Child should be present in the list to be rendered #}
+                        {% if child_topic.id in topics_not_rendered %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-chevron-right"></i>
+                                    {{ render_topics([child_topic]) }}
+                                </td>
+                            </tr>
+                            {% if child_topic.id in topics_not_rendered %}
+                                {% do topics_not_rendered.pop(child_topic.id) %}
+                            {% endif %}
+                        {% endif %}
                     {% endfor %}
+                    {% do topics_not_rendered.pop(topic.id) %}
                 {% endif %}
             {% endfor %}
+            {% for topic in topics_not_rendered.values() %}{{ _render_topic_table_tr(topic) }}{% endfor %}
         </tbody>
     </table>
 {% endmacro %}
