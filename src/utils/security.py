@@ -1,12 +1,16 @@
 from typing import Any
 
 from flask import Blueprint, flash, redirect, request, url_for
+from flask_limiter import RateLimitExceeded
 from flask_login import current_user, login_required
 
+from app import limiter
 from database import db
 from models.author import Author
 from models.document import Document
 from models.user import RolePermission, User
+
+RATELIMIT_NON_VIEW_ACTIONS = "180/minute"
 
 
 def secure_blueprint(blueprint: Blueprint):
@@ -64,6 +68,12 @@ def permission_check(model: Any, action: RolePermission):
 
     organization_id = None
 
+    try:
+        with limiter.limit(RATELIMIT_NON_VIEW_ACTIONS):
+            pass
+    except RateLimitExceeded:
+        flash("You have exceeded the rate limit! Please try again later.", "error")
+        return False
     # Try to get the organization_id from the model
     if model:
         if isinstance(model, Document):
