@@ -2,6 +2,8 @@ from flask import Flask
 from flask_alembic import Alembic
 from flask_babel import Babel
 from flask_bootstrap import Bootstrap5
+from flask_limiter import Limiter
+from flask_login import current_user
 from flask_security.core import Security
 from flask_security.datastore import FSQLALiteUserDatastore
 
@@ -16,6 +18,7 @@ user_datastore = FSQLALiteUserDatastore(db, User, Role)
 security = Security()
 babel = Babel()
 bootstrap = Bootstrap5()
+limiter = Limiter(lambda: str(current_user.id) if current_user else None)
 
 
 def monkeypatch_user_loader(user_loader):
@@ -46,6 +49,7 @@ def create_app():
 
         admin.init_app(app)
         security.init_app(app, user_datastore)
+        limiter.init_app(app)
 
         user_datastore.find_user = monkeypatch_user_loader(user_datastore.find_user)
 

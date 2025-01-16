@@ -4,6 +4,7 @@ from flask import Blueprint, flash, redirect, request, url_for
 from flask_login import current_user, login_required
 
 from database import db
+from models.author import Author
 from models.document import Document
 from models.user import RolePermission, User
 
@@ -67,8 +68,12 @@ def permission_check(model: Any, action: RolePermission):
     if model:
         if isinstance(model, Document):
             organization_id = model.organization_id
+            # Allow editing self document
             if model.user_id == user.id and action == RolePermission.EDIT:
                 action = RolePermission.EDIT_SELF
+        # Allow everyone to add authors
+        if isinstance(model, Author) and action == RolePermission.ADD:
+            return True
         elif hasattr(model, "organization_id"):
             organization_id = model.organization_id
         elif hasattr(model, "document_id") or hasattr(model, "document"):
