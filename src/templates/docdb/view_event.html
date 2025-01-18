@@ -1,6 +1,7 @@
 {% extends "docdb/base.html" %}
-{% from "docdb/snippets/user.html" import render_user %}
+{% from "docdb/snippets/user.html" import render_users %}
 {% from "docdb/snippets/topic.html" import render_topics %}
+{% from "docdb/snippets/author.html" import render_authors %}
 {% from "docdb/snippets/moderation.html" import render_moderation_options with context %}
 {% block title %}
     {{ event.title }} - ENRG DocDB
@@ -35,12 +36,7 @@
             </tr>
             <tr>
                 <th>Moderators</th>
-                <td>
-                    {% for moderator in event.moderators %}
-                        {{ render_user(moderator) }}
-                        {% if not loop.last %},{% endif %}
-                    {% endfor %}
-                </td>
+                <td>{{ render_users(event.moderators) }}</td>
             </tr>
         </table>
     </div>
@@ -87,12 +83,7 @@
                     <td>
                         <a href="{{ session.event_url }}" target="_blank">{{ session.event_url }}</a>
                     </td>
-                    <td>
-                        {% for moderator in session.moderators %}
-                            {{ render_user(moderator) }}
-                            {% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    </td>
+                    <td>{{ render_users(session.moderators) }}</td>
                 </tr>
                 <tr class="border-top-0">
                     <td colspan="5" class="{% if ns.is_even %}light{% else %}{% endif %}">
@@ -141,12 +132,7 @@
                                                     <a href="{{ url_for("document.new", attach_talk_note_id=note.id, url=get_request_url() ) }}">Create and attach document.</a>
                                                 {% endif %}
                                             </td>
-                                            <td>
-                                                {% for moderator in note.document.authors %}
-                                                    {{ render_user(moderator) }}
-                                                    {% if not loop.last %},{% endif %}
-                                                {% endfor %}
-                                            </td>
+                                            <td>{{ render_authors(note.document.authors) }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>

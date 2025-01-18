@@ -5,6 +5,12 @@
         <a href="{{ url_for('user.view', user_id=user.id) }}">{{ user.name }}</a>
     </div>
 {% endmacro %}
+{% macro render_users(users) %}
+    {% for user in users %}
+        {{ render_user(user) }}
+        {% if not loop.last %}·{% endif %}
+    {% endfor %}
+{% endmacro %}
 {% macro render_user_table(users, paginated_query) %}
     <table class="table table-striped table-hover">
         <thead>
