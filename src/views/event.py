@@ -63,10 +63,11 @@ def icalendar_all(jwt_token: str):
 
     for event in events:
         ical_event = ICalEvent()
+        ical_event.add("uid", event.id)
         ical_event.add("summary", event.title)
         utc_date = event.date.replace(tzinfo=pytz.UTC)
         ical_event.add("dtstart", utc_date)
-        description = "Topics: " + (", ".join([str(x) for x in event.topics]))
+        description = ", ".join([str(x) for x in event.topics])
         ical_event.add("description", description)
         if event.location:
             ical_event.add("location", event.location)
