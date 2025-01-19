@@ -36,7 +36,6 @@
                     </td>
                     <td>{{ event.date.strftime("%Y-%m-%d %H:%M:%S") }}</td>
                 </tr>
-                <tr></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -101,6 +100,7 @@
         }
       
         var calendar = new FullCalendar.Calendar(calendarEl, {
+          firstDay: 1,
           initialView: 'dayGridMonth',
           headerToolbar: {
             left: 'prev,next today',
