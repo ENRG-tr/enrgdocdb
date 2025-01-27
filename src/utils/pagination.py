@@ -82,6 +82,9 @@ def _sort_query(query: Query, query_model: Any) -> Query:
 
     if hasattr(query_model, "created_at"):
         query = query.order_by(query_model.created_at.desc())
+    elif hasattr(query_model, "create_datetime"):
+        query = query.order_by(query_model.create_datetime.desc())
+
     return query
 
 
