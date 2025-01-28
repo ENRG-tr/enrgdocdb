@@ -2,7 +2,11 @@
     <button data-edit-id="{{ random_id }}"
             class="btn btn-primary d-block"
             disabled>
-        <i class="fas fa-edit"></i>
+        {% if fas_custom_class %}
+            <i class="fas {{ fas_custom_class }}"></i>
+        {% else %}
+            <i class="fas fa-edit"></i>
+        {% endif %}
         {{ label or "Edit" }}
     </button>
     <span data-edit-warning-id="{{ random_id }}">
@@ -13,14 +17,14 @@
 <script>
      document.addEventListener("DOMContentLoaded", function () {
           const editButton = document.querySelector(`[data-edit-id="{{ random_id }}"]`);
-          const hiddenIdInput = editButton.closest("form").querySelector("input[type='hidden'][name$='-id']");
+          const hiddenIdInput = editButton.closest("form").querySelector("input[type='hidden'][name$='id']");
           if (hiddenIdInput) {
                 editButton.disabled = false;
                 editButton.addEventListener('click', event => {
                     event.preventDefault();
                     window.location.href = `{{ edit_view_url }}?id=${hiddenIdInput.value}&url=${encodeURIComponent(window.location.href)}`;
                 });
-          } else {
+                
                 const warning = document.querySelector(`[data-edit-warning-id="{{ random_id }}"]`);
                 warning.classList.add("d-none");
           }

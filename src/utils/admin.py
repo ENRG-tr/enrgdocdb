@@ -13,13 +13,15 @@ class EditInlineModelField(Field):
                 random_id=random(),
                 edit_view_url=url_for(field.edit_view),
                 label=field.label,
+                fas_custom_class=field.fas_custom_class,
             )
 
     widget = LinkWidget()
 
-    def __init__(self, edit_view: str, **kwargs):
+    def __init__(self, edit_view: str, fas_custom_class: str | None = None, **kwargs):
         super(EditInlineModelField, self).__init__(**kwargs)
         self.edit_view = edit_view
+        self.fas_custom_class = fas_custom_class
 
     def process(self, formdata, data=None, **kwargs):
         super(EditInlineModelField, self).process(formdata, data)

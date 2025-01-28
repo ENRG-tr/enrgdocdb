@@ -7,11 +7,11 @@ from flask_admin import Admin, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.theme import Bootstrap4Theme
 from flask_login import current_user
-from wtforms import TextAreaField
+from wtforms import FileField, HiddenField, TextAreaField
 
 from database import db
 from models.author import Author, Institution
-from models.document import Document, DocumentType
+from models.document import Document, DocumentFile, DocumentType
 from models.event import Event, EventSession, TalkNote
 from models.topic import Topic
 from models.user import (
@@ -63,10 +63,23 @@ class AdminView(ModelView):
 
 
 class DocumentAdminView(AdminView):
-    form_columns = ["title", "abstract", "topics", "document_type", "authors"]
+    form_columns = [
+        "id",
+        "title",
+        "abstract",
+        "topics",
+        "document_type",
+        "authors",
+        "files",
+        "upload_files",
+    ]
     # make abstract a textarea
     form_extra_fields = {
+        "id": HiddenField(),
         "abstract": TextAreaField("Abstract"),
+        "upload_files": EditInlineModelField(
+            "document.upload_files", fas_custom_class="fa-upload"
+        ),
     }
     can_create = False
 
@@ -74,6 +87,12 @@ class DocumentAdminView(AdminView):
         # Delete files of documents from disk
         for file in model.files:
             os.remove(os.path.join(FILE_UPLOAD_FOLDER, file.real_file_name))
+
+    def _modify_form_query(self, form, obj, is_create):
+        form.files.query = db.session.query(DocumentFile).filter(
+            DocumentFile.document_id == obj.id
+        )
+        return form
 
 
 class TopicAdminView(AdminView):

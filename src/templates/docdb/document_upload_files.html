@@ -1,0 +1,20 @@
+{% extends "docdb/base.html" %}
+{% from "docdb/snippets/user_files.html" import initialize_user_files %}
+{% from "bootstrap5/form.html" import render_field %}
+{% block title %}
+    Upload Files - ENRG DocDB
+{% endblock title %}
+{% block content %}
+    <h2>Upload Files</h2>
+    You are uploading files for document <a href="{{ url_for('document.view', document_id=document.id) }}">{{ document.title }}</a>.
+    <hr>
+    <form id="document-upload-files-form" method="post">
+        <div class="form-group">
+            {{ form.csrf_token() }}
+            <label for="file">File</label>
+            {{ render_field(form.files) }}
+        </div>
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+    {{ initialize_user_files("document-upload-files-form", user_files) }}
+{% endblock content %}

@@ -13,7 +13,8 @@ from flask import (
 from flask_login import current_user
 
 from database import db
-from forms.document import DocumentForm
+from forms.document import DocumentForm, DocumentUploadFilesForm
+from forms.file import FileForm
 from models.author import Author
 from models.document import (
     Document,
@@ -170,4 +171,42 @@ def new():
         "docdb/new_document.html",
         form=form,
         user_files=user_files_result.template_args,
+    )
+
+
+@blueprint.route("/upload_files", methods=["GET", "POST"])
+def upload_files():
+    document_id = request.args.get("id")
+    redirect_url = request.args.get("url")
+    if not document_id:
+        return abort(404)
+    document = db.session.query(Document).get(document_id)
+    if not document:
+        return abort(404)
+    if not permission_check(document, RolePermission.EDIT):
+        return abort(403)
+
+    form = DocumentUploadFilesForm()
+    user_files_result = handle_user_file_upload(request)
+
+    if form.validate_on_submit():
+        for user_file in user_files_result.user_files:
+            document_file = DocumentFile(
+                document_id=document.id,
+                file_name=user_file.uploaded_file_name,
+                real_file_name=user_file.file_path,
+            )
+            db.session.add(document_file)
+        db.session.commit()
+
+        flash("Files were uploaded successfully!", "success")
+        if not redirect_url:
+            return redirect(url_for("document.view", document_id=document.id))
+        return redirect(redirect_url)
+
+    return render_template(
+        "docdb/document_upload_files.html",
+        form=form,
+        user_files=user_files_result.template_args,
+        document=document,
     )

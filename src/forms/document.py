@@ -33,3 +33,7 @@ class DocumentForm(FileForm, FlaskForm):
         validators=[DataRequired()],
     )
     submit = SubmitField("Submit")
+
+
+class DocumentUploadFilesForm(FileForm, FlaskForm):
+    pass
