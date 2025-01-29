@@ -24,6 +24,9 @@ class Author(Base, Model):
     def __repr__(self) -> str:
         return self.name
 
+    def get_document_count(self) -> int:
+        return self.document_authors.count()
+
 
 class Institution(Base, Model):
     __tablename__ = "institutions"

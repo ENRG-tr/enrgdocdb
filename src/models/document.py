@@ -57,7 +57,7 @@ class DocumentAuthor(Base, Model):
     author_id: Mapped[int] = mapped_column(Integer, ForeignKey("authors.id"))
 
     author: Mapped[Author] = relationship("Author")
-    document: Mapped[Document] = relationship()
+    document: Mapped[Document] = relationship(back_populates="document_authors")
 
 
 class DocumentTopic(Base, Model):
