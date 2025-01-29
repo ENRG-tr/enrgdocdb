@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Model
 from models.base import Base
+
+if TYPE_CHECKING:
+    from models.document import DocumentAuthor
 
 
 class Author(Base, Model):
@@ -17,6 +22,10 @@ class Author(Base, Model):
     institution_id: Mapped[int] = mapped_column(Integer, ForeignKey("institutions.id"))
     institution: Mapped["Institution"] = relationship("Institution")
 
+    document_authors: Mapped[list["DocumentAuthor"]] = relationship(
+        "DocumentAuthor", back_populates="author"
+    )
+
     @property
     def name(self):
         return f"{self.first_name} {self.last_name}"
@@ -25,7 +34,7 @@ class Author(Base, Model):
         return self.name
 
     def get_document_count(self) -> int:
-        return self.document_authors.count()
+        return len(self.document_authors)
 
 
 class Institution(Base, Model):
