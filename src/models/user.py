@@ -85,7 +85,7 @@ class User(Model, sqla.FsUserMixin):
         return [
             x.organization
             for x in self.roles
-            if RolePermission.ADD in x.permissions and x.organization
+            if RolePermission.EDIT_SELF in x.permissions and x.organization
         ]
 
 

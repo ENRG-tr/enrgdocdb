@@ -21,7 +21,7 @@
             <tr>
                 <th>Abstract</th>
                 <td>
-                    {{ document.abstract.replace('\n', '<br>') }}
+                    {{ (document.abstract | escape).replace('\n', '<br>') }}
                 </td>
             </tr>
             <tr>
