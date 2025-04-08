@@ -1,8 +1,10 @@
-{% extends "docdb/base.html" %}
+{% extends "docdb/errors/base.html" %}
 {% block title %}
     404 - ENRG DocDB
 {% endblock title %}
-{% block content %}
-    <h1>404 - Not Found</h1>
-    <p>The page you requested does not exist.</p>
-{% endblock content %}
+{% block error_title %}
+    404 - Page Not Found
+{% endblock error_title %}
+{% block error_content %}
+    The page you are looking for does not exist.
+{% endblock error_content %}

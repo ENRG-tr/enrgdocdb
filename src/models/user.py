@@ -20,7 +20,7 @@ class RolePermission(str, Enum):
 
 ROLES_PERMISSIONS_BY_ORGANIZATION = {
     "guest": [RolePermission.VIEW],
-    "user": [RolePermission.VIEW, RolePermission.ADD, RolePermission.EDIT_SELF],
+    "user": [RolePermission.VIEW, RolePermission.EDIT_SELF],
     "moderator": [
         RolePermission.VIEW,
         RolePermission.ADD,

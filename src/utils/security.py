@@ -82,7 +82,7 @@ def permission_check(model: Any, action: RolePermission):
             if model.user_id == user.id and action == RolePermission.EDIT:
                 action = RolePermission.EDIT_SELF
         # Allow everyone to add authors
-        if isinstance(model, Author) and action == RolePermission.ADD:
+        if action == RolePermission.ADD and model is Author:
             return True
         elif hasattr(model, "organization_id"):
             organization_id = model.organization_id

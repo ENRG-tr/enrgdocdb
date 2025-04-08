@@ -10,6 +10,11 @@
         {{ render_field(form.abstract) }}
         {{ render_form_row([form.authors, form.topics, form.organization]) }}
         {{ render_form_row([form.document_type, form.files]) }}
+        <p class="text-muted">
+            <i class="fas fa-info-circle"></i>
+            Can't find the right author, or the author is not yet registered?
+            <a href="{{ url_for("admin_Author.create_view") }}">Create a new author</a>
+        </p>
         {{ render_field(form.submit) }}
     </form>
     {{ initialize_user_files("new-document-form", user_files) }}

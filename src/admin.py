@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
 
+from flask import abort, redirect, request, url_for
 from flask import current_app as app
-from flask import redirect, request, url_for
 from flask_admin import Admin, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.theme import Bootstrap4Theme
@@ -44,7 +44,12 @@ class AdminView(ModelView):
                 return redirect(return_url)
             model = self.get_one(id)
             return permission_check(model, RolePermission.EDIT)
+        elif request.path.endswith("/new/"):
+            return permission_check(self.model, RolePermission.ADD)
         return permission_check(None, RolePermission.ADMIN)
+
+    def inaccessible_callback(self, name, **kwargs):
+        return abort(403)
 
     @expose("/")
     def index_view(self):
