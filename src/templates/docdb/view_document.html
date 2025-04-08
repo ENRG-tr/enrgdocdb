@@ -20,7 +20,9 @@
             </tr>
             <tr>
                 <th>Abstract</th>
-                <td>{{ document.abstract }}</td>
+                <td>
+                    {{ document.abstract.replace('\n', '<br>') }}
+                </td>
             </tr>
             <tr>
                 <th>Document Type</th>
