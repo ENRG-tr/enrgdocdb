@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const isAuthView = !!document.querySelector("[data-is-auth-view='true']");
-    const isLegitAuthURL = ["/login", "/register"].includes(window.location.pathname);
+    const isLegitAuthURL = window.location.pathname.includes("/login") || window.location.pathname.includes("/register");
     const redirectUrlKey = "redirect-after-auth-url";
     if (!isAuthView && localStorage.getItem(redirectUrlKey)) {
         window.location.href = localStorage.getItem(redirectUrlKey);
