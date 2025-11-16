@@ -78,7 +78,7 @@ class User(Model, sqla.FsUserMixin):
         return self.name
 
     def get_organizations(self):
-        from utils.security import _is_super_admin
+        from ..utils.security import _is_super_admin
 
         if _is_super_admin(self):
             return db.session.query(Organization).all()
