@@ -6,6 +6,7 @@
   <a class="navbar-brand" href="{{ url_for("index.index") }}">Your ENRG DocDB Account</a>
 {% endblock nav_brand %}
 {% block nav %}
+  <div data-is-auth-view="true"></div>
   {% if current_user.is_authenticated %}
     {{ render_nav_item('user.your_account', _fsdomain('Return to Your Account') ) }}
   {% else %}
