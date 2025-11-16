@@ -1,6 +1,6 @@
 from flask import current_app as app
 
-from utils.url import get_request_base_url, get_request_url
+from ..utils.url import get_request_base_url, get_request_url
 
 
 @app.context_processor

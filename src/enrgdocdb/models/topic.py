@@ -1,8 +1,8 @@
 from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database import Model
-from models.base import Base
+from ..database import Model
+from .base import Base
 
 
 class Topic(Base, Model):

@@ -2,12 +2,12 @@ from flask import Blueprint, abort, flash, render_template, request
 from flask import current_app as app
 from flask_login import current_user
 
-from database import db
-from forms.user import EditUserProfileForm
-from models.document import Document, DocumentFile
-from models.user import RolePermission, User
-from utils.pagination import paginate
-from utils.security import permission_check, secure_blueprint
+from ..database import db
+from ..forms.user import EditUserProfileForm
+from ..models.document import Document, DocumentFile
+from ..models.user import RolePermission, User
+from ..utils.pagination import paginate
+from ..utils.security import permission_check, secure_blueprint
 
 blueprint = Blueprint("user", __name__, url_prefix="/user")
 secure_blueprint(blueprint)

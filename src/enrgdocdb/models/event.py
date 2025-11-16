@@ -4,11 +4,11 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, Time
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database import Model
-from models.base import Base
-from models.document import Document
-from models.topic import Topic
-from models.user import Organization, User
+from ..database import Model
+from .base import Base
+from .document import Document
+from .topic import Topic
+from .user import Organization, User
 
 
 class Event(Base, Model):

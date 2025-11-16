@@ -1,14 +1,14 @@
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_login import current_user
 
-from database import db
-from models.author import Author, Institution
-from models.document import Document, DocumentFile, DocumentType
-from models.event import Event
-from models.topic import Topic
-from models.user import Organization, Role, User
-from utils.pagination import paginate
-from utils.security import secure_blueprint
+from ..database import db
+from ..models.author import Author, Institution
+from ..models.document import Document, DocumentFile, DocumentType
+from ..models.event import Event
+from ..models.topic import Topic
+from ..models.user import Organization, Role, User
+from ..utils.pagination import paginate
+from ..utils.security import secure_blueprint
 
 blueprint = Blueprint("view_all", __name__, url_prefix="/view_all")
 secure_blueprint(blueprint)

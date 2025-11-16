@@ -5,8 +5,8 @@ from flask_security.models import sqla as sqla
 from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database import Model, db
-from models.base import Base
+from ..database import Model, db
+from .base import Base
 
 
 class RolePermission(str, Enum):

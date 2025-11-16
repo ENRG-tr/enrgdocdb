@@ -3,13 +3,13 @@ from datetime import datetime
 from flask import Blueprint, redirect, render_template, request, url_for
 from sqlalchemy import and_, or_
 
-from database import db
-from models.author import Author, Institution
-from models.document import Document, DocumentAuthor, DocumentFile, DocumentType
-from models.topic import Topic
-from models.user import User
-from utils.pagination import PaginatedQueryResult, paginate
-from utils.security import secure_blueprint
+from ..database import db
+from ..models.author import Author, Institution
+from ..models.document import Document, DocumentAuthor, DocumentFile, DocumentType
+from ..models.topic import Topic
+from ..models.user import User
+from ..utils.pagination import PaginatedQueryResult, paginate
+from ..utils.security import secure_blueprint
 
 blueprint = Blueprint("search", __name__, url_prefix="/search")
 secure_blueprint(blueprint)

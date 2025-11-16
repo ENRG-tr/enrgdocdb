@@ -1,10 +1,10 @@
 from flask import Blueprint, abort, render_template, request
 
-from database import db
-from models.author import Author
-from models.document import Document, DocumentAuthor
-from utils.pagination import paginate
-from utils.security import secure_blueprint
+from ..database import db
+from ..models.author import Author
+from ..models.document import Document, DocumentAuthor
+from ..utils.pagination import paginate
+from ..utils.security import secure_blueprint
 
 blueprint = Blueprint("author", __name__, url_prefix="/author")
 secure_blueprint(blueprint)

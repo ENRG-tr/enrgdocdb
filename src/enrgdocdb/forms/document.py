@@ -8,7 +8,7 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired
 
-from forms.file import FileForm
+from ..forms.file import FileForm
 
 
 class DocumentForm(FileForm, FlaskForm):

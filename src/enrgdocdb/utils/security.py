@@ -4,11 +4,11 @@ from flask import Blueprint, flash, redirect, request, url_for
 from flask_limiter import RateLimitExceeded
 from flask_login import current_user, login_required
 
-from app import limiter
-from database import db
-from models.author import Author
-from models.document import Document
-from models.user import RolePermission, User
+from ..app import limiter
+from ..database import db
+from ..models.author import Author
+from ..models.document import Document
+from ..models.user import RolePermission, User
 
 RATELIMIT_NON_VIEW_ACTIONS = "180/minute"
 

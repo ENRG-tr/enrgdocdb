@@ -6,10 +6,10 @@ from flask_login import current_user
 from icalendar import Calendar
 from icalendar import Event as ICalEvent
 
-from database import db
-from models.event import Event
-from models.user import RolePermission, User
-from utils.security import permission_check, secure_blueprint
+from ..database import db
+from ..models.event import Event
+from ..models.user import RolePermission, User
+from ..utils.security import permission_check, secure_blueprint
 
 blueprint = Blueprint("event", __name__, url_prefix="/events")
 secure_blueprint(blueprint)

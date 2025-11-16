@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.orm import Session
 
-from models.user import ADMIN_PERMISSIONS, Role
+from .models.user import ADMIN_PERMISSIONS, Role
 
 # revision identifiers, used by Alembic.
 revision: str = "1730235280"

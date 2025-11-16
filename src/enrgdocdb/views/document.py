@@ -12,24 +12,24 @@ from flask import (
 )
 from flask_login import current_user
 
-from database import db
-from forms.document import DocumentForm, DocumentUploadFilesForm
-from forms.file import FileForm
-from models.author import Author
-from models.document import (
+from ..database import db
+from ..forms.document import DocumentForm, DocumentUploadFilesForm
+from ..forms.file import FileForm
+from ..models.author import Author
+from ..models.document import (
     Document,
     DocumentAuthor,
     DocumentFile,
     DocumentTopic,
     DocumentType,
 )
-from models.event import TalkNote
-from models.topic import Topic
-from models.user import Organization, RolePermission, User
-from settings import FILE_UPLOAD_FOLDER
-from utils.file import handle_user_file_upload
-from utils.pagination import paginate
-from utils.security import _is_super_admin, permission_check, secure_blueprint
+from ..models.event import TalkNote
+from ..models.topic import Topic
+from ..models.user import Organization, RolePermission, User
+from ..settings import FILE_UPLOAD_FOLDER
+from ..utils.file import handle_user_file_upload
+from ..utils.pagination import paginate
+from ..utils.security import _is_super_admin, permission_check, secure_blueprint
 
 blueprint = Blueprint("document", __name__, url_prefix="/documents")
 secure_blueprint(blueprint)

@@ -4,12 +4,12 @@ from flask import Blueprint, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import or_
 
-from database import db
-from models.document import Document
-from models.event import Event
-from utils.pagination import paginate
-from utils.security import secure_blueprint
-from views.view_all import VIEW_ALL_ALLOWED_MODELS
+from ..database import db
+from ..models.document import Document
+from ..models.event import Event
+from ..utils.pagination import paginate
+from ..utils.security import secure_blueprint
+from ..views.view_all import VIEW_ALL_ALLOWED_MODELS
 
 blueprint = Blueprint("index", __name__)
 secure_blueprint(blueprint)

@@ -7,13 +7,13 @@ from pathlib import Path
 import jwt
 from flask import Blueprint, abort, request
 
-from settings import (
+from ..settings import (
     FILE_UPLOAD_MAX_FILE_SIZE,
     FILE_UPLOAD_TEMP_CLEAR_INTERVAL_HOURS,
     FILE_UPLOAD_TEMP_FOLDER,
     SECRET_KEY,
 )
-from utils.security import secure_blueprint
+from ..utils.security import secure_blueprint
 
 blueprint = Blueprint("file", __name__, url_prefix="/file")
 secure_blueprint(blueprint)

@@ -7,12 +7,12 @@ from flask_login import current_user
 from sqlalchemy import nulls_last, nullslast
 from sqlalchemy.orm import Query, Session
 
-from database import db
-from models.document import Document
-from models.topic import Topic
-from models.user import RolePermission
-from utils.security import _is_super_admin
-from utils.url import get_request_base_url
+from ..database import db
+from ..models.document import Document
+from ..models.topic import Topic
+from ..models.user import RolePermission
+from ..utils.security import _is_super_admin
+from ..utils.url import get_request_base_url
 
 
 @dataclass

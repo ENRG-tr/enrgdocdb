@@ -7,23 +7,23 @@ from flask_admin import Admin, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.theme import Bootstrap4Theme
 from flask_login import current_user
-from wtforms import FileField, HiddenField, TextAreaField
+from wtforms import HiddenField, TextAreaField
 
-from database import db
-from models.author import Author, Institution
-from models.document import Document, DocumentFile, DocumentType
-from models.event import Event, EventSession, TalkNote
-from models.topic import Topic
-from models.user import (
+from .database import db
+from .models.author import Author, Institution
+from .models.document import Document, DocumentFile, DocumentType
+from .models.event import Event, EventSession, TalkNote
+from .models.topic import Topic
+from .models.user import (
     ROLES_PERMISSIONS_BY_ORGANIZATION,
     Organization,
     Role,
     RolePermission,
     User,
 )
-from settings import FILE_UPLOAD_FOLDER
-from utils.admin import EditInlineModelField
-from utils.security import permission_check
+from .settings import FILE_UPLOAD_FOLDER
+from .utils.admin import EditInlineModelField
+from .utils.security import permission_check
 
 admin = Admin(
     name="ENRG DocDB Admin",

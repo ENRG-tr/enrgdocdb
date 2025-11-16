@@ -7,10 +7,10 @@ from flask_login import current_user
 from flask_security.core import Security
 from flask_security.datastore import FSQLALiteUserDatastore
 
-from database import Model, db
-from models.user import Role, User
-from oauth.slack import SlackFsOauthProvider
-from settings import SECURITY_OAUTH_ENABLE_SLACK
+from .database import Model, db
+from .models.user import Role, User
+from .oauth.slack import SlackFsOauthProvider
+from .settings import SECURITY_OAUTH_ENABLE_SLACK
 
 alembic = Alembic(metadatas=Model.metadata)
 user_datastore = FSQLALiteUserDatastore(db, User, Role)
@@ -34,7 +34,7 @@ def monkeypatch_user_loader(user_loader):
 def create_app():
     app = Flask(__name__)
     with app.app_context():
-        from views import get_blueprints
+        from .views import get_blueprints
 
         for blueprint in get_blueprints():
             app.register_blueprint(blueprint)
@@ -44,8 +44,8 @@ def create_app():
 
         for plugin in [db, alembic, babel, bootstrap]:
             plugin.init_app(app)
-        from admin import admin
-        from admin import views as admin_views
+        from .admin import admin
+        from .admin import views as admin_views
 
         admin.init_app(app)
         security.init_app(app, user_datastore)

@@ -2,11 +2,11 @@ from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database import Model
-from models.author import Author
-from models.base import Base
-from models.topic import Topic
-from models.user import Organization, User
+from ..database import Model
+from .author import Author
+from .base import Base
+from .topic import Topic
+from .user import Organization, User
 
 
 class Document(Base, Model):
