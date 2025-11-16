@@ -68,7 +68,7 @@ class SlackFsOauthProvider(FsOAuthProvider):
         }
 
     def fetch_identity_cb(self, oauth, token):  # pragma no cover
-        from app import user_datastore
+        from ..app import user_datastore
 
         profile = token["userinfo"]
         after_this_request(
