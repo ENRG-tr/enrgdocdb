@@ -1,3 +1,5 @@
+import math
+
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlencode
@@ -89,7 +91,7 @@ def _sort_query(query: Query, query_model: Any) -> Query:
 
 
 def paginate(
-    query: Query, request: Request, per_page: int = 50, query_name: str | None = None
+    query: Query, request: Request, per_page: int = 10, query_name: str | None = None
 ) -> PaginatedQueryResult:
     query_model: Any = query.column_descriptions[0]["entity"]
 
@@ -106,7 +108,7 @@ def paginate(
         result=query.all(),
         page=page,
         total_count=query_count,
-        total_pages=query_count // per_page,
+        total_pages=math.ceil(query_count / per_page),
         query_name=query_name,
         query_model=query_model.__name__,
     )
