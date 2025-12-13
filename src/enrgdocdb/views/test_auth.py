@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, Response, request
 from flask_login import current_user
 
 blueprint = Blueprint("test_auth", __name__, url_prefix="/test-auth")
@@ -13,7 +13,17 @@ def index():
 
 @blueprint.route("/has-role/<role>")
 def has_role(role):
-    if current_user.is_authenticated:
-        if any(role in r.name for r in current_user.roles):
-            return "You have the role '{}'".format(role)
-    return "You do not have the role '{}'".format(role), 401
+    has_role_as_admin_access = request.args.get("has_role_as_admin_access")
+    response = Response(
+        status=401, response="You do not have the role '{}'".format(role)
+    )
+    if not current_user.is_authenticated or not any(
+        role in r.name for r in current_user.roles
+    ):
+        return response
+
+    response = Response(status=200, response="You have the role '{}'".format(role))
+    if any(has_role_as_admin_access in r.name for r in current_user.roles):
+        response.headers["X-Admin-Access"] = "1"
+
+    return response
