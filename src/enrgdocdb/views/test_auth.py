@@ -13,17 +13,25 @@ def index():
 
 @blueprint.route("/has-role/<role>")
 def has_role(role):
-    has_role_as_admin_access = request.args.get("has_role_as_admin_access")
-    response = Response(
-        status=401, response="You do not have the role '{}'".format(role)
-    )
     if not current_user.is_authenticated or not any(
         role in r.name for r in current_user.roles
     ):
-        return response
+        return Response(
+            status=401, response="You do not have the role '{}'".format(role)
+        )
+
+    return Response(status=200, response="You have the role '{}'".format(role))
+
+
+@blueprint.route("/has-role/<role>/with-admin-role/<admin_role>")
+def has_role_with_admin_role(role, admin_role):
+    res = has_role(role)
+    if res.status_code == 401:
+        return res
 
     response = Response(status=200, response="You have the role '{}'".format(role))
-    if any(has_role_as_admin_access in r.name for r in current_user.roles):
-        response.headers["X-Admin-Access"] = "1"
+    response.headers["X-Admin-Access"] = (
+        "1" if any(admin_role in r.name for r in current_user.roles) else "0"
+    )
 
     return response
