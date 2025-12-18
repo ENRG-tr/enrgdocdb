@@ -6,7 +6,6 @@ from urllib.parse import urlencode
 
 from flask import Request
 from flask_login import current_user
-from sqlalchemy import nulls_last, nullslast
 from sqlalchemy.orm import Query, Session
 
 from ..database import db

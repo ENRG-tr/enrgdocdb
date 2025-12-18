@@ -1,4 +1,4 @@
-from flask import Blueprint, Response, request
+from flask import Blueprint, Response
 from flask_login import current_user
 
 blueprint = Blueprint("test_auth", __name__, url_prefix="/test-auth")

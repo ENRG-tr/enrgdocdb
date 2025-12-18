@@ -28,7 +28,10 @@ dependencies = [
 ]
 
 [tool.uv]
-dev-dependencies = ["djlint>=1.35.2"]
+dev-dependencies = [
+    "djlint>=1.35.2",
+    "ruff>=0.14.9",
+]
 
 [tool.djlint]
 ignore = "H021"

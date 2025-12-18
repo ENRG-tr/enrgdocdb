@@ -1,5 +1,4 @@
 from flask import Blueprint, abort, redirect, render_template, request, url_for
-from flask_login import current_user
 
 from ..database import db
 from ..models.author import Author, Institution

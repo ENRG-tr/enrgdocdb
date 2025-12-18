@@ -1,7 +1,6 @@
 from random import random
 
 from flask import render_template, url_for
-from markupsafe import Markup
 from wtforms import Field
 
 
