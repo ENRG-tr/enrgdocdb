@@ -22,7 +22,7 @@ class UserFileUploadResult:
 
 
 def handle_user_file_upload(request: Request) -> UserFileUploadResult:
-    from .settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_TEMP_FOLDER, SECRET_KEY
+    from ..settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_TEMP_FOLDER, SECRET_KEY
 
     """
     Handles file upload for user.
