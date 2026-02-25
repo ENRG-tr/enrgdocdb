@@ -2,7 +2,7 @@ import jwt
 from flask import Blueprint, Response, current_app
 from flask_login import current_user
 
-from enrgdocdb.settings import AUTH_JWT_SECRET_KEY
+from ..settings import AUTH_JWT_SECRET_KEY
 
 blueprint = Blueprint("test_auth", __name__, url_prefix="/test-auth")
 
