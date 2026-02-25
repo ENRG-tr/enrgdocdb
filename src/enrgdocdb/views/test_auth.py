@@ -1,5 +1,8 @@
-from flask import Blueprint, Response
+import jwt
+from flask import Blueprint, Response, current_app
 from flask_login import current_user
+
+from enrgdocdb.settings import AUTH_JWT_SECRET_KEY
 
 blueprint = Blueprint("test_auth", __name__, url_prefix="/test-auth")
 
@@ -25,13 +28,23 @@ def has_role(role):
 
 @blueprint.route("/has-role/<role>/with-admin-role/<admin_role>")
 def has_role_with_admin_role(role, admin_role):
+    assert AUTH_JWT_SECRET_KEY is not None
     res = has_role(role)
     if res.status_code == 401:
         return res
 
     response = Response(status=200, response="You have the role '{}'".format(role))
-    response.headers["X-Admin-Access"] = (
-        "1" if any(admin_role in r.name for r in current_user.roles) else "0"
-    )
+
+    is_admin = any(admin_role in r.name for r in current_user.roles)
+    token_payload = {
+        "admin": is_admin,
+        "user_info": {
+            "id": current_user.id,
+            "email": current_user.email,
+            "name": getattr(current_user, "name", ""),
+            "roles": [r.name for r in current_user.roles],
+        },
+    }
+    response.headers["X-Admin-Access"] = jwt.encode(token_payload, AUTH_JWT_SECRET_KEY)
 
     return response

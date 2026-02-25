@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SECRET_KEY = "your_secret_key"
+AUTH_JWT_SECRET_KEY = environ.get("AUTH_JWT_SECRET_KEY")
 
 SQLALCHEMY_ENGINES = {
     "default": {
