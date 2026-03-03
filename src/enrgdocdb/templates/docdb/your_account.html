@@ -34,32 +34,6 @@
             </li>
         {% endif %}
     </ul>
-    {% if server_password %}
-        <h2>ENRG Server Access</h2>
-        <hr>
-        <div class="alert alert-info" role="alert">
-            <p class="mb-1">
-                You have access to the following ENRG servers:
-                {% for role in server_roles %}
-                    <span class="badge bg-secondary">{{ role.name }}</span>
-                    {% if not loop.last %}·{% endif %}
-                {% endfor %}
-            </p>
-            <hr class="my-2">
-            <p class="mb-1">
-                Your <strong>server username</strong> is:
-                <code class="fs-5 user-select-all">{{ server_username }}</code>
-            </p>
-            <p class="mb-1">
-                Your <strong>temporary server password</strong> is:
-                <code class="fs-5 user-select-all">{{ server_password }}</code>
-            </p>
-            <p class="mb-0 text-muted small">
-                <i class="fas fa-info-circle"></i>
-                You will be prompted to change this password on your first login to the server.
-            </p>
-        </div>
-    {% endif %}
     <h2>Your Information</h2>
     <hr>
     <form method="post">

@@ -1,5 +1,3 @@
-import hashlib
-
 from flask import Blueprint, abort, flash, render_template, request
 from flask import current_app as app
 from flask_login import current_user
@@ -34,23 +32,7 @@ def your_account():
         form.first_name.data = current_user.first_name
         form.last_name.data = current_user.last_name
 
-    # Server roles, username and password
-    server_roles = [r for r in current_user.roles if r.name.startswith("enrg-server-")]
-    server_username = None
-    server_password = None
-    if server_roles and current_user.first_name and current_user.last_name:
-        first = "".join(filter(str.isalnum, current_user.first_name[0].lower()))
-        last = "".join(filter(str.isalnum, current_user.last_name[:6].lower()))
-        server_username = f"{first}{last}"
-        server_password = hashlib.md5(current_user.email.encode()).hexdigest()[:5]
-
-    return render_template(
-        "docdb/your_account.html",
-        form=form,
-        server_roles=server_roles,
-        server_username=server_username,
-        server_password=server_password,
-    )
+    return render_template("docdb/your_account.html", form=form)
 
 
 @blueprint.route("/view/<int:user_id>")
