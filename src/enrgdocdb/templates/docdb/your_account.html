@@ -52,4 +52,25 @@
         {% endif %}
         {{ render_form_row([form.submit]) }}
     </form>
+    {% if server_password %}
+        <h2>ENRG Server Access</h2>
+        <hr>
+        <div class="alert alert-info" role="alert">
+            <p class="mb-1">
+                <i class="fas fa-server"></i>
+                You have access to the following ENRG servers:
+                {% for role in server_roles %}<span class="badge bg-secondary">{{ role.name }}</span>{% endfor %}
+            </p>
+            <hr class="my-2">
+            <p class="mb-1">
+                <i class="fas fa-key"></i>
+                Your <strong>temporary server password</strong> is:
+                <code class="fs-5 user-select-all">{{ server_password }}</code>
+            </p>
+            <p class="mb-0 text-muted small">
+                <i class="fas fa-info-circle"></i>
+                You will be prompted to change this password on your first login to the server.
+            </p>
+        </div>
+    {% endif %}
 {% endblock content %}
