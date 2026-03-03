@@ -57,13 +57,11 @@
         <hr>
         <div class="alert alert-info" role="alert">
             <p class="mb-1">
-                <i class="fas fa-server"></i>
                 You have access to the following ENRG servers:
                 {% for role in server_roles %}<span class="badge bg-secondary">{{ role.name }}</span>{% endfor %}
             </p>
             <hr class="my-2">
             <p class="mb-1">
-                <i class="fas fa-key"></i>
                 Your <strong>temporary server password</strong> is:
                 <code class="fs-5 user-select-all">{{ server_password }}</code>
             </p>
