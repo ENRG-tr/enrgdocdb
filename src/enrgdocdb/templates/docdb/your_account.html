@@ -40,7 +40,10 @@
         <div class="alert alert-info" role="alert">
             <p class="mb-1">
                 You have access to the following ENRG servers:
-                {% for role in server_roles %}<span class="badge bg-secondary">{{ role.name }}</span>{% endfor %}
+                {% for role in server_roles %}
+                    <span class="badge bg-secondary">{{ role.name }}</span>
+                    {% if not loop.last %}·{% endif %}
+                {% endfor %}
             </p>
             <hr class="my-2">
             <p class="mb-1">
