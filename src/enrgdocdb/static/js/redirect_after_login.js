@@ -1,8 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const isAuthView = !!document.querySelector("[data-is-auth-view='true']");
-    const legitAuthURLs = ["/login", "/register", "/change", "/change-email", "/reset", "/verify", "/tf-select", "/tf-rescue", "/tf-setup", "/tf-setup/", "/tf-validate", "/login/oauthresponse/", "/login/oauthstart/"]
 
-    const isLegitAuthURL = legitAuthURLs.some((url) => window.location.pathname.startsWith(url));
+    const isLegitAuthURL = window.location.pathname.startsWith("/docdb/");
     const redirectUrlKey = "redirect-after-auth-url";
     if (!isAuthView && localStorage.getItem(redirectUrlKey)) {
         window.location.href = localStorage.getItem(redirectUrlKey);
