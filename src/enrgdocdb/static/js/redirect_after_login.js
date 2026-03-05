@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     const isAuthView = !!document.querySelector("[data-is-auth-view='true']");
-    const isLegitAuthURL = window.location.pathname.includes("/login") || window.location.pathname.includes("/register");
+    const legitAuthURLs = ["/login", "/register", "/change", "/change-email", "/reset", "/verify", "/tf-select", "/tf-rescue", "/tf-setup", "/tf-setup/", "/tf-validate", "/login/oauthresponse/", "/login/oauthstart/"]
+
+    const isLegitAuthURL = legitAuthURLs.some((url) => window.location.pathname.startsWith(url));
     const redirectUrlKey = "redirect-after-auth-url";
     if (!isAuthView && localStorage.getItem(redirectUrlKey)) {
         window.location.href = localStorage.getItem(redirectUrlKey);
@@ -8,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (isAuthView && !isLegitAuthURL) {
         // The idea is to catch the page nginx blocks with auth_request and redirect
-        // the user to that page after login. When /login or /register is requested
+        // the user to that page after login. When, e.g. /login or /register is requested
         // that means the user is not here because of the auth_request.
         const redirectUrl = window.location.href;
         localStorage.setItem(redirectUrlKey, redirectUrl)
@@ -16,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Display a info message to say that they need to login before they can see this page
         const infoMessage = document.createElement("div");
         infoMessage.classList.add("alert", "alert-info");
-        infoMessage.innerHTML = "You need to login with your ENRG DocDB account before you can see this page. (Presumably ENRGDAQ or its data)";
+        infoMessage.innerHTML = "You need to login with your ENRG DocDB account before you can see this page.";
         // Add it after h1
         document.querySelector("h1").parentNode.insertBefore(infoMessage, document.querySelector("h1").nextSibling);
     }

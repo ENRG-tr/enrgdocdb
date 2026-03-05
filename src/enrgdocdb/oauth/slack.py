@@ -1,9 +1,7 @@
 import logging
 from os import environ
-from secrets import token_urlsafe
 from typing import cast
 
-from argon2 import hash_password
 from flask import after_this_request
 from flask_security.datastore import UserDatastore
 from flask_security.oauth_provider import FsOAuthProvider
@@ -48,9 +46,7 @@ def _monkeypatch_user_datastore_for_oauth(
         if user is None and email == kwargs.get("email"):
             user = cast(
                 User,
-                user_datastore.create_user(
-                    email=email, password=hash_password(token_urlsafe().encode())
-                ),
+                user_datastore.create_user(email=email, password=None),
             )
             user.first_name = first_name
             user.last_name = last_name
