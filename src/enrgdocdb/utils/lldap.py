@@ -16,10 +16,16 @@ logger = logging.getLogger(__name__)
 _UID_UNSAFE = re.compile(r"[^a-z0-9_\-]")
 
 
-def _email_to_uid(email: str) -> str:
-    """john.doe@example.com → john_doe_at_example_com"""
-    local, _, domain = email.partition("@")
-    return _UID_UNSAFE.sub("_", f"{local}_at_{domain}".lower())
+def _user_to_uid(user: "User") -> str:
+    """john doe → jdoe, fallback to email prefix if missing."""
+    if user.first_name and user.last_name:
+        candidate = f"{user.first_name[0]}{user.last_name}".lower()
+        uid = _UID_UNSAFE.sub("", candidate)
+        if uid:
+            return uid
+
+    local, _, _ = user.email.partition("@")
+    return _UID_UNSAFE.sub("_", local.lower())
 
 
 def _role_to_group_name(role) -> str:
@@ -173,7 +179,7 @@ def sync_user(user: "User") -> None:
         remove_user(user)
         return
 
-    uid = _email_to_uid(user.email)
+    uid = _user_to_uid(user)
     try:
         _lldap_create_user(uid, user)
         logger.info("LLDAP: Created user %s (%s)", uid, user.email)
@@ -213,6 +219,10 @@ def init_app(app: Any) -> None:
     def on_user_registered(sender, user, **extra):
         try:
             sync_user(user)
+            from flask import has_request_context, request
+
+            if has_request_context() and request.form.get("password"):
+                update_password(user, request.form["password"])
         except Exception as exc:
             logger.error(
                 "LLDAP sync failed on registration for %s: %s", user.email, exc
@@ -222,6 +232,14 @@ def init_app(app: Any) -> None:
     def on_password_changed(sender, user, **extra):
         try:
             sync_user(user)
+            from flask import has_request_context, request
+
+            if has_request_context():
+                plain_pass = request.form.get("new_password") or request.form.get(
+                    "password"
+                )
+                if plain_pass:
+                    update_password(user, plain_pass)
         except Exception as exc:
             logger.error(
                 "LLDAP sync failed on password change for %s: %s", user.email, exc
@@ -281,7 +299,7 @@ def remove_user(user: "User") -> None:
         logger.debug("LLDAP not configured — skipping removal for %s", user.email)
         return
 
-    uid = _email_to_uid(user.email)
+    uid = _user_to_uid(user)
     try:
         _lldap_delete_user(uid)
         logger.info("LLDAP: Deleted user %s (%s)", uid, user.email)
@@ -297,7 +315,7 @@ def update_password(user: "User", new_plaintext_password: str) -> None:
         )
         return
 
-    uid = _email_to_uid(user.email)
+    uid = _user_to_uid(user)
     try:
         _graphql(
             """
