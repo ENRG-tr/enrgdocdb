@@ -1,11 +1,15 @@
+from typing import cast
+
 from flask import Blueprint, abort, flash, render_template, request
 from flask import current_app as app
 from flask_login import current_user
+from flask_security.utils import hash_password
 
 from ..database import db
 from ..forms.user import EditUserProfileForm
 from ..models.document import Document, DocumentFile
 from ..models.user import RolePermission, User
+from ..utils.lldap import update_password
 from ..utils.pagination import paginate
 from ..utils.security import permission_check, secure_blueprint
 
@@ -21,16 +25,31 @@ def inject_permission_check():
 @blueprint.route("/your_account", methods=["GET", "POST"])
 def your_account():
     form = EditUserProfileForm()
-    form.email.data = current_user.email
+    user = cast(User, current_user)
+    form.email.data = user.email
 
     if form.validate_on_submit():
-        current_user.first_name = form.first_name.data
-        current_user.last_name = form.last_name.data
+        user.first_name = form.first_name.data
+        user.last_name = form.last_name.data
+
+        if form.new_password.data and not user.password:
+            user.password = hash_password(form.new_password.data)
+            try:
+                update_password(user, form.new_password.data)
+                flash("Profile and account password updated successfully.")
+            except Exception as e:
+                app.logger.error("LLDAP password sync failed: %s", e)
+                flash(
+                    "Profile and password updated locally, but LDAP sync failed.",
+                    "warning",
+                )
+        else:
+            flash("Profile updated successfully")
+
         db.session.commit()
-        flash("Profile updated successfully")
     else:
-        form.first_name.data = current_user.first_name
-        form.last_name.data = current_user.last_name
+        form.first_name.data = user.first_name
+        form.last_name.data = user.last_name
 
     return render_template("docdb/your_account.html", form=form)
 

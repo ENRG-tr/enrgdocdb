@@ -50,6 +50,15 @@
         {% else %}
             {{ render_form_row([form.first_name, form.last_name]) }}
         {% endif %}
-        {{ render_form_row([form.submit]) }}
+        {% if not current_user.password %}
+            <hr class="mt-4 mb-4">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                You don't have an account password set. Set one below to enable email login and access LDAP-based services.
+            </div>
+            {{ render_field(form.new_password) }}
+            {{ render_field(form.confirm_password) }}
+        {% endif %}
+        <div class="mt-4">{{ render_form_row([form.submit]) }}</div>
     </form>
 {% endblock content %}
