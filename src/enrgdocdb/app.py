@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask
 from flask_alembic import Alembic
 from flask_babel import Babel
@@ -11,6 +13,9 @@ from .database import Model, db
 from .models.user import Role, User
 from .oauth.slack import SlackFsOauthProvider
 from .settings import SECURITY_OAUTH_ENABLE_SLACK
+from .utils import lldap as lldap_utils
+
+logger = logging.getLogger(__name__)
 
 alembic = Alembic(metadatas=Model.metadata)
 user_datastore = FSQLALiteUserDatastore(db, User, Role)
@@ -50,6 +55,8 @@ def create_app():
         admin.init_app(app)
         security.init_app(app, user_datastore)
         limiter.init_app(app)
+
+        lldap_utils.init_app(app)
 
         user_datastore.find_user = monkeypatch_user_loader(user_datastore.find_user)
 

@@ -1,10 +1,17 @@
+import logging
 from os import environ
 from secrets import token_urlsafe
+from typing import cast
 
 from argon2 import hash_password
 from flask import after_this_request
 from flask_security.datastore import UserDatastore
 from flask_security.oauth_provider import FsOAuthProvider
+
+from ..models.user import User
+from ..utils import lldap as lldap_utils
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_userinfo(client, data):
@@ -39,11 +46,19 @@ def _monkeypatch_user_datastore_for_oauth(
     def find_user(*args, **kwargs):
         user = org_find_user(*args, **kwargs)
         if user is None and email == kwargs.get("email"):
-            user = user_datastore.create_user(
-                email=email, password=hash_password(token_urlsafe().encode())
+            user = cast(
+                User,
+                user_datastore.create_user(
+                    email=email, password=hash_password(token_urlsafe().encode())
+                ),
             )
             user.first_name = first_name
             user.last_name = last_name
+            # create_user() bypasses user_registered — sync directly.
+            try:
+                lldap_utils.sync_user(user)
+            except Exception as exc:
+                logger.error("LLDAP sync failed for OAuth user %s: %s", email, exc)
         return user
 
     user_datastore.find_user = find_user
