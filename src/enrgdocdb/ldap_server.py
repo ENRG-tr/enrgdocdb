@@ -17,6 +17,7 @@ class DocDBLDAPServer(LDAPServer):
         self.app = app
         self.base_dn = "dc=enrgdocdb"
         self.users_ou = f"ou=users,{self.base_dn}"
+        self.bound_dn = b""
 
     def get_users(self):
         from src.enrgdocdb.database import db
@@ -79,47 +80,24 @@ class DocDBLDAPServer(LDAPServer):
             entries = [self._user_to_entry(u) for u in users]
 
             if request.baseObject == b"":
-                root_attrs = {
-                    "objectClass": [b"top"],
-                    "namingContexts": [self.base_dn.encode("utf-8")],
-                    "supportedLDAPVersion": [b"3"],
-                }
-                root = self._user_to_entry(
-                    type(
-                        "RootMock",
-                        (),
-                        {
-                            "id": "root",
-                            "email": "",
-                            "name": "",
-                            "last_name": "",
-                            "first_name": "",
-                        },
-                    )()
+                root = ReadOnlyInMemoryLDAPEntry(
+                    distinguishedname.DistinguishedName(b""),
+                    {
+                        "objectClass": [b"top"],
+                        "namingContexts": [self.base_dn.encode("utf-8")],
+                        "supportedLDAPVersion": [b"3"],
+                    },
                 )
-                root.attrs = root_attrs
-                root._dn = distinguishedname.DistinguishedName(b"")
                 entries.append(root)
 
             # organizational unit for users
-            ou_entry = self._user_to_entry(
-                type(
-                    "OUMock",
-                    (),
-                    {
-                        "id": "users",
-                        "email": "",
-                        "name": "users",
-                        "last_name": "",
-                        "first_name": "",
-                    },
-                )()
+            ou_entry = ReadOnlyInMemoryLDAPEntry(
+                distinguishedname.DistinguishedName(self.users_ou),
+                {
+                    "objectClass": [b"organizationalUnit", b"top"],
+                    "ou": [b"users"],
+                },
             )
-            ou_entry.attrs = {
-                "objectClass": [b"organizationalUnit", b"top"],
-                "ou": [b"users"],
-            }
-            ou_entry._dn = distinguishedname.DistinguishedName(self.users_ou)
             entries.append(ou_entry)
 
             matched = []
@@ -161,6 +139,7 @@ class DocDBLDAPServer(LDAPServer):
 
     def handle_LDAPBindRequest(self, request, controls, reply):
         if not request.dn and not request.auth:
+            self.bound_dn = b""
             return defer.succeed(
                 pureldap.LDAPBindResponse(
                     resultCode=ldaperrors.Success.resultCode,
@@ -181,7 +160,9 @@ class DocDBLDAPServer(LDAPServer):
                 )
             )
 
-        if dn == f"cn=admin,{self.base_dn}" and password == "admin":
+        admin_password = self.app.config.get("LDAP_ADMIN_PASSWORD", "admin")
+        if dn == f"cn=admin,{self.base_dn}" and password == admin_password:
+            self.bound_dn = request.dn
             return defer.succeed(
                 pureldap.LDAPBindResponse(
                     resultCode=ldaperrors.Success.resultCode,
@@ -218,6 +199,7 @@ class DocDBLDAPServer(LDAPServer):
                 with self.app.app_context():
                     is_valid = verify_password(password, user.password)
                     if is_valid:
+                        self.bound_dn = request.dn
                         return defer.succeed(
                             pureldap.LDAPBindResponse(
                                 resultCode=ldaperrors.Success.resultCode,
@@ -233,6 +215,16 @@ class DocDBLDAPServer(LDAPServer):
                 errorMessage=b"",
             )
         )
+
+    def extendedRequest_whoami(self, value=None, reply=None):
+        authz_id = b"dn:" + self.bound_dn if self.bound_dn else b""
+        # WhoAmI request does not return responseName
+        return pureldap.LDAPExtendedResponse(
+            resultCode=ldaperrors.Success.resultCode,
+            response=authz_id,
+        )
+
+    extendedRequest_whoami.oid = b"1.3.6.1.4.1.4203.1.11.3"
 
 
 def run_ldap_server(app, port=10389):
