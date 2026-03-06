@@ -25,13 +25,11 @@ dependencies = [
     "mysqlclient>=2.2.6",
     "icalendar>=6.1.0",
     "flask-limiter>=3.10.1",
+    "ldaptor>=21.2.0",
 ]
 
 [tool.uv]
-dev-dependencies = [
-    "djlint>=1.35.2",
-    "ruff>=0.14.9",
-]
+dev-dependencies = ["djlint>=1.35.2", "ruff>=0.14.9"]
 
 [tool.djlint]
 ignore = "H021"

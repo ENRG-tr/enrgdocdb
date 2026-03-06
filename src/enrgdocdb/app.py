@@ -13,7 +13,6 @@ from .database import Model, db
 from .models.user import Role, User
 from .oauth.slack import SlackFsOauthProvider
 from .settings import SECURITY_OAUTH_ENABLE_SLACK
-from .utils import authentik as authentik_utils
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +54,6 @@ def create_app():
         admin.init_app(app)
         security.init_app(app, user_datastore)
         limiter.init_app(app)
-
-        authentik_utils.init_app(app)
 
         user_datastore.find_user = monkeypatch_user_loader(user_datastore.find_user)
 

@@ -7,7 +7,6 @@ from flask_security.datastore import UserDatastore
 from flask_security.oauth_provider import FsOAuthProvider
 
 from ..models.user import User
-from ..utils import lldap as lldap_utils
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +49,6 @@ def _monkeypatch_user_datastore_for_oauth(
             )
             user.first_name = first_name
             user.last_name = last_name
-            # create_user() bypasses user_registered — sync directly.
-            try:
-                lldap_utils.sync_user(user)
-            except Exception as exc:
-                logger.error("LLDAP sync failed for OAuth user %s: %s", email, exc)
         return user
 
     user_datastore.find_user = find_user

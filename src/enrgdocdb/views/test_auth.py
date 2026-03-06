@@ -1,5 +1,5 @@
 import jwt
-from flask import Blueprint, Response, current_app
+from flask import Blueprint, Response
 from flask_login import current_user
 
 from ..settings import AUTH_JWT_SECRET_KEY
