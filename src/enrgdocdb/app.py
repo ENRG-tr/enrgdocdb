@@ -13,7 +13,7 @@ from .database import Model, db
 from .models.user import Role, User
 from .oauth.slack import SlackFsOauthProvider
 from .settings import SECURITY_OAUTH_ENABLE_SLACK
-from .utils import lldap as lldap_utils
+from .utils import authentik as authentik_utils
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def create_app():
         security.init_app(app, user_datastore)
         limiter.init_app(app)
 
-        lldap_utils.init_app(app)
+        authentik_utils.init_app(app)
 
         user_datastore.find_user = monkeypatch_user_loader(user_datastore.find_user)
 
@@ -74,5 +74,12 @@ def create_app():
 
         for view in admin_views:
             admin.add_view(view)
+
+        @app.cli.command("run-ldap")
+        def run_ldap():
+            """Run the LDAP server."""
+            from src.enrgdocdb.ldap_server import run_ldap_server
+
+            run_ldap_server(app)
 
     return app
