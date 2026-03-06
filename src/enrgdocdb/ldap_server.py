@@ -49,13 +49,57 @@ class DocDBLDAPServer(LDAPServer):
                 db.session.query(User).filter_by(email=email, deleted_at=None).first()
             )
 
+    def _generate_username(self, user):
+        import re
+
+        def transliterate(text):
+            charmap = {
+                "ç": "c", "ğ": "g", "ı": "i", "ö": "o", "ş": "s", "ü": "u",
+                "Ç": "c", "Ğ": "g", "İ": "i", "Ö": "o", "Ş": "s", "Ü": "u"
+            }
+            res = ""
+            for char in text:
+                res += str(charmap.get(char, char))
+            return res
+
+        f_name = transliterate((user.first_name or "").strip().lower())
+        l_name = transliterate((user.last_name or "").strip().lower())
+
+        if f_name and l_name:
+            f_init = re.sub(r"[^a-z0-9]", "", f_name)
+            if not f_init:
+                f_init = "u"
+            f_init = f_init[0]
+
+            l_part = re.sub(r"[^a-z0-9]", "", l_name)
+            uid_str = f"{f_init}{l_part}"
+        elif f_name:
+            uid_str = re.sub(r"[^a-z0-9]", "", f_name)
+        else:
+            email_part = transliterate((user.email or "").split("@")[0].lower())
+            uid_str = re.sub(r"[^a-z0-9]", "", email_part)
+
+        if not uid_str:
+            uid_str = str(user.id)
+
+        return uid_str
+
+    def get_user_by_generated_uid(self, uid_str):
+        users = self.get_users()
+        for u in users:
+            if self._generate_username(u) == uid_str:
+                return u
+        # try uuid fallback just in case
+        return self.get_user_by_uuid(uid_str)
+
     def _user_to_entry(self, user):
-        dn = f"uid={user.id},{self.users_ou}"
+        gen_uid = self._generate_username(user)
+        dn = f"uid={gen_uid},{self.users_ou}"
         object_classes = [b"inetOrgPerson", b"organizationalPerson", b"person", b"top"]
 
         attributes = {
             "objectClass": object_classes,
-            "uid": [str(user.id).encode("utf-8")],
+            "uid": [gen_uid.encode("utf-8")],
             "mail": [user.email.encode("utf-8")],
             "cn": [user.name.encode("utf-8")],
             "sn": [
@@ -177,7 +221,7 @@ class DocDBLDAPServer(LDAPServer):
             user = None
             if uid_part.startswith("uid="):
                 uid = uid_part[4:]
-                user = self.get_user_by_uuid(uid)
+                user = self.get_user_by_generated_uid(uid)
                 if not user:
                     user = self.get_user_by_email(uid)
 
