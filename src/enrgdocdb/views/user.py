@@ -9,7 +9,6 @@ from ..database import db
 from ..forms.user import EditUserProfileForm
 from ..models.document import Document, DocumentFile
 from ..models.user import RolePermission, User
-from ..utils.authentik import update_password
 from ..utils.pagination import paginate
 from ..utils.security import permission_check, secure_blueprint
 
@@ -34,7 +33,6 @@ def your_account():
 
         if form.new_password.data and not user.password:
             user.password = hash_password(form.new_password.data)
-            update_password(user, form.new_password.data)
             flash("Profile and account password updated successfully.")
         else:
             flash("Profile updated successfully")
