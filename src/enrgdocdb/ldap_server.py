@@ -1,12 +1,11 @@
 import logging
 import traceback
 
+from ldaptor.inmemory import ReadOnlyInMemoryLDAPEntry
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import ldaperrors
+from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 from ldaptor.protocols.ldap.ldapserver import LDAPServer
 from twisted.internet import defer
-from ldaptor.protocols.ldap import distinguishedname
-from ldaptor.inmemory import ReadOnlyInMemoryLDAPEntry
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +16,7 @@ class DocDBLDAPServer(LDAPServer):
         self.app = app
         self.base_dn = "dc=enrgdocdb"
         self.users_ou = f"ou=users,{self.base_dn}"
+        self.groups_ou = f"ou=groups,{self.base_dn}"
         self.bound_dn = b""
 
     def get_users(self):
@@ -49,13 +49,30 @@ class DocDBLDAPServer(LDAPServer):
                 db.session.query(User).filter_by(email=email, deleted_at=None).first()
             )
 
+    def get_roles(self):
+        from src.enrgdocdb.database import db
+        from src.enrgdocdb.models.user import Role
+
+        with self.app.app_context():
+            return db.session.query(Role).all()
+
     def _generate_username(self, user):
         import re
 
         def transliterate(text):
             charmap = {
-                "ç": "c", "ğ": "g", "ı": "i", "ö": "o", "ş": "s", "ü": "u",
-                "Ç": "c", "Ğ": "g", "İ": "i", "Ö": "o", "Ş": "s", "Ü": "u"
+                "ç": "c",
+                "ğ": "g",
+                "ı": "i",
+                "ö": "o",
+                "ş": "s",
+                "ü": "u",
+                "Ç": "c",
+                "Ğ": "g",
+                "İ": "i",
+                "Ö": "o",
+                "Ş": "s",
+                "Ü": "u",
             }
             res = ""
             for char in text:
@@ -118,10 +135,53 @@ class DocDBLDAPServer(LDAPServer):
 
         return ReadOnlyInMemoryLDAPEntry(dn, attributes)
 
+    def _role_to_entry(self, role):
+        dn = f"cn={role.name.lower()},{self.groups_ou}"
+        object_classes = [b"groupOfNames", b"top"]
+
+        # Get members
+        members = []
+        from src.enrgdocdb.database import db
+        from src.enrgdocdb.models.user import User
+
+        with self.app.app_context():
+            try:
+                # Query users who have this role
+                users = (
+                    db.session.query(User)
+                    .filter(User.roles.contains(role), User.deleted_at.is_(None))
+                    .all()
+                )
+                for user in users:
+                    user_dn = f"uid={self._generate_username(user)},{self.users_ou}"
+                    members.append(user_dn.encode("utf-8"))
+            except Exception as e:
+                logger.error(f"Error fetching members for role {role.name}: {e}")
+
+        if not members:
+            members = [b"cn=admin,dc=enrgdocdb"]
+
+        attributes = {
+            "objectClass": object_classes,
+            "cn": [role.name.encode("utf-8")],
+            "member": members,
+        }
+        if role.description:
+            attributes["description"] = [role.description.encode("utf-8")]
+
+        return ReadOnlyInMemoryLDAPEntry(dn, attributes)
+
     def handle_LDAPSearchRequest(self, request, controls, reply):
         try:
+            base_dn_str = request.baseObject.decode("utf-8")
+
             users = self.get_users()
-            entries = [self._user_to_entry(u) for u in users]
+            user_entries = [self._user_to_entry(u) for u in users]
+
+            roles = self.get_roles()
+            role_entries = [self._role_to_entry(r) for r in roles]
+
+            entries = []
 
             if request.baseObject == b"":
                 root = ReadOnlyInMemoryLDAPEntry(
@@ -135,18 +195,37 @@ class DocDBLDAPServer(LDAPServer):
                 entries.append(root)
 
             # organizational unit for users
-            ou_entry = ReadOnlyInMemoryLDAPEntry(
+            ou_users_entry = ReadOnlyInMemoryLDAPEntry(
                 distinguishedname.DistinguishedName(self.users_ou),
                 {
                     "objectClass": [b"organizationalUnit", b"top"],
                     "ou": [b"users"],
                 },
             )
-            entries.append(ou_entry)
+            entries.append(ou_users_entry)
+
+            # organizational unit for groups
+            ou_groups_entry = ReadOnlyInMemoryLDAPEntry(
+                distinguishedname.DistinguishedName(self.groups_ou),
+                {
+                    "objectClass": [b"organizationalUnit", b"top"],
+                    "ou": [b"groups"],
+                },
+            )
+            entries.append(ou_groups_entry)
+
+            entries.extend(user_entries)
+            entries.extend(role_entries)
 
             matched = []
+            search_base = distinguishedname.DistinguishedName(base_dn_str)
+
             for entry in entries:
                 try:
+                    # Check if entry is within the search base
+                    if not search_base.contains(entry.dn):
+                        continue
+
                     is_match = entry.match(request.filter)
                     if is_match:
                         matched.append(entry)
