@@ -41,4 +41,39 @@ FILE_UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 50
 FILE_UPLOAD_TEMP_CLEAR_INTERVAL_HOURS = 4
 FILE_UPLOAD_TEMP_FOLDER = tempfile.mkdtemp()
 
-LDAP_ADMIN_PASSWORD = environ.get("LDAP_ADMIN_PASSWORD", "admin")
+# LDAP Configuration
+LDAP_ENABLED = environ.get("LDAP_ENABLED", "false").lower() == "true"
+LDAP_PORT = int(environ.get("LDAP_PORT", 10389))
+LDAPS_PORT = int(environ.get("LDAPS_PORT", 636))
+LDAP_BASE_DN = environ.get("LDAP_BASE_DN", "dc=enrgdocdb")
+LDAP_USERS_OU = environ.get("LDAP_USERS_OU", "ou=users")
+LDAP_GROUPS_OU = environ.get("LDAP_GROUPS_OU", "ou=groups")
+LDAP_ADMIN_PASSWORD = environ.get("LDAP_ADMIN_PASSWORD")
+
+# LDAP TLS/SSL Configuration
+LDAP_USE_TLS = environ.get("LDAP_USE_TLS", "false").lower() == "true"
+LDAP_TLS_CERT_FILE = environ.get("LDAP_TLS_CERT_FILE")
+LDAP_TLS_KEY_FILE = environ.get("LDAP_TLS_KEY_FILE")
+LDAP_TLS_CA_FILE = environ.get("LDAP_TLS_CA_FILE")
+
+# LDAP Performance Settings
+LDAP_CACHE_ENABLED = environ.get("LDAP_CACHE_ENABLED", "false").lower() == "true"
+LDAP_CACHE_TYPE = environ.get("LDAP_CACHE_TYPE", "simple")  # simple, redis
+LDAP_CACHE_TIMEOUT = int(environ.get("LDAP_CACHE_TIMEOUT", 300))
+LDAP_PAGE_SIZE = int(environ.get("LDAP_PAGE_SIZE", 1000))
+
+# LDAP Logging
+LDAP_LOG_LEVEL = environ.get("LDAP_LOG_LEVEL", "INFO").upper()
+LDAP_LOG_REQUESTS = environ.get("LDAP_LOG_REQUESTS", "false").lower() == "true"
+
+# LDAP Security
+LDAP_REQUIRE_SECURE_BINDS = (
+    environ.get("LDAP_REQUIRE_SECURE_BINDS", "false").lower() == "true"
+)
+LDAP_MAX_CONNECTIONS = int(environ.get("LDAP_MAX_CONNECTIONS", 100))
+
+if LDAP_ENABLED and not LDAP_ADMIN_PASSWORD:
+    raise ValueError("LDAP_ADMIN_PASSWORD must be set when LDAP_ENABLED is true")
+
+if LDAP_ADMIN_PASSWORD and len(LDAP_ADMIN_PASSWORD) < 12:
+    raise ValueError("LDAP_ADMIN_PASSWORD must be at least 12 characters long")

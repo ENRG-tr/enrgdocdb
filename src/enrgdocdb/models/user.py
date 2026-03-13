@@ -1,12 +1,13 @@
+import re
+import unicodedata
 from datetime import datetime
 from enum import Enum
 
-from flask_security.models import sqla as sqla
-from sqlalchemy import ForeignKey, String, func
+from flask_security.models import sqla
+from sqlalchemy import ForeignKey, String, event, func, orm
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Model, db
-from .base import Base
 
 
 class RolePermission(str, Enum):
@@ -88,13 +89,116 @@ class User(Model, sqla.FsUserMixin):
             if RolePermission.EDIT_SELF in x.permissions and x.organization
         ]
 
+    @staticmethod
+    def transliterate(text):
+        if not text:
+            return ""
 
-class Organization(Base, Model):
+        text = unicodedata.normalize("NFKD", text)
+        charmap = {
+            "ç": "c",
+            "ğ": "g",
+            "ı": "i",
+            "ö": "o",
+            "ş": "s",
+            "ü": "u",
+            "Ç": "c",
+            "Ğ": "g",
+            "İ": "i",
+            "Ö": "o",
+            "Ş": "s",
+            "Ü": "u",
+        }
+        res = ""
+        for char in text:
+            if unicodedata.category(char) != "Mn":
+                res += charmap.get(char, char)
+        return res
+
+    def _generate_unique_username(self):
+        """Generate a unique username based on first and last name."""
+
+        if not self.first_name or not self.last_name:
+            return None
+
+        f_name = self.transliterate(self.first_name.strip().lower())
+        l_name = self.transliterate(self.last_name.strip().lower())
+
+        f_init = re.sub(r"[^a-z0-9]", "", f_name)
+        if not f_init:
+            f_init = "u"
+        f_init = f_init[0]
+        l_part = re.sub(r"[^a-z0-9]", "", l_name)
+
+        base_username = f"{f_init}{l_part}"
+        if not base_username:
+            return None
+
+        # Check for duplicates in the database
+        final_username = base_username
+        counter = 1
+
+        while True:
+            # Check if this username is already taken by ANOTHER user
+            existing = (
+                db.session.query(User)
+                .filter(User.username == final_username, User.id != self.id)
+                .first()
+            )
+
+            if not existing:
+                break
+
+            final_username = f"{base_username}{counter}"
+            counter += 1
+
+        return final_username
+
+    def get_ldap_uid(self) -> str:
+        """Get LDAP UID. Uses username if set, otherwise falls back to generation."""
+        if self.username:
+            return self.username
+
+        if hasattr(self, "_cached_ldap_uid"):
+            return self._cached_ldap_uid
+
+        f_name = self.transliterate((self.first_name or "").strip().lower())
+        l_name = self.transliterate((self.last_name or "").strip().lower())
+
+        if f_name and l_name:
+            f_init = re.sub(r"[^a-z0-9]", "", f_name)
+            if not f_init:
+                f_init = "u"
+            f_init = f_init[0]
+            l_part = re.sub(r"[^a-z0-9]", "", l_name)
+            uid_str = f"{f_init}{l_part}"
+        elif f_name:
+            uid_str = re.sub(r"[^a-z0-9]", "", f_name)
+        else:
+            email_part = self.transliterate((self.email or "").split("@")[0].lower())
+            uid_str = re.sub(r"[^a-z0-9]", "", email_part)
+
+        if not uid_str:
+            uid_str = str(self.id)
+
+        self._cached_ldap_uid = uid_str
+        return uid_str
+
+
+class Organization(Model):
     __tablename__ = "organizations"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(512))
 
-    roles: Mapped[list[Role]] = relationship()
+    roles: Mapped[list["Role"]] = relationship(back_populates="organization")
 
     def __repr__(self) -> str:
         return self.name
+
+
+# Event listeners to automatically generate username
+@event.listens_for(User, "before_insert")
+@event.listens_for(User, "before_update")
+def receive_before_flush(mapper, connection, target):
+    if not target.username and target.first_name and target.last_name:
+        target.username = target._generate_unique_username()

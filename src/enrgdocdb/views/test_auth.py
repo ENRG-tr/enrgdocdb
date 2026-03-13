@@ -43,6 +43,7 @@ def has_role_with_admin_role(role, admin_role):
             "email": current_user.email,
             "name": getattr(current_user, "name", ""),
             "roles": [r.name for r in current_user.roles],
+            "username": current_user.username,
         },
     }
     response.headers["X-Admin-Access"] = jwt.encode(token_payload, AUTH_JWT_SECRET_KEY)
