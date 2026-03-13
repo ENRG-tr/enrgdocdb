@@ -93,27 +93,9 @@ class User(Model, sqla.FsUserMixin):
     def transliterate(text):
         if not text:
             return ""
-
-        text = unicodedata.normalize("NFKD", text)
-        charmap = {
-            "ç": "c",
-            "ğ": "g",
-            "ı": "i",
-            "ö": "o",
-            "ş": "s",
-            "ü": "u",
-            "Ç": "c",
-            "Ğ": "g",
-            "İ": "i",
-            "Ö": "o",
-            "Ş": "s",
-            "Ü": "u",
-        }
-        res = ""
-        for char in text:
-            if unicodedata.category(char) != "Mn":
-                res += charmap.get(char, char)
-        return res
+        text = text.replace("ı", "i")
+        nfkd_form = unicodedata.normalize("NFKD", text)
+        return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
 
     def _generate_unique_username(self):
         """Generate a unique username based on first and last name."""
