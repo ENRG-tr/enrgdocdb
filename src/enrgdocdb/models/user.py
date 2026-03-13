@@ -105,6 +105,7 @@ class User(Model, sqla.FsUserMixin):
 
         f_name = self.transliterate(self.first_name.strip().lower())
         l_name = self.transliterate(self.last_name.strip().lower())
+        l_name = l_name[:10]
 
         f_init = re.sub(r"[^a-z0-9]", "", f_name)
         if not f_init:
