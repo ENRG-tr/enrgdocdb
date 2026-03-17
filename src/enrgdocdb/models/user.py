@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 
 from flask_security.models import sqla
-from sqlalchemy import ForeignKey, String, event, func, orm
+from sqlalchemy import ForeignKey, String, event, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Model, db
@@ -117,17 +117,34 @@ class User(Model, sqla.FsUserMixin):
         if not base_username:
             return None
 
-        # Check for duplicates in the database
+        return self.make_unique_username(base_username)
+
+    def make_unique_username(self, base_username):
+        """Ensure the username is unique by checking DB and current session."""
         final_username = base_username
         counter = 1
 
         while True:
-            # Check if this username is already taken by ANOTHER user
-            existing = (
-                db.session.query(User)
-                .filter(User.username == final_username, User.id != self.id)
-                .first()
-            )
+            # Check for duplicates in the database WITHOUT triggering autoflush
+            # to avoid IntegrityErrors when multiple objects in session have the same value
+            with db.session.no_autoflush:
+                existing = (
+                    db.session.query(User)
+                    .filter(User.username == final_username, User.id != self.id)
+                    .first()
+                )
+
+            # Also check the current session for uncommitted changes
+            if not existing:
+                for obj in db.session.new:
+                    if isinstance(obj, User) and obj.username == final_username and obj is not self:
+                        existing = obj
+                        break
+                if not existing:
+                    for obj in db.session.dirty:
+                        if isinstance(obj, User) and obj.username == final_username and obj is not self:
+                            existing = obj
+                            break
 
             if not existing:
                 break
