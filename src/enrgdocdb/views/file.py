@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import jwt
-from flask import Blueprint, abort, request
+from flask import Blueprint, abort, request, send_from_directory
 
 from ..settings import (
     FILE_UPLOAD_MAX_FILE_SIZE,
@@ -63,6 +63,19 @@ def upload_file():
     threading.Thread(target=_cleanup_temp_folder).start()
 
     return "OK", 204
+
+
+@blueprint.route("/get/<filename>")
+def get_file(filename):
+    from ..settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_TEMP_FOLDER
+
+    if FILE_UPLOAD_FOLDER and os.path.exists(os.path.join(FILE_UPLOAD_FOLDER, filename)):
+        return send_from_directory(FILE_UPLOAD_FOLDER, filename)
+    
+    if FILE_UPLOAD_TEMP_FOLDER and os.path.exists(os.path.join(FILE_UPLOAD_TEMP_FOLDER, filename)):
+        return send_from_directory(FILE_UPLOAD_TEMP_FOLDER, filename)
+    
+    return abort(404)
 
 
 def _cleanup_temp_folder():

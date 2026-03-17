@@ -1,10 +1,11 @@
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, abort, redirect, render_template, request, send_from_directory, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import desc
 
 from ..database import db
 from ..models.user import RolePermission
-from ..models.wiki import WikiPage, WikiRevision
+from ..models.wiki import WikiFile, WikiPage, WikiRevision
+from ..settings import FILE_UPLOAD_FOLDER
+from ..utils.file import handle_user_file_upload
 from ..utils.security import permission_check, secure_blueprint
 
 blueprint = Blueprint("wiki", __name__, url_prefix="/wiki")
@@ -67,9 +68,11 @@ def view_page(slug):
 
 
 @blueprint.route("/new", methods=["GET", "POST"])
+@blueprint.route("/new", methods=["GET", "POST"])
 @login_required
 def new_page():
     """Create a new wiki page."""
+    user_files_result = handle_user_file_upload(request)
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         slug = request.form.get("slug", "").strip()
@@ -88,6 +91,7 @@ def new_page():
                 is_pinned=is_pinned,
                 content=content,
                 all_pages=_get_all_pages(),
+                user_files=user_files_result.template_args,
             )
 
         # Check if slug already exists
@@ -102,6 +106,7 @@ def new_page():
                 is_pinned=is_pinned,
                 content=content,
                 all_pages=_get_all_pages(),
+                user_files=user_files_result.template_args,
             )
 
         # Check parent exists if specified
@@ -130,6 +135,17 @@ def new_page():
 
         db.session.add(page)
         db.session.add(revision)
+
+        # Handle user files
+        if user_files_result.user_files:
+            for user_file in user_files_result.user_files:
+                wiki_file = WikiFile(
+                    page=page,
+                    file_name=user_file.uploaded_file_name,
+                    real_file_name=user_file.file_path,
+                )
+                db.session.add(wiki_file)
+
         db.session.commit()
 
         return redirect(url_for("wiki.view_page", slug=page.slug))
@@ -141,6 +157,7 @@ def new_page():
         page=None,
         parent_id=parent_id,
         all_pages=_get_all_pages(),
+        user_files=user_files_result.template_args,
     )
 
 
@@ -154,6 +171,8 @@ def edit_page(slug):
 
     if not permission_check(page, RolePermission.EDIT):
         return redirect(url_for("index.no_role"))
+
+    user_files_result = handle_user_file_upload(request)
 
     if request.method == "POST":
         title = request.form.get("title", "").strip()
@@ -173,6 +192,7 @@ def edit_page(slug):
                 is_pinned=is_pinned,
                 content=content,
                 all_pages=_get_all_pages(),
+                user_files=user_files_result.template_args,
             )
 
         # Check for slug conflict (excluding current page)
@@ -189,6 +209,7 @@ def edit_page(slug):
                     is_pinned=is_pinned,
                     content=content,
                     all_pages=_get_all_pages(),
+                    user_files=user_files_result.template_args,
                 )
 
         # Check for circular parent reference
@@ -203,6 +224,7 @@ def edit_page(slug):
                 is_pinned=is_pinned,
                 content=content,
                 all_pages=_get_all_pages(),
+                user_files=user_files_result.template_args,
             )
 
         # Validate parent exists
@@ -226,13 +248,27 @@ def edit_page(slug):
             comment=request.form.get("comment", ""),
         )
         db.session.add(revision)
+
+        # Handle user files
+        if user_files_result.user_files:
+            for user_file in user_files_result.user_files:
+                wiki_file = WikiFile(
+                    page=page,
+                    file_name=user_file.uploaded_file_name,
+                    real_file_name=user_file.file_path,
+                )
+                db.session.add(wiki_file)
+
         db.session.commit()
 
         return redirect(url_for("wiki.view_page", slug=page.slug))
 
     # GET request - show form pre-populated
     return render_template(
-        "docdb/wiki/edit.html", page=page, all_pages=_get_all_pages()
+        "docdb/wiki/edit.html",
+        page=page,
+        all_pages=_get_all_pages(),
+        user_files=user_files_result.template_args,
     )
 
 
@@ -255,6 +291,27 @@ def history(slug):
     )
 
 
+@blueprint.route("/download-file/<int:file_id>")
+@login_required
+def download_file(file_id: int):
+    """Download an attached file."""
+    file = db.session.query(WikiFile).get(file_id)
+    if not file:
+        return abort(404)
+
+    if not permission_check(file.page, RolePermission.VIEW):
+        return abort(403)
+
+    if FILE_UPLOAD_FOLDER is None:
+        return abort(500)
+
+    return send_from_directory(
+        FILE_UPLOAD_FOLDER,
+        file.real_file_name,
+        download_name=file.file_name,
+    )
+
+
 @blueprint.route("/<slug>/revision/<int:revision_id>")
 @login_required
 def view_revision(slug, revision_id):
@@ -274,10 +331,21 @@ def view_revision(slug, revision_id):
     if not revision:
         return redirect(url_for("errors.error_404"))
 
+    # Calculate relative revision number
+    revision_number = (
+        db.session.query(WikiRevision)
+        .filter(
+            WikiRevision.page_id == page.id,
+            WikiRevision.id <= revision.id,
+        )
+        .count()
+    )
+
     return render_template(
         "docdb/wiki/view_revision.html",
         page=page,
         revision=revision,
+        revision_number=revision_number,
     )
 
 

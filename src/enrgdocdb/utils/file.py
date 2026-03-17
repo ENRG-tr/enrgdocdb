@@ -99,6 +99,11 @@ def handle_user_file_upload(request: Request) -> UserFileUploadResult:
             if not os.path.exists(file_path):
                 continue
 
+            from pathlib import Path
+
+            # Ensure the permanent upload folder exists
+            Path(FILE_UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
+
             # Move folder out of temp folder to upload folder
             shutil.move(file_path, FILE_UPLOAD_FOLDER)
             file_path = os.path.basename(file_path)

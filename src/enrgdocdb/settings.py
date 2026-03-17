@@ -1,4 +1,4 @@
-import tempfile
+import os
 from os import environ
 
 from dotenv import load_dotenv
@@ -36,10 +36,17 @@ SECURITY_POST_REGISTER_VIEW = "index.index"
 
 BOOTSTRAP_BOOTSWATCH_THEME = "pulse"
 
-FILE_UPLOAD_FOLDER = environ["FILE_UPLOAD_FOLDER"]
+_upload_folder = environ.get("FILE_UPLOAD_FOLDER", "uploads")
+if not os.path.isabs(_upload_folder):
+    _upload_folder = os.path.abspath(os.path.join(os.getcwd(), _upload_folder))
+FILE_UPLOAD_FOLDER = _upload_folder
+
 FILE_UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 50
 FILE_UPLOAD_TEMP_CLEAR_INTERVAL_HOURS = 4
-FILE_UPLOAD_TEMP_FOLDER = tempfile.mkdtemp()
+_temp_folder = environ.get("FILE_UPLOAD_TEMP_FOLDER", "temp_uploads")
+if not os.path.isabs(_temp_folder):
+    _temp_folder = os.path.abspath(os.path.join(os.getcwd(), _temp_folder))
+FILE_UPLOAD_TEMP_FOLDER = _temp_folder
 
 # LDAP Configuration
 LDAP_ENABLED = environ.get("LDAP_ENABLED", "false").lower() == "true"

@@ -44,6 +44,9 @@ class WikiPage(Base, Model):
         order_by="WikiRevision.created_at.desc()",
     )
     organization: Mapped["Organization | None"] = relationship("Organization")
+    files: Mapped[list["WikiFile"]] = relationship(
+        "WikiFile", back_populates="page", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return self.title
@@ -60,3 +63,17 @@ class WikiRevision(Base, Model):
 
     page: Mapped["WikiPage"] = relationship("WikiPage")
     author: Mapped["User"] = relationship("User")  # type: ignore
+
+
+class WikiFile(Base, Model):
+    __tablename__ = "wiki_files"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    page_id: Mapped[int] = mapped_column(ForeignKey("wiki_pages.id"), nullable=False)
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    real_file_name: Mapped[str] = mapped_column(String(512), nullable=False)
+
+    page: Mapped["WikiPage"] = relationship(back_populates="files")
+
+    def __repr__(self) -> str:
+        return self.file_name

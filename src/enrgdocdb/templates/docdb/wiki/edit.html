@@ -1,38 +1,100 @@
 {% extends "docdb/base.html" %}
+{% from "docdb/snippets/user_files.html" import initialize_user_files %}
 {% block title %}{{ "New Wiki Page" if not page else "Edit Wiki Page" }} - ENRG DocDB{% endblock %}
 {% block head %}
   {{ super() }}
-  <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+  <!-- Quill Rich Text Editor -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const titleInput = document.getElementById('title');
       const slugInput = document.getElementById('slug');
-      const contentInput = document.getElementById('content');
+      const contentTextArea = document.getElementById('content');
 
       function generateSlug(text) {
         return text
+          .replace(/[ıİ]/g, 'i') // Special handling for Turkish dotless i
+          .normalize('NFD') // Decompose combined characters (e.g., â -> a + ^)
+          .replace(/[\u0300-\u036f]/g, '') // Remove the combining marks
           .toLowerCase()
           .replace(/[^a-z0-9\s-]/g, '')
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-')
-          .trim();
+          .trim()
+          .substring(0, 40);
       }
 
-      // Auto-generate slug from title only if empty
+      // Auto-generate slug from title
       if (titleInput && slugInput) {
         titleInput.addEventListener('input', function() {
-          // removed if intentionally, do not change
+          // Do not readd if here
           slugInput.value = generateSlug(this.value);
         });
       }
 
-      // Initialize CKEditor
-      if (contentInput) {
-        ClassicEditor
-          .create(contentInput)
-          .catch(error => {
-            console.error(error);
-          });
+      // Initialize Quill
+      if (contentTextArea) {
+        contentTextArea.style.display = 'none';
+        const editorContainer = document.createElement('div');
+        editorContainer.id = 'editor-container';
+        editorContainer.style.height = '600px';
+        editorContainer.style.background = '#fff';
+        editorContainer.className = 'border rounded-bottom';
+        contentTextArea.parentNode.insertBefore(editorContainer, contentTextArea.nextSibling);
+
+        const toolbarOptions = [
+          ['bold', 'italic', 'underline', 'strike'],
+          ['code-block', 'blockquote'],
+          [{
+            'header': 1
+          }, {
+            'header': 2
+          }],
+          [{
+            'list': 'ordered'
+          }, {
+            'list': 'bullet'
+          }],
+          ['link', 'image'],
+          ['clean']
+        ];
+
+        const quill = new Quill('#editor-container', {
+          theme: 'snow',
+          modules: {
+            toolbar: toolbarOptions
+          }
+        });
+
+        if (contentTextArea.value) {
+          quill.root.innerHTML = contentTextArea.value;
+        }
+
+        quill.on('text-change', function() {
+          contentTextArea.value = quill.root.innerHTML;
+        });
+
+        // Intercept image button to use our upload system
+        const toolbar = quill.getModule('toolbar');
+        toolbar.addHandler('image', () => {
+          const fileInput = document.getElementById('files');
+          if (fileInput) fileInput.click();
+        });
+
+        // Add a helper to insert uploaded files
+        window.insertFileIntoEditor = function(token, filename) {
+          const range = quill.getSelection(true);
+          const ext = filename.split('.').pop().toLowerCase();
+          const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+          const url = `/file/get/doc_${token}.${ext}`;
+
+          if (isImage) {
+            quill.insertEmbed(range.index, 'image', url);
+          } else {
+            quill.insertText(range.index, filename, 'link', url);
+          }
+        };
       }
     });
   </script>
@@ -44,7 +106,7 @@
     </div>
     <div class="card-body">
       {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-      <form method="POST">
+      <form id="wiki-edit-form" method="POST">
         <div class="mb-3">
           <label for="title" class="form-label">Title *</label>
           <input type="text"
@@ -88,6 +150,11 @@
           <label class="form-check-label" for="is_pinned">Pin this page to top of index</label>
         </div>
         <div class="mb-3">
+          <label class="form-label d-block">Attachments</label>
+          <input type="file" id="files" multiple>
+          <div id="uploaded-files-preview" class="mt-2 d-flex flex-wrap gap-2"></div>
+        </div>
+        <div class="mb-3">
           <label for="content" class="form-label">Content</label>
           <textarea class="form-control" id="content" name="content" rows="15">{{ content or (page.content if page else '') }}</textarea>
         </div>
@@ -103,9 +170,59 @@
         {% endif %}
         <div class="d-flex justify-content-between">
           <a href="{{ url_for("wiki.index") }}" class="btn btn-secondary">Cancel</a>
-          <button type="submit" class="btn btn-primary">{{ "Create Page" if not page else "Save Changes" }}</button>
+          <button type="submit" id="submit-btn" class="btn btn-primary">
+            {{ "Create Page" if not page else "Save Changes" }}
+          </button>
         </div>
       </form>
     </div>
   </div>
+  {{ initialize_user_files("wiki-edit-form", user_files) }}
+  <script>
+    // Custom logic to show "Insert" button for newly uploaded files
+    (function() {
+      const originalUpdateForm = window.updateForm;
+      const previewContainer = document.getElementById('uploaded-files-preview');
+
+      // We need to wait for user_files.js to be fully initialized and for its functions to be globally available
+      // Since initialize_user_files is called at the bottom, we should hook into the file upload completion.
+
+      // Actually, user_files.js is quite monolithic. Let's observe the token_to_file input change.
+      const tokenInput = document.querySelector('input[name="token_to_file"]');
+      if (tokenInput) {
+        const observer = new MutationObserver(() => {
+          updateUploadedPreview();
+        });
+        // MutationObserver doesn't work on value attribute changes via JS.
+        // Let's monkeypatch the uploadedFileCount logic if possible, or just poll.
+
+        setInterval(() => {
+          updateUploadedPreview();
+        }, 1000);
+      }
+
+      let lastTokenMap = "{}";
+
+      function updateUploadedPreview() {
+        const tokenMapStr = document.querySelector('input[name="token_to_file"]').value;
+        if (tokenMapStr === lastTokenMap) return;
+        lastTokenMap = tokenMapStr;
+
+        const tokenMap = JSON.parse(tokenMapStr);
+        previewContainer.innerHTML = '';
+
+        Object.entries(tokenMap).forEach(([token, filename]) => {
+          const badge = document.createElement('div');
+          badge.className = 'badge bg-light text-dark border d-flex align-items-center gap-2 p-2';
+          badge.innerHTML = `
+                    <span>${filename}</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="insertFileIntoEditor('${token}', '${filename}')">
+                        Insert
+                    </button>
+                `;
+          previewContainer.appendChild(badge);
+        });
+      }
+    })();
+  </script>
 {% endblock %}

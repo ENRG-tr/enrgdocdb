@@ -1,8 +1,7 @@
 {% extends "docdb/base.html" %}
 {% block head %}
   {{ super() }}
-  <link rel="stylesheet"
-        href="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor5.css">
+  <!-- Removed CKEditor CSS -->
   <style>
     .wiki-content {
       max-width: 100%;
@@ -34,19 +33,42 @@
       font-style: italic;
     }
 
-    .wiki-content pre {
-      background-color: #f5f5f5;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 10px;
-      overflow-x: auto;
-    }
-
     .wiki-content code {
       background-color: #f5f5f5;
       padding: 2px 4px;
       border-radius: 3px;
       font-family: monospace;
+    }
+
+    .wiki-content pre {
+      background-color: #f4f4f4;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 1em;
+      overflow: auto;
+      line-height: 1.4;
+    }
+
+    .wiki-content pre code {
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      color: inherit;
+    }
+
+    .ck-content pre {
+      background-color: #2d2d2d;
+      color: #f8f8f2;
+      padding: 1em;
+      border-radius: 0.3em;
+      overflow: auto;
+    }
+
+    .ck-content pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
     }
 
     .wiki-content img {
@@ -59,33 +81,48 @@
       margin-left: 2em;
       margin-bottom: 1em;
     }
+
+    .wiki-attachment-item {
+      background-color: #ffffff !important;
+      color: #333333 !important;
+      transition: background-color 0.2s ease;
+    }
+
+    .wiki-attachment-item:hover {
+      background-color: #f8f9fa !important;
+      color: #000000 !important;
+      cursor: pointer;
+    }
   </style>
 {% endblock head %}
 {% block content %}
-  <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      {% block header_title %}
-      {% endblock header_title %}
-    </div>
-    <div class="card-body">
+  <div class="card bg-white text-dark shadow-sm">
+    <div class="card-header bg-light border-bottom-0 pt-3 pb-0">
       {% block breadcrumb %}
         <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
+          <ol class="breadcrumb mb-0" style="font-size: 0.85rem;">
             <li class="breadcrumb-item">
-              <a href="{{ url_for("wiki.index") }}">Wiki</a>
+              <a href="{{ url_for("wiki.index") }}" class="text-muted">Wiki</a>
             </li>
             {% for crumb in breadcrumbs %}
               {% if loop.last %}
-                <li class="breadcrumb-item active" aria-current="page">{{ crumb.title }}</li>
+                <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">{{ crumb.title }}</li>
               {% else %}
                 <li class="breadcrumb-item">
-                  <a href="{{ url_for('wiki.view_page', slug=crumb.slug) }}">{{ crumb.title }}</a>
+                  <a href="{{ url_for('wiki.view_page', slug=crumb.slug) }}"
+                     class="text-muted">{{ crumb.title }}</a>
                 </li>
               {% endif %}
             {% endfor %}
           </ol>
         </nav>
       {% endblock breadcrumb %}
+    </div>
+    <div class="card-header bg-light d-flex justify-content-between align-items-center pt-2 pb-3">
+      {% block header_title %}
+      {% endblock header_title %}
+    </div>
+    <div class="card-body">
       {% block page_content %}
       {% endblock page_content %}
     </div>

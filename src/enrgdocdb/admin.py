@@ -230,24 +230,6 @@ class EventSessionAdminView(AdminView):
     ]
 
 
-class WikiPageAdminView(AdminView):
-    form_columns = ["title", "slug", "is_pinned", "parent_page", "content"]
-    form_overrides = dict(content=RichTextField)
-    form_extra_fields = {
-        "content": RichTextField(),
-    }
-
-    def _modify_form_query(self, form, obj, is_create):
-        # parent_page query should exclude self to prevent cycles
-        if not is_create:
-            form.parent_page.query = db.session.query(WikiPage).filter(
-                WikiPage.id != obj.id
-            )
-        else:
-            form.parent_page.query = db.session.query(WikiPage)
-        return form
-
-
 def get_admin_view_endpoint(model):
     return f"admin_{model.__name__}"
 
@@ -280,8 +262,5 @@ views = [
     EventAdminView(Event, session_proxy, endpoint=get_admin_view_endpoint(Event)),
     EventSessionAdminView(
         EventSession, session_proxy, endpoint=get_admin_view_endpoint(EventSession)
-    ),
-    WikiPageAdminView(
-        WikiPage, session_proxy, endpoint=get_admin_view_endpoint(WikiPage)
     ),
 ]

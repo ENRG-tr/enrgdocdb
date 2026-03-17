@@ -1,7 +1,7 @@
 {% extends "docdb/wiki/base_wiki.html" %}
-{% block title %}Revision {{ revision.id }} - {{ page.title }} - ENRG DocDB{% endblock %}
+{% block title %}Rev {{ revision_number }} - {{ page.title }} - ENRG DocDB{% endblock %}
 {% block header_title %}
-    <h2 class="mb-0">Revision {{ revision.id }}: {{ page.title }}</h2>
+    <h2 class="mb-0"><span class="badge bg-secondary">Rev {{ revision_number }}</span>: {{ page.title }}</h2>
     <div class="d-flex">
         <a href="{{ url_for('wiki.view_page', slug=page.slug) }}"
            class="btn btn-primary me-2">

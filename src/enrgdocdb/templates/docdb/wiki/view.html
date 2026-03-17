@@ -1,4 +1,6 @@
 {% extends "docdb/wiki/base_wiki.html" %}
+{% from "docdb/snippets/file.html" import get_file_icon %}
+{% from "docdb/snippets/wiki.html" import render_page_tree %}
 {% block title %}{{ page.title }} - ENRG DocDB{% endblock %}
 {% block header_title %}
   <h2 class="mb-0">{{ page.title }}</h2>
@@ -24,10 +26,47 @@
   {% endif %}
 {% endblock header_title %}
 {% block page_content %}
-  <div class="wiki-content">{{ page.content | safe }}</div>
+  <div class="row">
+    <div class="col-md-9">
+      <div class="wiki-content">{{ page.content | safe }}</div>
+    </div>
+    <div class="col-md-3 border-start">
+      {% if page.child_pages %}
+        <div class="mb-4">
+          <h6 class="text-uppercase text-muted fw-bold small"><i class="fas fa-sitemap me-2"></i>Sub-pages</h6>
+          <ul class="list-unstyled mt-2">
+            {% for child in page.child_pages %}{{ render_page_tree(child, 0) }}{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% if page.files %}
+        <div>
+          <h6 class="text-uppercase text-muted fw-bold small"><i class="fas fa-paperclip me-2"></i>Attachments</h6>
+          <ul class="list-unstyled mt-2">
+            {% for file in page.files %}
+              <li class="mb-2 p-2 bg-light border rounded position-relative wiki-attachment-item">
+                <div class="text-dark small d-flex align-items-center">
+                  <span class="me-1 text-primary">{{ get_file_icon(file) }}</span>
+                  <span class="fw-bold text-truncate" style="max-width: 150px;" title="{{ file.file_name }}">{{ file.file_name }}</span>
+                </div>
+                <div class="mt-1">
+                  <a href="{{ url_for('wiki.download_file', file_id=file.id) }}"
+                     class="btn btn-sm btn-link p-0 text-primary text-decoration-none small">
+                    <i class="fas fa-download me-1"></i> Download
+                  </a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 {% endblock page_content %}
 {% block footer %}
   <small>
+    Revision {{ page.revisions|length }} |
     Last updated: {{ page.updated_at or page.created_at }}
     {% if page.organization %}| Organization: {{ page.organization.name }}{% endif %}
   </small>

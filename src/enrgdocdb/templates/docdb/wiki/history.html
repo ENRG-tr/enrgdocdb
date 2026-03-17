@@ -13,6 +13,7 @@
       <table class="table table-striped">
         <thead>
           <tr>
+            <th>#</th>
             <th>Date</th>
             <th>Author</th>
             <th>Comment</th>
@@ -20,8 +21,12 @@
           </tr>
         </thead>
         <tbody>
+          {% set total_revisions = revisions|length %}
           {% for revision in revisions %}
             <tr>
+              <td>
+                <span class="badge bg-secondary">Rev {{ total_revisions - loop.index0 }}</span>
+              </td>
               <td>{{ revision.created_at }}</td>
               <td>{{ revision.author.name }}</td>
               <td>{{ revision.comment or '(No comment)' }}</td>

@@ -1,4 +1,19 @@
 {% from "docdb/snippets/pagination.html" import render_pagination %}
+{% macro get_file_icon(file) %}
+    {% if file.file_name.endswith(".pdf") %}
+        <i class="fas fa-file-pdf"></i>
+    {% elif file.file_name.endswith(".docx") %}
+        <i class="fas fa-file-word"></i>
+    {% elif file.file_name.endswith(".pptx") %}
+        <i class="fas fa-file-powerpoint"></i>
+    {% elif file.file_name.endswith(".xlsx") %}
+        <i class="fas fa-file-excel"></i>
+    {% elif file.file_name.endswith(".zip") %}
+        <i class="fas fa-file-archive"></i>
+    {% else %}
+        <i class="fas fa-file"></i>
+    {% endif %}
+{% endmacro %}
 {% macro render_file(file) %}
     <div class="d-inline-flex align-items-center gap-1">
         <span class="badge bg-primary">
