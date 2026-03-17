@@ -23,6 +23,11 @@ def index():
         .order_by(WikiPage.title)
         .all()
     )
+    # Filter pinned pages by permission
+    pinned_pages = [
+        p for p in pinned_pages if permission_check(p, RolePermission.VIEW)
+    ]
+
     # Get all non-pinned pages
     all_pages = (
         db.session.query(WikiPage)
@@ -30,6 +35,8 @@ def index():
         .order_by(WikiPage.title)
         .all()
     )
+    # Filter all pages by permission
+    all_pages = [p for p in all_pages if permission_check(p, RolePermission.VIEW)]
 
     # Build hierarchical structure
     page_tree = build_page_tree(all_pages)
@@ -58,16 +65,17 @@ def view_page(slug):
 
     breadcrumbs = _get_breadcrumbs(page)
     can_edit = permission_check(page, RolePermission.EDIT)
+    can_admin = permission_check(page, RolePermission.ADMIN)
 
     return render_template(
         "docdb/wiki/view.html",
         page=page,
         breadcrumbs=breadcrumbs,
         can_edit=can_edit,
+        can_admin=can_admin,
     )
 
 
-@blueprint.route("/new", methods=["GET", "POST"])
 @blueprint.route("/new", methods=["GET", "POST"])
 @login_required
 def new_page():

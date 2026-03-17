@@ -154,6 +154,14 @@
           <input type="file" id="files" multiple>
           <div id="uploaded-files-preview" class="mt-2 d-flex flex-wrap gap-2"></div>
         </div>
+        {% if page %}
+          <div class="mb-3">
+            <a href="{{ url_for('admin_WikiPage.edit_view', id=page.id, url=request.path) }}"
+               class="btn btn-outline-info w-100 mb-3">
+              <i class="fas fa-lock me-2"></i> Manage Permissions
+            </a>
+          </div>
+        {% endif %}
         <div class="mb-3">
           <label for="content" class="form-label">Content</label>
           <textarea class="form-control" id="content" name="content" rows="15">{{ content or (page.content if page else '') }}</textarea>
@@ -181,21 +189,9 @@
   <script>
     // Custom logic to show "Insert" button for newly uploaded files
     (function() {
-      const originalUpdateForm = window.updateForm;
       const previewContainer = document.getElementById('uploaded-files-preview');
-
-      // We need to wait for user_files.js to be fully initialized and for its functions to be globally available
-      // Since initialize_user_files is called at the bottom, we should hook into the file upload completion.
-
-      // Actually, user_files.js is quite monolithic. Let's observe the token_to_file input change.
       const tokenInput = document.querySelector('input[name="token_to_file"]');
       if (tokenInput) {
-        const observer = new MutationObserver(() => {
-          updateUploadedPreview();
-        });
-        // MutationObserver doesn't work on value attribute changes via JS.
-        // Let's monkeypatch the uploadedFileCount logic if possible, or just poll.
-
         setInterval(() => {
           updateUploadedPreview();
         }, 1000);
@@ -204,7 +200,9 @@
       let lastTokenMap = "{}";
 
       function updateUploadedPreview() {
-        const tokenMapStr = document.querySelector('input[name="token_to_file"]').value;
+        const tokenInput = document.querySelector('input[name="token_to_file"]');
+        if (!tokenInput) return;
+        const tokenMapStr = tokenInput.value;
         if (tokenMapStr === lastTokenMap) return;
         lastTokenMap = tokenMapStr;
 

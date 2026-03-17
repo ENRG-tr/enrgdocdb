@@ -21,7 +21,7 @@ from .models.user import (
     RolePermission,
     User,
 )
-from .models.wiki import WikiPage, WikiRevision
+from .models.wiki import WikiPage, WikiPagePermission, WikiRevision
 from .settings import FILE_UPLOAD_FOLDER
 from .utils.admin import EditInlineModelField, RichTextField
 from .utils.security import permission_check
@@ -66,6 +66,26 @@ class AdminView(ModelView):
     def edit_form(self, obj=None):
         form = super().edit_form(obj)
         return self._modify_form_query(form, obj, False)
+
+
+class WikiPageAdminView(AdminView):
+    form_columns = [
+        "title",
+    ]
+    inline_models = [
+        (WikiPagePermission, {"form_columns": ["id", "role", "permission"]}),
+    ]
+    form_overrides = {
+        "content": RichTextField,
+    }
+
+    def is_accessible(self):
+        if request.path.endswith("/edit/"):
+            id = request.args.get("id")
+            if id:
+                model = self.get_one(id)
+                return permission_check(model, RolePermission.ADMIN)
+        return permission_check(None, RolePermission.ADMIN)
 
 
 class DocumentAdminView(AdminView):
@@ -262,5 +282,8 @@ views = [
     EventAdminView(Event, session_proxy, endpoint=get_admin_view_endpoint(Event)),
     EventSessionAdminView(
         EventSession, session_proxy, endpoint=get_admin_view_endpoint(EventSession)
+    ),
+    WikiPageAdminView(
+        WikiPage, session_proxy, endpoint=get_admin_view_endpoint(WikiPage)
     ),
 ]

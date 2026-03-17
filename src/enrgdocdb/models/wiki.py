@@ -4,7 +4,7 @@ from sqlalchemy.types import String, Text
 
 from ..database import Model
 from .base import Base
-from .user import Organization, User
+from .user import Organization, Role, RolePermission, User
 
 WIKI_CONTENT_SIZE = 1024 * 32
 
@@ -47,9 +47,27 @@ class WikiPage(Base, Model):
     files: Mapped[list["WikiFile"]] = relationship(
         "WikiFile", back_populates="page", cascade="all, delete-orphan"
     )
+    permissions: Mapped[list["WikiPagePermission"]] = relationship(
+        "WikiPagePermission", back_populates="page", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return self.title
+
+
+class WikiPagePermission(Base, Model):
+    __tablename__ = "wiki_page_permissions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    page_id: Mapped[int] = mapped_column(ForeignKey("wiki_pages.id"), nullable=False)
+    role_id: Mapped[int] = mapped_column(ForeignKey("role.id"), nullable=False)
+    permission: Mapped[RolePermission] = mapped_column(nullable=False)
+
+    page: Mapped["WikiPage"] = relationship(back_populates="permissions")
+    role: Mapped["Role"] = relationship()
+
+    def __repr__(self) -> str:
+        return f"{self.role.name} -> {self.permission}"
 
 
 class WikiRevision(Base, Model):

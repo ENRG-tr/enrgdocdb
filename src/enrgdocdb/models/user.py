@@ -49,7 +49,9 @@ class Role(Model, sqla.FsRoleMixin):
 
     def __repr__(self) -> str:
         if self.organization:
-            return f"{self.name.capitalize()} ({self.organization.name})"
+            return (
+                f"{self.name.capitalize()} of organization '{self.organization.name}'"
+            )
         return self.name.capitalize()
 
 
@@ -137,12 +139,20 @@ class User(Model, sqla.FsUserMixin):
             # Also check the current session for uncommitted changes
             if not existing:
                 for obj in db.session.new:
-                    if isinstance(obj, User) and obj.username == final_username and obj is not self:
+                    if (
+                        isinstance(obj, User)
+                        and obj.username == final_username
+                        and obj is not self
+                    ):
                         existing = obj
                         break
                 if not existing:
                     for obj in db.session.dirty:
-                        if isinstance(obj, User) and obj.username == final_username and obj is not self:
+                        if (
+                            isinstance(obj, User)
+                            and obj.username == final_username
+                            and obj is not self
+                        ):
                             existing = obj
                             break
 
