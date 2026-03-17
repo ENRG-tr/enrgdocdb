@@ -9,7 +9,7 @@ from .user import Organization, User
 WIKI_CONTENT_SIZE = 1024 * 32
 
 
-class WikiPage(Model):
+class WikiPage(Base, Model):
     __tablename__ = "wiki_pages"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -17,6 +17,7 @@ class WikiPage(Model):
     slug: Mapped[str] = mapped_column(
         String(512), nullable=False, unique=True, index=True
     )
+    is_pinned: Mapped[bool] = mapped_column(nullable=False, default=False)
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("wiki_pages.id"), index=True
     )

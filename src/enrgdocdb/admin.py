@@ -231,7 +231,7 @@ class EventSessionAdminView(AdminView):
 
 
 class WikiPageAdminView(AdminView):
-    form_columns = ["title", "slug", "parent_page", "content"]
+    form_columns = ["title", "slug", "is_pinned", "parent_page", "content"]
     form_overrides = dict(content=RichTextField)
     form_extra_fields = {
         "content": RichTextField(),

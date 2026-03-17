@@ -15,13 +15,33 @@ secure_blueprint(blueprint)
 @login_required
 def index():
     """List all wiki pages with hierarchical structure."""
-    top_pages = (
+    # Get pinned pages first, then by title
+    pinned_pages = (
         db.session.query(WikiPage)
-        .filter(WikiPage.parent_id.is_(None))
+        .filter(WikiPage.is_pinned == True)  # noqa: E712
         .order_by(WikiPage.title)
         .all()
     )
-    return render_template("docdb/wiki/index.html", top_pages=top_pages)
+    # Get all non-pinned pages
+    all_pages = (
+        db.session.query(WikiPage)
+        .filter(WikiPage.is_pinned == False)  # noqa: E712
+        .order_by(WikiPage.title)
+        .all()
+    )
+
+    # Build hierarchical structure
+    page_tree = build_page_tree(all_pages)
+
+    # Check if user can edit any wiki page
+    can_edit = permission_check(None, RolePermission.ADD)
+
+    return render_template(
+        "docdb/wiki/index.html",
+        pinned_pages=pinned_pages,
+        page_tree=page_tree,
+        can_edit=can_edit,
+    )
 
 
 @blueprint.route("/<slug>")
@@ -53,8 +73,9 @@ def new_page():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         slug = request.form.get("slug", "").strip()
-        content = request.form.get("content", "")
         parent_id = request.form.get("parent_id", type=int)
+        is_pinned = request.form.get("is_pinned") == "true"
+        content = request.form.get("content", "")
 
         # Validate required fields
         if not title or not slug:
@@ -63,8 +84,9 @@ def new_page():
                 error="Title and slug are required",
                 title=title,
                 slug=slug,
-                content=content,
                 parent_id=parent_id,
+                is_pinned=is_pinned,
+                content=content,
                 all_pages=_get_all_pages(),
             )
 
@@ -76,13 +98,13 @@ def new_page():
                 error=f"A page with slug '{slug}' already exists",
                 title=title,
                 slug=slug,
-                content=content,
                 parent_id=parent_id,
+                is_pinned=is_pinned,
+                content=content,
                 all_pages=_get_all_pages(),
             )
 
         # Check parent exists if specified
-        parent_page = None
         if parent_id:
             parent_page = db.session.query(WikiPage).get(parent_id)
             if not parent_page:
@@ -92,9 +114,10 @@ def new_page():
         page = WikiPage(
             title=title,
             slug=slug,
+            is_pinned=is_pinned,
             parent_id=parent_id,
             content=content,
-            organization_id=None,  # Or set based on user's org
+            organization_id=None,
         )
 
         # Create initial revision
@@ -134,8 +157,10 @@ def edit_page(slug):
 
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        content = request.form.get("content", "")
+        slug = request.form.get("slug", "").strip()
         parent_id = request.form.get("parent_id", type=int)
+        is_pinned = request.form.get("is_pinned") == "true"
+        content = request.form.get("content", "")
 
         if not title:
             return render_template(
@@ -143,10 +168,28 @@ def edit_page(slug):
                 page=page,
                 error="Title is required",
                 title=title,
-                content=content,
+                slug=slug,
                 parent_id=parent_id,
+                is_pinned=is_pinned,
+                content=content,
                 all_pages=_get_all_pages(),
             )
+
+        # Check for slug conflict (excluding current page)
+        if slug != page.slug:
+            existing = db.session.query(WikiPage).filter_by(slug=slug).first()
+            if existing:
+                return render_template(
+                    "docdb/wiki/edit.html",
+                    page=page,
+                    error=f"A page with slug '{slug}' already exists",
+                    title=title,
+                    slug=slug,
+                    parent_id=parent_id,
+                    is_pinned=is_pinned,
+                    content=content,
+                    all_pages=_get_all_pages(),
+                )
 
         # Check for circular parent reference
         if parent_id and parent_id == page.id:
@@ -155,13 +198,14 @@ def edit_page(slug):
                 page=page,
                 error="Page cannot be its own parent",
                 title=title,
-                content=content,
+                slug=slug,
                 parent_id=parent_id,
+                is_pinned=is_pinned,
+                content=content,
                 all_pages=_get_all_pages(),
             )
 
         # Validate parent exists
-        parent_page = None
         if parent_id:
             parent_page = db.session.query(WikiPage).get(parent_id)
             if not parent_page:
@@ -169,6 +213,8 @@ def edit_page(slug):
 
         # Update page
         page.title = title
+        page.slug = slug
+        page.is_pinned = is_pinned
         page.parent_id = parent_id
         page.content = content
 
@@ -235,6 +281,24 @@ def view_revision(slug, revision_id):
     )
 
 
+@blueprint.route("/<slug>/delete", methods=["POST"])
+@login_required
+def delete_page(slug):
+    """Delete a wiki page."""
+    page = db.session.query(WikiPage).filter_by(slug=slug).first()
+    if not page:
+        return redirect(url_for("errors.error_404"))
+
+    if not permission_check(page, RolePermission.EDIT):
+        return redirect(url_for("index.no_role"))
+
+    # Delete the page and all its children recursively
+    db.session.delete(page)
+    db.session.commit()
+
+    return redirect(url_for("wiki.index"))
+
+
 def _get_all_pages() -> list[WikiPage]:
     """Get all wiki pages for parent selection."""
     return db.session.query(WikiPage).order_by(WikiPage.title).all()
@@ -248,3 +312,39 @@ def _get_breadcrumbs(page: WikiPage) -> list[WikiPage]:
         breadcrumbs.insert(0, current)
         current = current.parent_page
     return breadcrumbs
+
+
+def build_page_tree(pages: list[WikiPage]) -> list[WikiPage]:
+    """Build hierarchical tree structure from flat list of pages."""
+    # Create a mapping of pages by their ID
+    page_map = {page.id: page for page in pages}
+
+    # Find root pages (those without parents or whose parent isn't in our list)
+    roots = []
+    for page in pages:
+        if page.parent_id is None or page.parent_id not in page_map:
+            roots.append(page)
+
+    # Sort roots by title
+    roots.sort(key=lambda x: x.title)
+
+    # Build the tree by recursively organizing children
+    def attach_children(parent_page: WikiPage):
+        children = []
+        for page in pages:
+            if (
+                page.parent_id == parent_page.id and page.id != parent_page.id
+            ):  # Avoid self-reference
+                children.append(page)
+        # Sort children by title
+        children.sort(key=lambda x: x.title)
+        # Recursively attach grandchildren
+        for child in children:
+            attach_children(child)
+        # Set the children on the parent
+        parent_page.child_pages = children
+
+    for root in roots:
+        attach_children(root)
+
+    return roots

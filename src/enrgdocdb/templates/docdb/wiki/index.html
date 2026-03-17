@@ -1,31 +1,77 @@
 {% extends "docdb/base.html" %}
 {% block title %}Wiki - ENRG DocDB{% endblock %}
+{% macro render_page_tree(page, depth) %}
+  <li style="margin-left: {{ depth * 20 }}px;">
+    {% if page.child_pages %}
+      <i class="fas fa-folder text-primary me-1"></i>
+    {% else %}
+      <i class="fas fa-file text-muted me-1"></i>
+    {% endif %}
+    <a href="{{ url_for('wiki.view_page', slug=page.slug) }}">{{ page.title }}</a>
+    {% if page.is_pinned %}<i class="fas fa-thumbtack text-primary ms-1" title="Pinned"></i>{% endif %}
+    <span class="text-muted small">({{ page.updated_at or page.created_at }})</span>
+    {% if page.child_pages %}
+      <ul class="list-unstyled mt-1">
+        {% for child in page.child_pages %}{{ render_page_tree(child, depth + 1) }}{% endfor %}
+      </ul>
+    {% endif %}
+  </li>
+{% endmacro %}
 {% block content %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="mb-0">Wiki Pages</h2>
-    </div>
-    <div class="card-body">
-      {% if top_pages %}
-        <ul>
-          {% for page in top_pages %}
+  <div class="d-flex justify-content-between align-items-center">
+    <h1 class="mb-0">Wiki</h1>
+    {% if can_edit %}
+      <a href="{{ url_for("wiki.new_page") }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Create New Page
+      </a>
+    {% endif %}
+  </div>
+  <hr>
+  {% if pinned_pages %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-thumbtack"></i> Pinned Pages
+        </h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled">
+          {% for page in pinned_pages %}
             <li>
-              <a href="{{ url_for('wiki.view_page', slug=page.slug) }}">
-                <strong>{{ page.title }}</strong>
-                {% if page.child_pages %}
-                  <span class="badge bg-secondary float-end">{{ page.child_pages|length }} subpages</span>
-                {% endif %}
-              </a>
+              {% if page.child_pages %}
+                <i class="fas fa-folder text-primary me-1"></i>
+              {% else %}
+                <i class="fas fa-file text-muted me-1"></i>
+              {% endif %}
+              <a href="{{ url_for('wiki.view_page', slug=page.slug) }}">{{ page.title }}</a>
+              <i class="fas fa-thumbtack text-primary ms-1" title="Pinned"></i>
+              <span class="text-muted small">({{ page.updated_at or page.created_at }})</span>
+              {% if page.child_pages %}
+                <ul class="list-unstyled mt-1">
+                  {% for child in page.child_pages %}{{ render_page_tree(child, 1) }}{% endfor %}
+                </ul>
+              {% endif %}
             </li>
           {% endfor %}
         </ul>
-      {% else %}
-        <p class="text-muted">No wiki pages have been created yet.</p>
-      {% endif %}
+      </div>
     </div>
-    <div class="card-footer text-muted">
-      <a href="{{ url_for("wiki.new_page") }}" class="btn btn-success">Create New Page</a>
-      <a href="{{ url_for("index.index") }}" class="btn btn-primary">Back to Home</a>
+  {% endif %}
+  {% if page_tree %}
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">All Pages</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled">
+          {% for page in page_tree %}{{ render_page_tree(page, 0) }}{% endfor %}
+        </ul>
+      </div>
     </div>
-  </div>
+  {% else %}
+    <div class="alert alert-info">
+      No wiki pages have been created yet.
+      {% if can_edit %}<a href="{{ url_for("wiki.new_page") }}">Create the first page</a>.{% endif %}
+    </div>
+  {% endif %}
 {% endblock %}

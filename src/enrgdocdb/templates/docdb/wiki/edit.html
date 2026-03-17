@@ -4,48 +4,37 @@
   {{ super() }}
   <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
   <script>
-      // Auto-generate slug from title
-      document.addEventListener('DOMContentLoaded', function() {
-          const titleInput = document.getElementById('title');
-          const slugInput = document.getElementById('slug');
-          
-          function generateSlug(text) {
-              return text
-                  .toLowerCase()
-                  .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
-                  .replace(/\s+/g, '-')           // Replace spaces with hyphens
-                  .replace(/-+/g, '-')            // Replace multiple hyphens with single
-                  .trim();
-          }
-          
-          // Auto-generate slug on title change if slug is empty or unchanged
-          if (titleInput && slugInput) {
-              titleInput.addEventListener('input', function() {
-                  const currentSlug = slugInput.dataset.original || slugInput.value;
-                  if (!slugInput.value || slugInput.value === currentSlug) {
-                      slugInput.value = generateSlug(this.value);
-                  }
-              });
-              
-              // Store original slug to track if user manually changed it
-              if (slugInput.value) {
-                  slugInput.dataset.original = slugInput.value;
-              }
-              
-              slugInput.addEventListener('focus', function() {
-                  if (!this.dataset.original) {
-                      this.dataset.original = this.value;
-                  }
-              });
-          }
-          
-          // Initialize CKEditor
-          if (document.querySelector('#content')) {
-              ClassicEditor
-                  .create(document.querySelector('#content'))
-                  .catch(error => { console.error(error); });
-          }
-      });
+    document.addEventListener('DOMContentLoaded', function() {
+      const titleInput = document.getElementById('title');
+      const slugInput = document.getElementById('slug');
+      const contentInput = document.getElementById('content');
+
+      function generateSlug(text) {
+        return text
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim();
+      }
+
+      // Auto-generate slug from title only if empty
+      if (titleInput && slugInput) {
+        titleInput.addEventListener('input', function() {
+          // removed if intentionally, do not change
+          slugInput.value = generateSlug(this.value);
+        });
+      }
+
+      // Initialize CKEditor
+      if (contentInput) {
+        ClassicEditor
+          .create(contentInput)
+          .catch(error => {
+            console.error(error);
+          });
+      }
+    });
   </script>
 {% endblock head %}
 {% block content %}
@@ -73,7 +62,7 @@
                  name="slug"
                  value="{{ slug or (page.slug if page else '') }}"
                  required>
-          <div class="form-text">Used in the URL. Use lowercase letters, numbers, and hyphens only.</div>
+          <div class="form-text">URL-friendly version of the title. Generated automatically but can be edited.</div>
         </div>
         <div class="mb-3">
           <label for="parent_id" class="form-label">Parent Page</label>
@@ -88,6 +77,15 @@
               {% endif %}
             {% endfor %}
           </select>
+        </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox"
+                 class="form-check-input"
+                 id="is_pinned"
+                 name="is_pinned"
+                 value="true"
+                 {% if is_pinned or (page and page.is_pinned) %}checked{% endif %}>
+          <label class="form-check-label" for="is_pinned">Pin this page to top of index</label>
         </div>
         <div class="mb-3">
           <label for="content" class="form-label">Content</label>
