@@ -39,6 +39,7 @@
     <form method="post">
         {{ form.csrf_token() }}
         {{ render_field(form.email, disabled=True) }}
+        {{ render_field(form.username, disabled=True) }}
         {% if not form.first_name.data or not form.last_name.data %}
             <div class="border border-dashed border-2 border-warning  p-2 mb-2">
                 <div class="alert alert-warning" role="alert">

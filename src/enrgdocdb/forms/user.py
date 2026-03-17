@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired, EqualTo, Optional
 
 class EditUserProfileForm(FlaskForm):
     email = StringField("Email", render_kw={"readonly": True}, validators=[])
+    username = StringField("Username", render_kw={"readonly": True}, validators=[])
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
     new_password = PasswordField(

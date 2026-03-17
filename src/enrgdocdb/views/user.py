@@ -26,6 +26,7 @@ def your_account():
     form = EditUserProfileForm()
     user = cast(User, current_user)
     form.email.data = user.email
+    form.username.data = user.username
 
     if form.validate_on_submit():
         user.first_name = form.first_name.data
