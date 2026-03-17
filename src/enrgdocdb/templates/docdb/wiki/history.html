@@ -1,0 +1,42 @@
+{% extends "docdb/wiki/base_wiki.html" %}
+{% block title %}History - {{ page.title }} - ENRG DocDB{% endblock %}
+{% block header_title %}
+  <h2 class="mb-0">Revision History: {{ page.title }}</h2>
+  <a href="{{ url_for('wiki.view_page', slug=page.slug) }}"
+     class="btn btn-primary">
+    <i class="fas fa-arrow-left"></i> Back to Page
+  </a>
+{% endblock header_title %}
+{% block page_content %}
+  {% if revisions %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Author</th>
+            <th>Comment</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for revision in revisions %}
+            <tr>
+              <td>{{ revision.created_at }}</td>
+              <td>{{ revision.author.name }}</td>
+              <td>{{ revision.comment or '(No comment)' }}</td>
+              <td>
+                <a href="{{ url_for('wiki.view_revision', slug=page.slug, revision_id=revision.id) }}"
+                   class="btn btn-sm btn-outline-secondary">View</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">No revisions found for this page.</p>
+  {% endif %}
+{% endblock page_content %}
+{% block footer %}
+{% endblock footer %}

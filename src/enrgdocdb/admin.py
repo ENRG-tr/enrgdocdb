@@ -21,8 +21,9 @@ from .models.user import (
     RolePermission,
     User,
 )
+from .models.wiki import WikiPage, WikiRevision
 from .settings import FILE_UPLOAD_FOLDER
-from .utils.admin import EditInlineModelField
+from .utils.admin import EditInlineModelField, RichTextField
 from .utils.security import permission_check
 
 admin = Admin(
@@ -137,8 +138,7 @@ class OrganizationAdminView(AdminView):
             sample_role_permissions,
         ) in ROLES_PERMISSIONS_BY_ORGANIZATION.items():
             role = Role(name=sample_role, organization_id=model.id)
-            role.permissions = []
-            role.permissions.extend([x.value for x in sample_role_permissions])
+            role.permissions = [x.value for x in sample_role_permissions]
             db.session.add(role)
         db.session.commit()
 
@@ -230,6 +230,24 @@ class EventSessionAdminView(AdminView):
     ]
 
 
+class WikiPageAdminView(AdminView):
+    form_columns = ["title", "slug", "parent_page", "content"]
+    form_overrides = dict(content=RichTextField)
+    form_extra_fields = {
+        "content": RichTextField(),
+    }
+
+    def _modify_form_query(self, form, obj, is_create):
+        # parent_page query should exclude self to prevent cycles
+        if not is_create:
+            form.parent_page.query = db.session.query(WikiPage).filter(
+                WikiPage.id != obj.id
+            )
+        else:
+            form.parent_page.query = db.session.query(WikiPage)
+        return form
+
+
 def get_admin_view_endpoint(model):
     return f"admin_{model.__name__}"
 
@@ -262,5 +280,8 @@ views = [
     EventAdminView(Event, session_proxy, endpoint=get_admin_view_endpoint(Event)),
     EventSessionAdminView(
         EventSession, session_proxy, endpoint=get_admin_view_endpoint(EventSession)
+    ),
+    WikiPageAdminView(
+        WikiPage, session_proxy, endpoint=get_admin_view_endpoint(WikiPage)
     ),
 ]

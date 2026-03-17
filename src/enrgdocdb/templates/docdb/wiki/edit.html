@@ -1,0 +1,113 @@
+{% extends "docdb/base.html" %}
+{% block title %}{{ "New Wiki Page" if not page else "Edit Wiki Page" }} - ENRG DocDB{% endblock %}
+{% block head %}
+  {{ super() }}
+  <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+  <script>
+      // Auto-generate slug from title
+      document.addEventListener('DOMContentLoaded', function() {
+          const titleInput = document.getElementById('title');
+          const slugInput = document.getElementById('slug');
+          
+          function generateSlug(text) {
+              return text
+                  .toLowerCase()
+                  .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
+                  .replace(/\s+/g, '-')           // Replace spaces with hyphens
+                  .replace(/-+/g, '-')            // Replace multiple hyphens with single
+                  .trim();
+          }
+          
+          // Auto-generate slug on title change if slug is empty or unchanged
+          if (titleInput && slugInput) {
+              titleInput.addEventListener('input', function() {
+                  const currentSlug = slugInput.dataset.original || slugInput.value;
+                  if (!slugInput.value || slugInput.value === currentSlug) {
+                      slugInput.value = generateSlug(this.value);
+                  }
+              });
+              
+              // Store original slug to track if user manually changed it
+              if (slugInput.value) {
+                  slugInput.dataset.original = slugInput.value;
+              }
+              
+              slugInput.addEventListener('focus', function() {
+                  if (!this.dataset.original) {
+                      this.dataset.original = this.value;
+                  }
+              });
+          }
+          
+          // Initialize CKEditor
+          if (document.querySelector('#content')) {
+              ClassicEditor
+                  .create(document.querySelector('#content'))
+                  .catch(error => { console.error(error); });
+          }
+      });
+  </script>
+{% endblock head %}
+{% block content %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="mb-0">{{ "Create New Wiki Page" if not page else "Edit Wiki Page" }}</h2>
+    </div>
+    <div class="card-body">
+      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+      <form method="POST">
+        <div class="mb-3">
+          <label for="title" class="form-label">Title *</label>
+          <input type="text"
+                 class="form-control"
+                 id="title"
+                 name="title"
+                 value="{{ title or (page.title if page else '') }}"
+                 required>
+        </div>
+        <div class="mb-3">
+          <label for="slug" class="form-label">URL Slug *</label>
+          <input type="text"
+                 class="form-control"
+                 id="slug"
+                 name="slug"
+                 value="{{ slug or (page.slug if page else '') }}"
+                 required>
+          <div class="form-text">Used in the URL. Use lowercase letters, numbers, and hyphens only.</div>
+        </div>
+        <div class="mb-3">
+          <label for="parent_id" class="form-label">Parent Page</label>
+          <select class="form-select" id="parent_id" name="parent_id">
+            <option value="">None (Top-level page)</option>
+            {% for p in all_pages %}
+              {% if not page or p.id != page.id %}
+                <option value="{{ p.id }}"
+                        {% if parent_id == p.id or (page and page.parent_id == p.id) %}selected{% endif %}>
+                  {{ p.title }}
+                </option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="content" class="form-label">Content</label>
+          <textarea class="form-control" id="content" name="content" rows="15">{{ content or (page.content if page else '') }}</textarea>
+        </div>
+        {% if page %}
+          <div class="mb-3">
+            <label for="comment" class="form-label">Revision Comment</label>
+            <input type="text"
+                   class="form-control"
+                   id="comment"
+                   name="comment"
+                   placeholder="Optional summary of changes">
+          </div>
+        {% endif %}
+        <div class="d-flex justify-content-between">
+          <a href="{{ url_for("wiki.index") }}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">{{ "Create Page" if not page else "Save Changes" }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

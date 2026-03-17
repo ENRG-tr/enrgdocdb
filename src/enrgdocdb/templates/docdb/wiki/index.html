@@ -1,0 +1,31 @@
+{% extends "docdb/base.html" %}
+{% block title %}Wiki - ENRG DocDB{% endblock %}
+{% block content %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="mb-0">Wiki Pages</h2>
+    </div>
+    <div class="card-body">
+      {% if top_pages %}
+        <ul>
+          {% for page in top_pages %}
+            <li>
+              <a href="{{ url_for('wiki.view_page', slug=page.slug) }}">
+                <strong>{{ page.title }}</strong>
+                {% if page.child_pages %}
+                  <span class="badge bg-secondary float-end">{{ page.child_pages|length }} subpages</span>
+                {% endif %}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No wiki pages have been created yet.</p>
+      {% endif %}
+    </div>
+    <div class="card-footer text-muted">
+      <a href="{{ url_for("wiki.new_page") }}" class="btn btn-success">Create New Page</a>
+      <a href="{{ url_for("index.index") }}" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+{% endblock %}

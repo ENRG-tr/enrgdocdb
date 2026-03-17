@@ -8,6 +8,7 @@ from ..models.author import Author, Institution
 from ..models.document import Document, DocumentAuthor, DocumentFile, DocumentType
 from ..models.topic import Topic
 from ..models.user import User
+from ..models.wiki import WikiPage
 from ..utils.pagination import PaginatedQueryResult, paginate
 from ..utils.security import secure_blueprint
 
@@ -57,6 +58,15 @@ def index():
                 query,
                 [
                     Topic.name,
+                ],
+            )
+        ),
+        db.session.query(WikiPage).filter(
+            filter_query(
+                query,
+                [
+                    WikiPage.title,
+                    WikiPage.content,
                 ],
             )
         ),

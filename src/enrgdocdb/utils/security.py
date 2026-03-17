@@ -9,6 +9,7 @@ from ..database import db
 from ..models.author import Author
 from ..models.document import Document
 from ..models.user import RolePermission, User
+from ..models.wiki import WikiPage
 
 RATELIMIT_NON_VIEW_ACTIONS = "180/minute"
 
@@ -82,8 +83,10 @@ def permission_check(model: Any, action: RolePermission):
             if model.user_id == user.id and action == RolePermission.EDIT:
                 action = RolePermission.EDIT_SELF
         # Allow everyone to add authors
-        if action == RolePermission.ADD and model is Author:
+        elif action == RolePermission.ADD and model is Author:
             return True
+        elif isinstance(model, WikiPage):
+            organization_id = model.organization_id
         elif hasattr(model, "organization_id"):
             organization_id = model.organization_id
         elif hasattr(model, "document_id") or hasattr(model, "document"):

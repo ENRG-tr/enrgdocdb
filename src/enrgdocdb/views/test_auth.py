@@ -10,7 +10,13 @@ blueprint = Blueprint("test_auth", __name__, url_prefix="/test-auth")
 @blueprint.route("/")
 def index():
     if current_user.is_authenticated:
-        return "You are logged in as '{}'".format(current_user.email)
+        response = Response("You are logged in as '{}'".format(current_user.email))
+        # Add identity headers for reverse proxy / backend service integration
+        response.headers["X-Forwarded-User"] = current_user.username
+        response.headers["X-Forwarded-Email"] = current_user.email
+        response.headers["X-Forwarded-Name"] = getattr(current_user, "name", "")
+        response.headers["X-Forwarded-Groups"] = ",".join(r.name for r in current_user.roles)
+        return response
     return "You are not logged in", 401
 
 

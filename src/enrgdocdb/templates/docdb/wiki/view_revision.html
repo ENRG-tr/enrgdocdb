@@ -1,0 +1,28 @@
+{% extends "docdb/wiki/base_wiki.html" %}
+{% block title %}Revision {{ revision.id }} - {{ page.title }} - ENRG DocDB{% endblock %}
+{% block header_title %}
+    <h2 class="mb-0">Revision {{ revision.id }}: {{ page.title }}</h2>
+    <div class="d-flex">
+        <a href="{{ url_for('wiki.view_page', slug=page.slug) }}"
+           class="btn btn-primary me-2">
+            <i class="fas fa-arrow-left"></i> Back to Current
+        </a>
+        <a href="{{ url_for('wiki.history', slug=page.slug) }}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-history"></i> View History
+        </a>
+    </div>
+{% endblock header_title %}
+{% block page_content %}
+    <div class="mb-3">
+        <strong>Author:</strong> {{ revision.author.name }}
+        <br>
+        <strong>Date:</strong> {{ revision.created_at }}
+        <br>
+        <strong>Comment:</strong> {{ revision.comment or '(No comment)' }}
+    </div>
+    <hr>
+    <div class="wiki-content">{{ revision.content | safe }}</div>
+{% endblock page_content %}
+{% block footer %}
+{% endblock footer %}

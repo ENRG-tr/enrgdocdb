@@ -1,0 +1,28 @@
+{% extends "docdb/wiki/base_wiki.html" %}
+{% block title %}{{ page.title }} - ENRG DocDB{% endblock %}
+{% block header_title %}
+  <h2 class="mb-0">{{ page.title }}</h2>
+  <div class="d-flex">
+    <a href="{{ url_for('wiki.history', slug=page.slug) }}"
+       class="btn btn-secondary me-2">
+      <i class="fas fa-history"></i> History
+    </a>
+    {% if can_edit %}
+      <a href="{{ url_for('wiki.edit_page', slug=page.slug) }}"
+         class="btn btn-primary">
+        <i class="fas fa-edit"></i> Edit
+      </a>
+    {% endif %}
+  </div>
+{% endblock header_title %}
+{% block page_content %}
+  <div class="wiki-content">{{ page.content | safe }}</div>
+{% endblock page_content %}
+{% block footer %}
+  <small>
+    Last updated: {{ page.updated_at or page.created_at }}
+    {% if page.organization %}| Organization: {{ page.organization.name }}{% endif %}
+  </small>
+  <a href="{{ url_for("index.index") }}"
+     class="btn btn-sm btn-secondary float-end">Back to Home</a>
+{% endblock footer %}
