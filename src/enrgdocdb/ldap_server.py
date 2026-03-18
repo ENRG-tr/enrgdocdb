@@ -1,19 +1,15 @@
 import logging
 import struct
-import traceback
-from functools import lru_cache
-from typing import Any, Optional
+from typing import Optional
 
 from flask_security.utils import verify_password
 from ldaptor.inmemory import ReadOnlyInMemoryLDAPEntry
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 from ldaptor.protocols.ldap.ldapserver import LDAPServer
-from OpenSSL import SSL
 from sqlalchemy.orm import joinedload
 from twisted.internet import defer, reactor
 from twisted.internet.endpoints import serverFromString
-from twisted.internet.interfaces import IReactorCore
 from twisted.internet.protocol import ServerFactory
 
 from src.enrgdocdb.database import db
@@ -225,7 +221,7 @@ class DocDBLDAPServer(LDAPServer):
     def handle_LDAPSearchRequest(self, request, controls, reply):
         try:
             base_dn_str = request.baseObject.decode("utf-8")
-            logger.debug(f"LDAP Search: base={base_dn_str}, filter={request.filter}")
+            logger.debug(f"LDAP Search: base={base_dn_str}, filter={request.filter!r}")
 
             # Check for paged results control (1.2.840.113556.1.4.319)
             paged_control = None
@@ -309,7 +305,7 @@ class DocDBLDAPServer(LDAPServer):
                     if is_match:
                         matched.append(entry)
                 except Exception as e:
-                    logger.warning(f"Filter error for {entry.dn}: {e}")
+                    logger.warning("Filter error for %r: %s", entry.dn, e)
 
             # Handle paged results if requested
             total_matched = len(matched)
@@ -387,7 +383,7 @@ class DocDBLDAPServer(LDAPServer):
             )
 
     def handle_LDAPBindRequest(self, request, controls, reply):
-        logger.debug(f"LDAP Bind: DN={request.dn}, has_auth={bool(request.auth)}")
+        logger.debug(f"LDAP Bind: DN={request.dn!r}, has_auth={bool(request.auth)}")
 
         if not request.dn and not request.auth:
             self.bound_dn = b""
