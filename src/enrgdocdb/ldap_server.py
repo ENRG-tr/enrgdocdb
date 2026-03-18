@@ -69,7 +69,6 @@ class DocDBLDAPServer(LDAPServer):
             return query.all()
 
     def get_user_by_uuid(self, uuid_str):
-
         with self.app.app_context():
             try:
                 # Use UUID directly for fs_uniquifier or id
@@ -87,7 +86,6 @@ class DocDBLDAPServer(LDAPServer):
                 return None
 
     def get_user_by_email(self, email):
-
         with self.app.app_context():
             return (
                 db.session.query(User)
@@ -102,11 +100,15 @@ class DocDBLDAPServer(LDAPServer):
 
         with self.app.app_context():
             # 1. Direct query on new username field (Fastest)
-            user = db.session.query(User).filter(
-                (User.username == uid_str),
-                User.deleted_at.is_(None),
-                User.active.is_(True)
-            ).first()
+            user = (
+                db.session.query(User)
+                .filter(
+                    (User.username == uid_str),
+                    User.deleted_at.is_(None),
+                    User.active.is_(True),
+                )
+                .first()
+            )
             if user:
                 return user
 
@@ -311,19 +313,20 @@ class DocDBLDAPServer(LDAPServer):
             total_matched = len(matched)
             start_index = 0
             if paged_control:
-
                 try:
                     value = paged_control.controlValue
                     if value:
                         # Improved BER parsing for paged results would go here.
                         # For now, we use a simple string-based cookie for index.
                         page_size = self.page_size
-                        
+
                         if len(value) > 2:
                             try:
                                 # Try to detect a simple string index in the cookie field
                                 cookie_part = value[2:] if value[0] == 0x30 else value
-                                start_index = int(cookie_part.decode("utf-8", errors="ignore"))
+                                start_index = int(
+                                    cookie_part.decode("utf-8", errors="ignore")
+                                )
                             except (ValueError, TypeError):
                                 start_index = 0
                     else:
@@ -369,7 +372,7 @@ class DocDBLDAPServer(LDAPServer):
                     resultCode=ldaperrors.Success.resultCode,
                     matchedDN=b"",
                     errorMessage=b"",
-                    controls=response_controls if response_controls else None,
+                    # controls=response_controls if response_controls else None,
                 )
             )
         except Exception as e:
