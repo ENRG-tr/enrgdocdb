@@ -53,6 +53,7 @@ def users_with_role(role_name: str):
             "first_name": user.first_name or "",
             "last_name": user.last_name or "",
             "email": user.email,
+            "username": user.username,
         }
         for user in users
     ]
