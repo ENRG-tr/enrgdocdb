@@ -1,7 +1,6 @@
 {% extends "docdb/base.html" %}
 {% block head %}
   {{ super() }}
-  <!-- Removed CKEditor CSS -->
   <style>
     .wiki-content {
       max-width: 100%;
@@ -64,11 +63,9 @@
       overflow: auto;
     }
 
-    .ck-content pre code {
-      background: none;
-      color: inherit;
-      padding: 0;
-      border-radius: 0;
+    /* Quill styles for wiki content */
+    .ql-editor {
+      min-height: 200px;
     }
 
     .wiki-content img {
@@ -94,6 +91,8 @@
       cursor: pointer;
     }
   </style>
+  {% block wiki_head %}
+  {% endblock wiki_head %}
 {% endblock head %}
 {% block content %}
   <div class="card bg-white text-dark shadow-sm">
@@ -104,24 +103,34 @@
             <li class="breadcrumb-item">
               <a href="{{ url_for("wiki.index") }}" class="text-muted">Wiki</a>
             </li>
-            {% for crumb in breadcrumbs %}
-              {% if loop.last %}
-                <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">{{ crumb.title }}</li>
-              {% else %}
-                <li class="breadcrumb-item">
-                  <a href="{{ url_for('wiki.view_page', slug=crumb.slug) }}"
-                     class="text-muted">{{ crumb.title }}</a>
-                </li>
-              {% endif %}
-            {% endfor %}
+            {% if breadcrumbs %}
+              {% for crumb in breadcrumbs %}
+                {% if loop.last %}
+                  <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">{{ crumb.title }}</li>
+                {% else %}
+                  <li class="breadcrumb-item">
+                    <a href="{{ url_for('wiki.view_page', slug=crumb.slug) }}"
+                       class="text-muted">{{ crumb.title }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
           </ol>
         </nav>
       {% endblock breadcrumb %}
     </div>
-    <div class="card-header bg-light d-flex justify-content-between align-items-center pt-2 pb-3">
-      {% block header_title %}
-      {% endblock header_title %}
+    <div class="card-header bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center pt-2 pb-3 gap-2">
+      <div id="wiki-header-title">
+        {% block header_title %}
+          <h2 class="mb-0 text-truncate">{{ title }}</h2>
+        {% endblock header_title %}
+      </div>
+      <div id="wiki-header-actions" class="d-flex flex-wrap align-items-center gap-2">
+        {% block header_actions %}
+        {% endblock header_actions %}
+      </div>
     </div>
+
     <div class="card-body">
       {% block page_content %}
       {% endblock page_content %}

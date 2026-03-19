@@ -1,53 +1,39 @@
-{% extends "docdb/base.html" %}
+{% extends "docdb/wiki/base_wiki.html" %}
 {% from "docdb/snippets/wiki.html" import render_page_tree %}
 {% block title %}Wiki - ENRG DocDB{% endblock %}
-{% block content %}
-  <div class="d-flex justify-content-between align-items-center">
-    <h1 class="mb-0">Wiki</h1>
-    {% if can_edit %}
-      <a href="{{ url_for("wiki.new_page") }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Create New Page
-      </a>
-    {% endif %}
-  </div>
-  <hr>
+{% block breadcrumb %}{# Hide breadcrumb on index #}{% endblock %}
+{% block header_title %}
+  <h1 class="mb-0">Wiki</h1>
+{% endblock header_title %}
+{% block header_actions %}
+  {% if can_edit %}
+    <a href="{{ url_for("wiki.new_page") }}" class="btn btn-primary">
+      <i class="fas fa-plus me-1"></i> Create New Page
+    </a>
+  {% endif %}
+{% endblock header_actions %}
+{% block page_content %}
   {% if pinned_pages %}
-    <div class="card mb-4">
-      <div class="card-header">
+    <div class="card mb-4 border-primary">
+      <div class="card-header bg-primary text-white">
         <h5 class="mb-0">
-          <i class="fas fa-thumbtack"></i> Pinned Pages
+          <i class="fas fa-thumbtack me-2"></i> Pinned Pages
         </h5>
       </div>
       <div class="card-body">
-        <ul class="list-unstyled">
-          {% for page in pinned_pages %}
-            <li>
-              {% if page.child_pages %}
-                <i class="fas fa-folder text-primary me-1"></i>
-              {% else %}
-                <i class="fas fa-file text-muted me-1"></i>
-              {% endif %}
-              <a href="{{ url_for('wiki.view_page', slug=page.slug) }}">{{ page.title }}</a>
-              <i class="fas fa-thumbtack text-primary ms-1" title="Pinned"></i>
-              <span class="text-muted small">({{ page.updated_at or page.created_at }})</span>
-              {% if page.child_pages %}
-                <ul class="list-unstyled mt-1">
-                  {% for child in page.child_pages %}{{ render_page_tree(child, 1) }}{% endfor %}
-                </ul>
-              {% endif %}
-            </li>
-          {% endfor %}
+        <ul class="list-unstyled mb-0">
+          {% for page in pinned_pages %}{{ render_page_tree(page, 0) }}{% endfor %}
         </ul>
       </div>
     </div>
   {% endif %}
   {% if page_tree %}
     <div class="card">
-      <div class="card-header">
+      <div class="card-header bg-light">
         <h5 class="mb-0">All Pages</h5>
       </div>
       <div class="card-body">
-        <ul class="list-unstyled">
+        <ul class="list-unstyled mb-0">
           {% for page in page_tree %}{{ render_page_tree(page, 0) }}{% endfor %}
         </ul>
       </div>
@@ -55,7 +41,7 @@
   {% else %}
     <div class="alert alert-info">
       No wiki pages have been created yet.
-      {% if can_edit %}<a href="{{ url_for("wiki.new_page") }}">Create the first page</a>.{% endif %}
+      {% if can_edit %}<a href="{{ url_for("wiki.new_page") }}" class="alert-link">Create the first page</a>.{% endif %}
     </div>
   {% endif %}
-{% endblock %}
+{% endblock page_content %}

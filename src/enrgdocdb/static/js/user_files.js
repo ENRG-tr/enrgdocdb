@@ -4,7 +4,10 @@ const MAX_FILE_COUNT = 10;
 function initializeUserFiles(formId, fileToken, documentTokens, uploadUrl) {
     const form = document.getElementById(formId);
     const filesInput = form.querySelector("#files");
-    const submitButton = form.querySelector("[type='submit']");
+    let submitButton = form.querySelector("[type='submit']");
+    if (!submitButton) {
+        submitButton = document.getElementById("submit-btn");
+    }
 
     if (!filesInput) {
         console.error("No file input found in form");
@@ -12,7 +15,7 @@ function initializeUserFiles(formId, fileToken, documentTokens, uploadUrl) {
     }
 
     if (!submitButton) {
-        console.error("No submit button found in form");
+        console.error("No submit button found in form or with ID submit-btn");
         return;
     }
 

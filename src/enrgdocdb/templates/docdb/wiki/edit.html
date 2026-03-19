@@ -1,8 +1,7 @@
-{% extends "docdb/base.html" %}
+{% extends "docdb/wiki/base_wiki.html" %}
 {% from "docdb/snippets/user_files.html" import initialize_user_files %}
 {% block title %}{{ "New Wiki Page" if not page else "Edit Wiki Page" }} - ENRG DocDB{% endblock %}
-{% block head %}
-  {{ super() }}
+{% block wiki_head %}
   <!-- Quill Rich Text Editor -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
@@ -98,15 +97,31 @@
       }
     });
   </script>
-{% endblock head %}
-{% block content %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="mb-0">{{ "Create New Wiki Page" if not page else "Edit Wiki Page" }}</h2>
-    </div>
-    <div class="card-body">
-      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-      <form id="wiki-edit-form" method="POST">
+{% endblock wiki_head %}
+{% block header_title %}
+  <h2 class="mb-0">{{ "Create New Wiki Page" if not page else "Edit Wiki Page" }}</h2>
+{% endblock header_title %}
+{% block header_actions %}
+  <a href="{{ url_for("wiki.index") }}" class="btn btn-secondary me-1">Cancel</a>
+  {% if page %}
+    <a href="{{ url_for('admin_WikiPage.edit_view', id=page.id, url=request.path) }}"
+       class="btn btn-outline-info">
+      <i class="fas fa-lock me-1"></i> Manage Permissions
+    </a>
+  {% endif %}
+  <button type="submit"
+          id="submit-btn"
+          form="wiki-edit-form"
+          class="btn btn-primary">
+    <i class="fas fa-save me-1"></i> {{ "Create Page" if not page else "Save Changes" }}
+  </button>
+{% endblock header_actions %}
+{% block page_content %}
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+  <form id="wiki-edit-form" method="POST">
+    <button type="submit" class="d-none"></button>
+    <div class="row">
+      <div class="col-md-6">
         <div class="mb-3">
           <label for="title" class="form-label">Title *</label>
           <input type="text"
@@ -116,6 +131,8 @@
                  value="{{ title or (page.title if page else '') }}"
                  required>
         </div>
+      </div>
+      <div class="col-md-6">
         <div class="mb-3">
           <label for="slug" class="form-label">URL Slug *</label>
           <input type="text"
@@ -124,8 +141,12 @@
                  name="slug"
                  value="{{ slug or (page.slug if page else '') }}"
                  required>
-          <div class="form-text">URL-friendly version of the title. Generated automatically but can be edited.</div>
+          <div class="form-text">Generated automatically from title.</div>
         </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
         <div class="mb-3">
           <label for="parent_id" class="form-label">Parent Page</label>
           <select class="form-select" id="parent_id" name="parent_id">
@@ -140,7 +161,9 @@
             {% endfor %}
           </select>
         </div>
-        <div class="mb-3 form-check">
+      </div>
+      <div class="col-md-6 d-flex align-items-center">
+        <div class="form-check mt-3">
           <input type="checkbox"
                  class="form-check-input"
                  id="is_pinned"
@@ -149,42 +172,28 @@
                  {% if is_pinned or (page and page.is_pinned) %}checked{% endif %}>
           <label class="form-check-label" for="is_pinned">Pin this page to top of index</label>
         </div>
-        <div class="mb-3">
-          <label class="form-label d-block">Attachments</label>
-          <input type="file" id="files" multiple>
-          <div id="uploaded-files-preview" class="mt-2 d-flex flex-wrap gap-2"></div>
-        </div>
-        {% if page %}
-          <div class="mb-3">
-            <a href="{{ url_for('admin_WikiPage.edit_view', id=page.id, url=request.path) }}"
-               class="btn btn-outline-info w-100 mb-3">
-              <i class="fas fa-lock me-2"></i> Manage Permissions
-            </a>
-          </div>
-        {% endif %}
-        <div class="mb-3">
-          <label for="content" class="form-label">Content</label>
-          <textarea class="form-control" id="content" name="content" rows="15">{{ content or (page.content if page else '') }}</textarea>
-        </div>
-        {% if page %}
-          <div class="mb-3">
-            <label for="comment" class="form-label">Revision Comment</label>
-            <input type="text"
-                   class="form-control"
-                   id="comment"
-                   name="comment"
-                   placeholder="Optional summary of changes">
-          </div>
-        {% endif %}
-        <div class="d-flex justify-content-between">
-          <a href="{{ url_for("wiki.index") }}" class="btn btn-secondary">Cancel</a>
-          <button type="submit" id="submit-btn" class="btn btn-primary">
-            {{ "Create Page" if not page else "Save Changes" }}
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
-  </div>
+    <label for="files" class="form-label">Files</label>
+    <input type="file" id="files" multiple>
+    <div id="uploaded-files-preview" class="mt-2 d-flex flex-wrap gap-2"></div>
+    <div class="mb-3">
+      <label for="content" class="form-label">Content</label>
+      <textarea class="form-control" id="content" name="content" rows="15">{{ content or (page.content if page else '') }}</textarea>
+    </div>
+    {% if page %}
+      <div class="mb-3">
+        <label for="comment" class="form-label">Revision Comment</label>
+        <input type="text"
+               class="form-control"
+               id="comment"
+               name="comment"
+               placeholder="Optional summary of changes">
+      </div>
+    {% endif %}
+  </form>
+{% endblock page_content %}
+{% block footer %}
   {{ initialize_user_files("wiki-edit-form", user_files) }}
   <script>
     // Custom logic to show "Insert" button for newly uploaded files
@@ -223,4 +232,4 @@
       }
     })();
   </script>
-{% endblock %}
+{% endblock footer %}
