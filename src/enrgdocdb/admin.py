@@ -1,13 +1,14 @@
 import os
 from datetime import datetime
 
-from flask import abort, redirect, request, url_for
+from flask import abort, flash, redirect, request, url_for
 from flask import current_app as app
 from flask_admin import Admin, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.theme import Bootstrap4Theme
 from flask_login import current_user
-from wtforms import HiddenField, TextAreaField
+from flask_security.utils import hash_password
+from wtforms import HiddenField, PasswordField, TextAreaField
 
 from .database import db
 from .models.author import Author, Institution
@@ -66,6 +67,19 @@ class AdminView(ModelView):
     def edit_form(self, obj=None):
         form = super().edit_form(obj)
         return self._modify_form_query(form, obj, False)
+
+    def _on_change(self, form, model, is_created):
+        return True
+
+    def update_model(self, form, model):
+        if not self._on_change(form, model, False):
+            return False
+        return super().update_model(form, model)
+
+    def create_model(self, form):
+        if not self._on_change(form, None, True):
+            return False
+        return super().create_model(form)
 
 
 class WikiPageAdminView(AdminView):
@@ -164,7 +178,32 @@ class OrganizationAdminView(AdminView):
 
 
 class UserAdminView(AdminView):
-    form_columns = ["first_name", "last_name", "email", "roles"]
+    form_columns = [
+        "first_name",
+        "last_name",
+        "email",
+        "roles",
+        "password",
+        "password_again",
+    ]
+
+    form_extra_fields = {
+        "password": PasswordField("Password"),
+        "password_again": PasswordField("Password Again"),
+    }
+
+    def _on_change(self, form, model, is_created):
+        if form.password.data is None or form.password.data == "":
+            return True
+        if form.password.data != form.password_again.data:
+            flash("Passwords do not match", "error")
+            return False
+        if len(form.password.data) < 8:
+            flash("Password must be at least 8 characters", "error")
+            return False
+
+        model.password = hash_password(form.password.data)
+        return True
 
     def delete_model(self, model: User):
         model = db.session.query(User).filter(User.id == model.id).one()
