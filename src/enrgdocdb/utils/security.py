@@ -62,28 +62,34 @@ def _is_super_admin(user: User):
 
 def _has_page_permission(user: User, page: WikiPage, action: RolePermission) -> bool:
     current_page = page
+    processed_permissions = 0
     while current_page:
         for perm in current_page.permissions:
+            processed_permissions += 1
             # Check if user has this role
-            user_has_role = any(role.id == perm.role_id for role in user.roles)
-            if user_has_role:
-                # ADMIN permission on page grants everything
-                if perm.permission == RolePermission.ADMIN:
-                    return True
-                # Exact match
-                if perm.permission == action:
-                    return True
-                # VIEW is covered by any higher permission
-                if action == RolePermission.VIEW:
-                    return True
-                # EDIT is covered by REMOVE
-                if (
-                    action == RolePermission.EDIT
-                    and perm.permission == RolePermission.REMOVE
-                ):
-                    return True
+            if not any(role.id == perm.role_id for role in user.roles):
+                continue
+            # Exact match
+            if perm.permission == action:
+                return True
         # Inherit parent permissions (additive)
         current_page = current_page.parent_page
+
+    # If no permission has been defined for any of the pages...
+    if (
+        processed_permissions == 0
+        # And if the user wants only to view...
+        and action == RolePermission.VIEW
+        # Match organizations:
+        and (
+            # If the page has no organization
+            page.organization_id is None
+            # Or the user has access to the organization
+            or any(role.organization_id == page.organization_id for role in user.roles)
+        )
+    ):
+        # The user may access then
+        return True
     return False
 
 
@@ -113,14 +119,10 @@ def permission_check(model: Any, action: RolePermission):
         elif action == RolePermission.ADD and model is Author:
             return True
         elif isinstance(model, WikiPage):
-            organization_id = model.organization_id
-            if _has_page_permission(user, model, action):
-                return True
+            return _has_page_permission(user, model, action)
         elif hasattr(model, "page") and isinstance(getattr(model, "page"), WikiPage):
             # For WikiFile and WikiRevision
-            if _has_page_permission(user, getattr(model, "page"), action):
-                return True
-            organization_id = getattr(model, "page").organization_id
+            return _has_page_permission(user, getattr(model, "page"), action)
         elif hasattr(model, "organization_id"):
             organization_id = model.organization_id
         elif hasattr(model, "document_id") or hasattr(model, "document"):
