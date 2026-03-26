@@ -1,5 +1,6 @@
 import jwt
 from flask import Blueprint, Response
+from urllib.parse import quote
 from flask_login import current_user
 
 from ..settings import AUTH_JWT_SECRET_KEY
@@ -11,11 +12,10 @@ blueprint = Blueprint("test_auth", __name__, url_prefix="/test-auth")
 def index():
     if current_user.is_authenticated:
         response = Response("You are logged in as '{}'".format(current_user.email))
-        # Add identity headers for reverse proxy / backend service integration
-        response.headers["X-Forwarded-User"] = current_user.username
-        response.headers["X-Forwarded-Email"] = current_user.email
-        response.headers["X-Forwarded-Name"] = getattr(current_user, "name", "")
-        response.headers["X-Forwarded-Groups"] = ",".join(r.name for r in current_user.roles)
+        response.headers["X-Forwarded-User"] = quote(current_user.username)
+        response.headers["X-Forwarded-Email"] = quote(current_user.email)
+        response.headers["X-Forwarded-Name"] = quote(getattr(current_user, "name", ""))
+        response.headers["X-Forwarded-Groups"] = quote(",".join(r.name for r in current_user.roles))
         return response
     return "You are not logged in", 401
 
