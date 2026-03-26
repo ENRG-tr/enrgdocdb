@@ -92,7 +92,7 @@ class WikiPageAdminView(AdminView):
     form_overrides = {
         "content": RichTextField,
     }
-    form_widget_args = {"title": {"disabled": True}}
+    form_widget_args = {"title": {"readonly": True}}
 
     def is_accessible(self):
         if request.path.endswith("/edit/"):
