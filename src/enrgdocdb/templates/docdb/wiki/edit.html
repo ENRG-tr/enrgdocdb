@@ -132,7 +132,8 @@
   <h2 class="mb-0">{{ "Create New Wiki Page" if not page else "Edit Wiki Page" }}</h2>
 {% endblock header_title %}
 {% block header_actions %}
-  <a href="{{ url_for("wiki.index") }}" class="btn btn-secondary me-1">Cancel</a>
+  <a href="{{ url_for('wiki.view_page', slug=page.slug) }}"
+     class="btn btn-secondary me-1">Cancel</a>
   {% if page %}
     <a href="{{ url_for('admin_WikiPage.edit_view', id=page.id, url=request.path) }}"
        class="btn btn-outline-info">

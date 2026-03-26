@@ -39,13 +39,13 @@
       <div class="wiki-content ql-editor">{{ page.content | safe }}</div>
     </div>
     <div class="col-md-3 border-start">
-      {% if page.child_pages %}
+      {% if sub_pages %}
         <div class="mb-4">
           <h6 class="text-uppercase text-muted fw-bold small">
             <i class="fas fa-sitemap me-2"></i>Sub-pages
           </h6>
           <ul class="list-unstyled mt-2">
-            {% for child in page.child_pages %}{{ render_page_tree(child, 0) }}{% endfor %}
+            {% for child in sub_pages %}{{ render_page_tree(child, 0) }}{% endfor %}
           </ul>
         </div>
       {% endif %}

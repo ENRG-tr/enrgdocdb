@@ -1,4 +1,12 @@
-from flask import Blueprint, abort, redirect, render_template, request, send_from_directory, url_for
+from flask import (
+    Blueprint,
+    abort,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from ..database import db
@@ -24,9 +32,7 @@ def index():
         .all()
     )
     # Filter pinned pages by permission
-    pinned_pages = [
-        p for p in pinned_pages if permission_check(p, RolePermission.VIEW)
-    ]
+    pinned_pages = [p for p in pinned_pages if permission_check(p, RolePermission.VIEW)]
 
     # Get all non-pinned pages
     all_pages = (
@@ -67,12 +73,17 @@ def view_page(slug):
     can_edit = permission_check(page, RolePermission.EDIT)
     can_admin = permission_check(page, RolePermission.ADMIN)
 
+    sub_pages = [
+        p for p in page.child_pages if permission_check(p, RolePermission.VIEW)
+    ]
+
     return render_template(
         "docdb/wiki/view.html",
         page=page,
         breadcrumbs=breadcrumbs,
         can_edit=can_edit,
         can_admin=can_admin,
+        sub_pages=sub_pages,
     )
 
 
@@ -81,6 +92,16 @@ def view_page(slug):
 def new_page():
     """Create a new wiki page."""
     user_files_result = handle_user_file_upload(request)
+
+    def render(**kwargs):
+        return render_template(
+            "docdb/wiki/edit.html",
+            page=None,
+            all_pages=_get_all_pages(),
+            user_files=user_files_result.template_args,
+            **kwargs,
+        )
+
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         slug = request.form.get("slug", "").strip()
@@ -90,31 +111,25 @@ def new_page():
 
         # Validate required fields
         if not title or not slug:
-            return render_template(
-                "docdb/wiki/edit.html",
+            return render(
                 error="Title and slug are required",
                 title=title,
                 slug=slug,
                 parent_id=parent_id,
                 is_pinned=is_pinned,
                 content=content,
-                all_pages=_get_all_pages(),
-                user_files=user_files_result.template_args,
             )
 
         # Check if slug already exists
         existing = db.session.query(WikiPage).filter_by(slug=slug).first()
         if existing:
-            return render_template(
-                "docdb/wiki/edit.html",
+            return render(
                 error=f"A page with slug '{slug}' already exists",
                 title=title,
                 slug=slug,
                 parent_id=parent_id,
                 is_pinned=is_pinned,
                 content=content,
-                all_pages=_get_all_pages(),
-                user_files=user_files_result.template_args,
             )
 
         # Check parent exists if specified
@@ -160,13 +175,7 @@ def new_page():
 
     # GET request - show form
     parent_id = request.args.get("parent", type=int)
-    return render_template(
-        "docdb/wiki/edit.html",
-        page=None,
-        parent_id=parent_id,
-        all_pages=_get_all_pages(),
-        user_files=user_files_result.template_args,
-    )
+    return render(parent_id=parent_id)
 
 
 @blueprint.route("/<slug>/edit", methods=["GET", "POST"])
@@ -182,6 +191,16 @@ def edit_page(slug):
 
     user_files_result = handle_user_file_upload(request)
 
+    def render(**kwargs):
+        return render_template(
+            "docdb/wiki/edit.html",
+            page=page,
+            breadcrumbs=_get_breadcrumbs(page),
+            all_pages=_get_all_pages(),
+            user_files=user_files_result.template_args,
+            **kwargs,
+        )
+
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         slug = request.form.get("slug", "").strip()
@@ -190,49 +209,37 @@ def edit_page(slug):
         content = request.form.get("content", "")
 
         if not title:
-            return render_template(
-                "docdb/wiki/edit.html",
-                page=page,
+            return render(
                 error="Title is required",
                 title=title,
                 slug=slug,
                 parent_id=parent_id,
                 is_pinned=is_pinned,
                 content=content,
-                all_pages=_get_all_pages(),
-                user_files=user_files_result.template_args,
             )
 
         # Check for slug conflict (excluding current page)
         if slug != page.slug:
             existing = db.session.query(WikiPage).filter_by(slug=slug).first()
             if existing:
-                return render_template(
-                    "docdb/wiki/edit.html",
-                    page=page,
+                return render(
                     error=f"A page with slug '{slug}' already exists",
                     title=title,
                     slug=slug,
                     parent_id=parent_id,
                     is_pinned=is_pinned,
                     content=content,
-                    all_pages=_get_all_pages(),
-                    user_files=user_files_result.template_args,
                 )
 
         # Check for circular parent reference
         if parent_id and parent_id == page.id:
-            return render_template(
-                "docdb/wiki/edit.html",
-                page=page,
+            return render(
                 error="Page cannot be its own parent",
                 title=title,
                 slug=slug,
                 parent_id=parent_id,
                 is_pinned=is_pinned,
                 content=content,
-                all_pages=_get_all_pages(),
-                user_files=user_files_result.template_args,
             )
 
         # Validate parent exists
@@ -272,12 +279,7 @@ def edit_page(slug):
         return redirect(url_for("wiki.view_page", slug=page.slug))
 
     # GET request - show form pre-populated
-    return render_template(
-        "docdb/wiki/edit.html",
-        page=page,
-        all_pages=_get_all_pages(),
-        user_files=user_files_result.template_args,
-    )
+    return render()
 
 
 @blueprint.route("/<slug>/history")
@@ -291,10 +293,13 @@ def history(slug):
     if not permission_check(page, RolePermission.VIEW):
         return redirect(url_for("index.no_role"))
 
+    breadcrumbs = _get_breadcrumbs(page)
+
     revisions = page.revisions
     return render_template(
         "docdb/wiki/history.html",
         page=page,
+        breadcrumbs=breadcrumbs,
         revisions=revisions,
     )
 
@@ -354,6 +359,7 @@ def view_revision(slug, revision_id):
         page=page,
         revision=revision,
         revision_number=revision_number,
+        breadcrumbs=_get_breadcrumbs(page),
     )
 
 
