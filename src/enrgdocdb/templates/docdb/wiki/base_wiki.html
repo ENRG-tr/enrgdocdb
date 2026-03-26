@@ -7,6 +7,32 @@
       overflow-x: auto;
     }
 
+    .wiki-content h3,
+    .wiki-content h4,
+    .wiki-content h5,
+    .wiki-content h6 {
+      margin-top: 0.5rem !important;
+      margin-bottom: 0.5rem !important;
+      font-weight: 600;
+    }
+
+    .wiki-content h1,
+    .wiki-content h2 {
+      border-bottom: 2px solid #dee2e6c5 !important;
+      margin-bottom: 1rem !important;
+      margin-top: 1rem !important;
+    }
+
+    .wiki-content h1:first-child {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0.5rem !important;
+    }
+
+    .wiki-content p {
+      margin-bottom: 1rem !important;
+    }
+
     .wiki-content table {
       border-collapse: collapse;
       width: 100%;
@@ -39,13 +65,27 @@
       font-family: monospace;
     }
 
-    .wiki-content pre {
-      background-color: #f4f4f4;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 1em;
-      overflow: auto;
-      line-height: 1.4;
+    .wiki-content pre,
+    .wiki-content .ql-syntax,
+    .wiki-content .ql-code-block,
+    .wiki-content .ql-code-block-container {
+      background-color: #f8f9fa !important;
+      border: 1px solid #e9ecef !important;
+      border-radius: 6px !important;
+      padding: 1.25rem !important;
+      margin-bottom: 1.5rem !important;
+      overflow: auto !important;
+      line-height: 1.5 !important;
+      font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    }
+
+    .wiki-content li {
+      list-style-type: disc !important;
+      padding-left: 0.5rem !important;
+    }
+
+    .wiki-content ul {
+      padding-left: 0.5rem !important;
     }
 
     .wiki-content pre code {
@@ -84,14 +124,17 @@
       color: #333333 !important;
       transition: background-color 0.2s ease;
     }
+
     .wiki-attachment-item:hover {
       background-color: #f8f9fa !important;
       color: #000000 !important;
       cursor: pointer;
     }
   </style>
-  <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/quill-table-better@1/dist/quill-table-better.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css"
+        rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/quill-table-better@1/dist/quill-table-better.css"
+        rel="stylesheet" />
   {% block wiki_head %}
   {% endblock wiki_head %}
 {% endblock head %}
@@ -126,12 +169,12 @@
           <h2 class="mb-0 text-truncate">{{ title }}</h2>
         {% endblock header_title %}
       </div>
-      <div id="wiki-header-actions" class="d-flex flex-wrap align-items-center gap-2">
+      <div id="wiki-header-actions"
+           class="d-flex flex-wrap align-items-center gap-2">
         {% block header_actions %}
         {% endblock header_actions %}
       </div>
     </div>
-
     <div class="card-body">
       {% block page_content %}
       {% endblock page_content %}
