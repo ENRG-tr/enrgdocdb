@@ -60,7 +60,9 @@ def _is_super_admin(user: User):
     return False
 
 
-def _has_page_permission(user: User, page: WikiPage, action: RolePermission) -> bool:
+def _has_wiki_page_permission(
+    user: User, page: WikiPage, action: RolePermission
+) -> bool:
     current_page = page
     processed_permissions = 0
     while current_page:
@@ -119,10 +121,10 @@ def permission_check(model: Any, action: RolePermission):
         elif action == RolePermission.ADD and model is Author:
             return True
         elif isinstance(model, WikiPage):
-            return _has_page_permission(user, model, action)
+            return _has_wiki_page_permission(user, model, action)
         elif hasattr(model, "page") and isinstance(getattr(model, "page"), WikiPage):
             # For WikiFile and WikiRevision
-            return _has_page_permission(user, getattr(model, "page"), action)
+            return _has_wiki_page_permission(user, getattr(model, "page"), action)
         elif hasattr(model, "organization_id"):
             organization_id = model.organization_id
         elif hasattr(model, "document_id") or hasattr(model, "document"):
