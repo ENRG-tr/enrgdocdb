@@ -8,16 +8,18 @@
             <i class="fas fa-user"></i>
             <a href="{{ url_for("user.view", user_id=current_user.id) }}">{{ _fsdomain("View Your Profile") }}</a>
         </li>
-        {% if security.changeable %}
+        {#
+        {% if false and security.changeable %}
             <li>
                 <a href="{{ url_for_security("change_password") }}">{{ _fsdomain("Change Password") }}</a>
             </li>
         {% endif %}
-        {% if security.change_email %}
+        {% if false and security.change_email %}
             <li>
                 <a href="{{ url_for_security("change_email") }}">{{ _fsdomain("Change Registered Email") }}</a>
             </li>
         {% endif %}
+        #}
         {% if security.two_factor %}
             <li>
                 <a href="{{ url_for_security("two_factor_setup") }}">{{ _fsdomain("Two Factor Setup") }}</a>
@@ -51,15 +53,17 @@
         {% else %}
             {{ render_form_row([form.first_name, form.last_name]) }}
         {% endif %}
-        {% if not current_user.password %}
-            <hr class="mt-4 mb-4">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                You don't have an account password set. Set one below to enable email login and access LDAP-based services.
-            </div>
-            {{ render_field(form.new_password) }}
-            {{ render_field(form.confirm_password) }}
-        {% endif %}
+        <h2>Change Password</h2>
+        <hr>
+        <div class="alert alert-info">
+          {% if not current_user.password %}
+            <i class="fas fa-info-circle"></i>
+            You don't have an account password set. Set one below to enable email login and access LDAP-based services.
+          {% endif %}
+
+          {{ render_field(form.new_password) }}
+          {{ render_field(form.confirm_password) }}
+        </div>
         <div class="mt-4">{{ render_form_row([form.submit]) }}</div>
     </form>
 {% endblock content %}

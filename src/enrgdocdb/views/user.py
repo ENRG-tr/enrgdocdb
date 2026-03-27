@@ -32,9 +32,12 @@ def your_account():
         user.first_name = form.first_name.data
         user.last_name = form.last_name.data
 
-        if form.new_password.data and not user.password:
-            user.password = hash_password(form.new_password.data)
-            flash("Profile and account password updated successfully.")
+        if form.new_password.data:
+            if form.new_password.data == form.confirm_password.data:
+                user.password = hash_password(form.new_password.data)
+                flash("Profile and account password updated successfully")
+            else:
+                flash("Passwords do not match", "error")
         else:
             flash("Profile updated successfully")
 

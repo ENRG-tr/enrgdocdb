@@ -15,7 +15,9 @@ def index():
         response.headers["X-Forwarded-User"] = quote(current_user.username)
         response.headers["X-Forwarded-Email"] = quote(current_user.email)
         response.headers["X-Forwarded-Name"] = quote(getattr(current_user, "name", ""))
-        response.headers["X-Forwarded-Groups"] = quote(",".join(r.name for r in current_user.roles))
+        response.headers["X-Forwarded-Groups"] = quote(
+            ",".join(r.name for r in current_user.roles)
+        )
         return response
     return "You are not logged in", 401
 
