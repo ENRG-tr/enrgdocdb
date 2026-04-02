@@ -1,0 +1,45 @@
+{% extends "docdb/base.html" %}
+{% from "bootstrap5/form.html" import render_form_row, render_field %}
+{% block title %}Create User - ENRG DocDB{% endblock %}
+{% block content %}
+    <h2>Create User</h2>
+    <hr>
+    <form method="post">
+        {{ form.csrf_token() }}
+        
+        <div class="row">
+            <div class="col-md-6">
+                {{ render_field(form.email) }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                {{ render_field(form.first_name) }}
+            </div>
+            <div class="col-md-6">
+                {{ render_field(form.last_name) }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                {{ render_field(form.password) }}
+            </div>
+            <div class="col-md-6">
+                {{ render_field(form.confirm_password) }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                {{ render_field(form.role) }}
+            </div>
+        </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Create User
+            </button>
+            <a href="{{ url_for('user.view_all') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Users
+            </a>
+        </div>
+    </form>
+{% endblock content %}

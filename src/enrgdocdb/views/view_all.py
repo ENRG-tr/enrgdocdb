@@ -46,6 +46,9 @@ def proxy_new(model_name: str):
     if model_name not in [model.__name__ for model in VIEW_ALL_ALLOWED_MODELS]:
         return abort(404)
 
+    if model_name == "User":
+        return redirect(url_for("user.create"))
+
     return redirect(
         url_for(f"admin_{model_name}.create_view", url=request.args.get("url"))
     )

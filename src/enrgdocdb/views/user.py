@@ -1,14 +1,15 @@
 from typing import cast
 
-from flask import Blueprint, abort, flash, render_template, request
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask import current_app as app
 from flask_login import current_user
 from flask_security.utils import hash_password
 
+from ..app import user_datastore
 from ..database import db
-from ..forms.user import EditUserProfileForm
+from ..forms.user import CreateUserForm, EditUserProfileForm
 from ..models.document import Document, DocumentFile
-from ..models.user import RolePermission, User
+from ..models.user import Organization, RolePermission, Role, User
 from ..utils.pagination import paginate
 from ..utils.security import permission_check, secure_blueprint
 
@@ -76,3 +77,45 @@ def view_all():
     users = paginate(db.session.query(User), request)
 
     return render_template("docdb/view_user.html", users=users)
+
+
+@blueprint.route("/create", methods=["GET", "POST"])
+def create():
+    """Create a new user. Only administrators can create users."""
+
+    def render():
+        return render_template("docdb/create_user.html", form=form)
+
+    if not permission_check(None, RolePermission.ADMIN):
+        return abort(403)
+
+    form = CreateUserForm()
+
+    if form.validate_on_submit():
+        try:
+            # Create user using Flask-Security datastore
+            user = db.session.query(User).filter_by(email=form.email.data).first()
+            if user:
+                flash("User with this email already exists", "error")
+                return render()
+            user = user_datastore.create_user(
+                email=form.email.data,
+                password=hash_password(form.password.data),
+                first_name=form.first_name.data,
+                last_name=form.last_name.data,
+                active=True,
+            )
+
+            # Add role to user
+            role = db.session.query(Role).get(form.role.data)
+            if role:
+                user_datastore.add_role_to_user(user, role)
+
+            db.session.commit()
+            flash("User created successfully!", "success")
+            return redirect(url_for("user.view", user_id=user.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error creating user: {str(e)}", "error")
+
+    return render()
