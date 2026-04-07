@@ -10,6 +10,9 @@ from flask import (
 from flask_login import current_user, login_required
 
 from ..database import db
+from ..utils.logging import get_logger
+
+logger = get_logger(__name__)
 from ..models.user import RolePermission
 from ..models.wiki import WikiFile, WikiPage, WikiRevision
 from ..settings import FILE_UPLOAD_FOLDER
@@ -24,6 +27,7 @@ secure_blueprint(blueprint)
 @login_required
 def index():
     """List all wiki pages with hierarchical structure."""
+    logger.info(f"User {current_user.id} accessing wiki index")
     # Get pinned pages first, then by title
     pinned_pages = (
         db.session.query(WikiPage)
@@ -50,6 +54,7 @@ def index():
     # Check if user can edit any wiki page
     can_edit = permission_check(None, RolePermission.ADD)
 
+    logger.debug(f"Wiki index: {len(pinned_pages)} pinned, {len(all_pages)} total pages")
     return render_template(
         "docdb/wiki/index.html",
         pinned_pages=pinned_pages,
@@ -62,11 +67,14 @@ def index():
 @login_required
 def view_page(slug):
     """View a specific wiki page."""
+    logger.debug(f"Viewing wiki page: {slug} by user {current_user.id}")
     page = db.session.query(WikiPage).filter_by(slug=slug).first()
     if not page:
+        logger.warning(f"Wiki page {slug} not found")
         return redirect(url_for("errors.error_404"))
 
     if not permission_check(page, RolePermission.VIEW):
+        logger.warning(f"Permission denied: user {current_user.id} tried to view wiki page {page.id}")
         return redirect(url_for("index.no_role"))
 
     breadcrumbs = _get_breadcrumbs(page)
@@ -77,6 +85,7 @@ def view_page(slug):
         p for p in page.child_pages if permission_check(p, RolePermission.VIEW)
     ]
 
+    logger.info(f"Wiki page {page.id} ({slug}) viewed by user {current_user.id}")
     return render_template(
         "docdb/wiki/view.html",
         page=page,

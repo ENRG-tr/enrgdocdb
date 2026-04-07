@@ -12,6 +12,9 @@ from ..models.document import Document, DocumentFile
 from ..models.user import Organization, RolePermission, Role, User
 from ..utils.pagination import paginate
 from ..utils.security import permission_check, secure_blueprint
+from ..utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 blueprint = Blueprint("user", __name__, url_prefix="/user")
 secure_blueprint(blueprint)
@@ -30,15 +33,18 @@ def your_account():
     form.username.data = user.username
 
     if form.validate_on_submit():
+        logger.info(f"User {current_user.id} updating profile")  # type: ignore
         user.first_name = form.first_name.data
         user.last_name = form.last_name.data
 
         if form.new_password.data:
             if form.new_password.data == form.confirm_password.data:
+                logger.info(f"User {current_user.id} updated password")  # type: ignore
                 user.password = hash_password(form.new_password.data)
                 flash("Profile and account password updated successfully")
             else:
                 flash("Passwords do not match", "error")
+                logger.warning(f"User {current_user.id} entered mismatched passwords")  # type: ignore
         else:
             flash("Profile updated successfully")
 

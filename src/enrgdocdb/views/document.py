@@ -11,6 +11,9 @@ from flask import (
 from flask_login import current_user
 
 from ..database import db
+from ..utils.logging import get_logger
+
+logger = get_logger(__name__)
 from ..forms.document import DocumentForm, DocumentUploadFilesForm
 from ..models.author import Author
 from ..models.document import (
@@ -34,19 +37,24 @@ secure_blueprint(blueprint)
 
 @blueprint.route("/view/<int:document_id>")
 def view(document_id: int):
+    logger.debug(f"Viewing document {document_id}")
     document = db.session.query(Document).get(document_id)
     if not document:
+        logger.warning(f"Document {document_id} not found")
         return abort(404)
     if not permission_check(document, RolePermission.VIEW):
+        logger.warning(f"Permission denied: user {current_user.id} tried to view document {document_id}")
         return abort(403)
-
+    logger.info(f"Document {document_id} viewed by user {current_user.id}")
     return render_template("docdb/view_document.html", document=document)
 
 
 @blueprint.route("/view-topic/<int:document_type_id>")
 def view_document_type(document_type_id: int):
+    logger.debug(f"Viewing document type {document_type_id}")
     document_type = db.session.query(DocumentType).get(document_type_id)
     if not document_type:
+        logger.warning(f"Document type {document_type_id} not found")
         return abort(404)
 
     documents = paginate(
@@ -56,6 +64,7 @@ def view_document_type(document_type_id: int):
         request,
     )
 
+    logger.info(f"Document type {document_type_id} viewed: {documents.total} documents")
     return render_template(
         "docdb/view_document_type.html",
         document_type=document_type,
@@ -65,15 +74,20 @@ def view_document_type(document_type_id: int):
 
 @blueprint.route("/download-file/<int:file_id>")
 def download_file(file_id: int):
+    logger.debug(f"Downloading file {file_id}")
     file = db.session.query(DocumentFile).get(file_id)
     if not file:
+        logger.warning(f"File {file_id} not found")
         return abort(404)
     if not permission_check(file, RolePermission.VIEW):
+        logger.warning(f"Permission denied: user {current_user.id} tried to download file {file_id}")
         return abort(403)
 
     if FILE_UPLOAD_FOLDER is None:
+        logger.error(f"File upload folder not configured for file {file_id}")
         return abort(500)
 
+    logger.info(f"File {file.file_name} downloaded by user {current_user.id}")
     return send_from_directory(
         FILE_UPLOAD_FOLDER,
         file.real_file_name,
@@ -119,6 +133,7 @@ def new():
     url = request.args.get("url")
 
     if form.validate_on_submit():
+        logger.info(f"Creating new document by user {current_user.id}")
         document = Document(
             title=form.title.data,
             abstract=form.abstract.data,
@@ -136,8 +151,10 @@ def new():
             talk_note = db.session.query(TalkNote).get(attach_talk_note_id)
             if talk_note.document_id:
                 flash("Talk note already has an attached document.", "error")
+                logger.warning(f"Talk note {attach_talk_note_id} already has document attached")
             else:
                 talk_note.document_id = document.id
+                logger.info(f"Attached talk note {attach_talk_note_id} to document {document.id}")
 
         for author_id in form.authors.data:
             document_author = DocumentAuthor(
@@ -150,6 +167,7 @@ def new():
 
         # Handle user files
         if user_files_result.user_files:
+            logger.info(f"Uploading {len(user_files_result.user_files)} files to document {document.id}")
             for user_file in user_files_result.user_files:
                 document_file = DocumentFile(
                     document_id=document.id,
@@ -159,6 +177,7 @@ def new():
                 db.session.add(document_file)
         db.session.commit()
 
+        logger.info(f"Document {document.id} created successfully by user {current_user.id}")
         flash("Document was uploaded successfully!", "success")
         if not url:
             url = url_for("document.view", document_id=document.id)
@@ -181,12 +200,14 @@ def upload_files():
     if not document:
         return abort(404)
     if not permission_check(document, RolePermission.EDIT):
+        logger.warning(f"Permission denied: user {current_user.id} tried to upload files to document {document_id}")
         return abort(403)
 
     form = DocumentUploadFilesForm()
     user_files_result = handle_user_file_upload(request)
 
     if form.validate_on_submit():
+        logger.info(f"Uploading {len(user_files_result.user_files)} files to document {document.id} by user {current_user.id}")
         for user_file in user_files_result.user_files:
             document_file = DocumentFile(
                 document_id=document.id,
@@ -196,6 +217,7 @@ def upload_files():
             db.session.add(document_file)
         db.session.commit()
 
+        logger.info(f"Files uploaded successfully to document {document.id}")
         flash("Files were uploaded successfully!", "success")
         if not redirect_url:
             return redirect(url_for("document.view", document_id=document.id))
