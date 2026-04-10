@@ -1,5 +1,5 @@
 import jwt
-from flask import Blueprint, Response
+from flask import Blueprint, Response, after_this_request
 from urllib.parse import quote
 from flask_login import current_user
 
@@ -8,10 +8,14 @@ from ..settings import AUTH_JWT_SECRET_KEY
 blueprint = Blueprint("test_auth", __name__, url_prefix="/test-auth")
 
 
-@blueprint.route("/")
-def index():
-    if current_user.is_authenticated:
-        response = Response("You are logged in as '{}'".format(current_user.email))
+@blueprint.before_request
+def add_x_forwarded_headers():
+    """Add X-Forwarded headers to all responses in this blueprint."""
+    if not current_user.is_authenticated:
+        return
+
+    @after_this_request
+    def add_headers(response):
         response.headers["X-Forwarded-User"] = quote(current_user.username)
         response.headers["X-Forwarded-Email"] = quote(current_user.email)
         response.headers["X-Forwarded-Name"] = quote(getattr(current_user, "name", ""))
@@ -19,7 +23,14 @@ def index():
             ",".join(r.name for r in current_user.roles)
         )
         return response
-    return "You are not logged in", 401
+
+
+@blueprint.route("/")
+def index():
+    if not current_user.is_authenticated:
+        return "You are not logged in", 401
+    response = Response("You are logged in as '{}'".format(current_user.email))
+    return response
 
 
 @blueprint.route("/has-role/<role>")
