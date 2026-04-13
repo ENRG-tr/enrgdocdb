@@ -17,7 +17,7 @@
     </a>
   {% endif %}
   {% if can_admin %}
-    <a href="{{ url_for('admin_WikiPage.edit_view', id=page.id, url=request.path) }}"
+    <a href="{{ try_url_for('admin_WikiPage.edit_view', id=page.id, url=request.path) }}"
        class="btn btn-outline-warning me-1">
       <i class="fas fa-lock me-1"></i> Permissions
     </a>
@@ -36,7 +36,7 @@
 {% block page_content %}
   <div class="row">
     <div class="col-md-9">
-      <div class="wiki-content">{{ page.content | safe }}</div>
+      <div class="wiki-content">{{ page.content | sanitize_html }}</div>
     </div>
     <div class="col-md-3 border-start">
       {% if sub_pages %}

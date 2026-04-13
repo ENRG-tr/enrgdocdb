@@ -10,7 +10,7 @@
     <hr>
     <form id="document-upload-files-form" method="post">
         <div class="form-group">
-            {{ form.csrf_token() }}
+            {{ form.hidden_tag() }}
             <label for="file">File</label>
             {{ render_field(form.files) }}
         </div>

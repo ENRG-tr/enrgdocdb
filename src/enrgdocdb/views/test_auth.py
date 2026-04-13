@@ -1,6 +1,7 @@
+from urllib.parse import quote
+
 import jwt
 from flask import Blueprint, Response, after_this_request
-from urllib.parse import quote
 from flask_login import current_user
 
 from ..settings import AUTH_JWT_SECRET_KEY

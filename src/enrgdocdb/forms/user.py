@@ -2,8 +2,8 @@ from flask_wtf import FlaskForm
 from wtforms import PasswordField, SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, Optional
 
-from ..models.user import Organization, Role
 from ..database import db
+from ..models.user import Role
 
 
 class EditUserProfileForm(FlaskForm):

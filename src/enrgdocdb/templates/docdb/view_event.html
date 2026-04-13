@@ -75,7 +75,7 @@
                     style="border-color: inherit">
                     <td>{{ session.session_time }}</td>
                     <td>
-                        <a href="{{ url_for('admin_EventSession.edit_view', id=session.id, url=get_request_url() ) }}">
+                        <a href="{{ try_url_for('admin_EventSession.edit_view', id=session.id, url=get_request_url() ) }}">
                             {{ session.session_name }}
                         </a>
                     </td>
@@ -90,7 +90,7 @@
                         {% if not session.talk_notes %}
                             <i class="fas fa-info-circle"></i> No talks found for this session.
                             {% if permission_check(session, RolePermission.EDIT) %}
-                                <a href="{{ url_for('admin_EventSession.edit_view', id=session.id, url=get_request_url() ) }}">
+                                <a href="{{ try_url_for('admin_EventSession.edit_view', id=session.id, url=get_request_url() ) }}">
                                     Consider adding some talks.
                                 </a>
                             {% endif %}

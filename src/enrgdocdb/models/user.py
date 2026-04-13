@@ -8,6 +8,7 @@ from sqlalchemy import ForeignKey, String, event, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Model, db
+from .base import Base
 
 
 class RolePermission(str, Enum):
@@ -85,10 +86,23 @@ class User(Model, sqla.FsUserMixin):
 
         if _is_super_admin(self):
             return db.session.query(Organization).all()
+
+        # If user has a global role with ADD permission, they can see all organizations
+        has_global_add = any(
+            role.organization_id is None and RolePermission.ADD in role.permissions
+            for role in self.roles
+        )
+        if has_global_add:
+            return db.session.query(Organization).all()
+
         return [
             x.organization
             for x in self.roles
-            if RolePermission.EDIT_SELF in x.permissions and x.organization
+            if (
+                RolePermission.EDIT_SELF in x.permissions
+                or RolePermission.ADD in x.permissions
+            )
+            and x.organization
         ]
 
     @staticmethod
@@ -195,7 +209,7 @@ class User(Model, sqla.FsUserMixin):
         return uid_str
 
 
-class Organization(Model):
+class Organization(Base, Model):
     __tablename__ = "organizations"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(512))

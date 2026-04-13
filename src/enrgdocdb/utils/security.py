@@ -1,8 +1,8 @@
 from typing import Any
 
-from flask import Blueprint, flash, redirect, request, url_for
+from flask import Blueprint, current_app, flash, redirect, request, url_for
 from flask_limiter import RateLimitExceeded
-from flask_login import current_user, login_required
+from flask_login import current_user
 
 from ..app import limiter
 from ..database import db
@@ -16,21 +16,41 @@ RATELIMIT_NON_VIEW_ACTIONS = "180/minute"
 
 def secure_blueprint(blueprint: Blueprint):
     @blueprint.before_request
-    @login_required
     def ensure_user_logged_in():
-        pass
+        # Skip authentication check in test mode if desired, but we've enabled it
+        if not current_user.is_authenticated:
+            # Skip for icalendar routes which use token-based auth
+            if request.endpoint and "icalendar" in request.endpoint:
+                return None
+            # Trigger the unauthorized handler (usually redirect to login)
+            return current_app.login_manager.unauthorized()
 
     @blueprint.before_request
     def ensure_user_has_roles():
-        if not len(current_user.roles) and request.endpoint != "index.no_role":
+        # Only check roles for authenticated users
+        if not current_user.is_authenticated:
+            return None
+
+        # Check if the user has any roles assigned
+        # AnonymousUser won't have the 'roles' attribute from our model
+        roles = getattr(current_user, "roles", [])
+        if not len(roles) and request.endpoint != "index.no_role":
             return redirect(url_for("index.no_role"))
 
     @blueprint.before_request
     def ensure_user_has_filled_name():
+        # Skip name check in test mode if desired
+        if not current_user.is_authenticated:
+            return None
+
+        roles = getattr(current_user, "roles", [])
         if (
-            len(current_user.roles)
+            len(roles)
             and request.endpoint != "user.your_account"
-            and (not current_user.first_name or not current_user.last_name)
+            and (
+                not getattr(current_user, "first_name", None)
+                or not getattr(current_user, "last_name", None)
+            )
         ):
             flash("You must fill your name in to use ENRG DocDB!", "error")
             return redirect(url_for("user.your_account"))

@@ -13,7 +13,6 @@ from flask_login import current_user
 from ..database import db
 from ..utils.logging import get_logger
 
-logger = get_logger(__name__)
 from ..forms.document import DocumentForm, DocumentUploadFilesForm
 from ..models.author import Author
 from ..models.document import (
@@ -27,12 +26,14 @@ from ..models.event import TalkNote
 from ..models.topic import Topic
 from ..models.user import RolePermission
 from ..settings import FILE_UPLOAD_FOLDER
+from ..utils import security
 from ..utils.file import handle_user_file_upload
 from ..utils.pagination import paginate
-from ..utils.security import permission_check, secure_blueprint
 
 blueprint = Blueprint("document", __name__, url_prefix="/documents")
-secure_blueprint(blueprint)
+security.secure_blueprint(blueprint)
+
+logger = get_logger(__name__)
 
 
 @blueprint.route("/view/<int:document_id>")
@@ -42,10 +43,14 @@ def view(document_id: int):
     if not document:
         logger.warning(f"Document {document_id} not found")
         return abort(404)
-    if not permission_check(document, RolePermission.VIEW):
-        logger.warning(f"Permission denied: user {current_user.id} tried to view document {document_id}")
+    if not security.permission_check(document, RolePermission.VIEW):
+        logger.warning(
+            f"Permission denied: user {getattr(current_user, 'id', 'anonymous')} tried to view document {document_id}"
+        )
         return abort(403)
-    logger.info(f"Document {document_id} viewed by user {current_user.id}")
+    logger.info(
+        f"Document {document_id} viewed by user {getattr(current_user, 'id', 'anonymous')}"
+    )
     return render_template("docdb/view_document.html", document=document)
 
 
@@ -64,7 +69,9 @@ def view_document_type(document_type_id: int):
         request,
     )
 
-    logger.info(f"Document type {document_type_id} viewed: {documents.total} documents")
+    logger.info(
+        f"Document type {document_type_id} viewed: {documents.total_count} documents"
+    )
     return render_template(
         "docdb/view_document_type.html",
         document_type=document_type,
@@ -79,15 +86,19 @@ def download_file(file_id: int):
     if not file:
         logger.warning(f"File {file_id} not found")
         return abort(404)
-    if not permission_check(file, RolePermission.VIEW):
-        logger.warning(f"Permission denied: user {current_user.id} tried to download file {file_id}")
+    if not security.permission_check(file, RolePermission.VIEW):
+        logger.warning(
+            f"Permission denied: user {getattr(current_user, 'id', 'anonymous')} tried to download file {file_id}"
+        )
         return abort(403)
 
     if FILE_UPLOAD_FOLDER is None:
         logger.error(f"File upload folder not configured for file {file_id}")
         return abort(500)
 
-    logger.info(f"File {file.file_name} downloaded by user {current_user.id}")
+    logger.info(
+        f"File {file.file_name} downloaded by user {getattr(current_user, 'id', 'anonymous')}"
+    )
     return send_from_directory(
         FILE_UPLOAD_FOLDER,
         file.real_file_name,
@@ -97,6 +108,12 @@ def download_file(file_id: int):
 
 @blueprint.route("/new", methods=["GET", "POST"])
 def new():
+    if not security.permission_check(None, RolePermission.ADD):
+        logger.warning(
+            f"Permission denied: user {getattr(current_user, 'id', 'anonymous')} tried to create new document"
+        )
+        return abort(403)
+
     """
     Create a new document.
 
@@ -125,7 +142,11 @@ def new():
     form.organization.choices = list(
         {
             (organization.id, organization.name)
-            for organization in current_user.get_organizations()
+            for organization in (
+                current_user.get_organizations()
+                if current_user.is_authenticated
+                else []
+            )
         }
     )
 
@@ -133,11 +154,13 @@ def new():
     url = request.args.get("url")
 
     if form.validate_on_submit():
-        logger.info(f"Creating new document by user {current_user.id}")
+        logger.info(
+            f"Creating new document by user {getattr(current_user, 'id', 'anonymous')}"
+        )
         document = Document(
             title=form.title.data,
             abstract=form.abstract.data,
-            user_id=current_user.id,
+            user_id=getattr(current_user, "id", None),
             document_type_id=form.document_type.data,
             organization_id=form.organization.data,
         )
@@ -151,10 +174,14 @@ def new():
             talk_note = db.session.query(TalkNote).get(attach_talk_note_id)
             if talk_note.document_id:
                 flash("Talk note already has an attached document.", "error")
-                logger.warning(f"Talk note {attach_talk_note_id} already has document attached")
+                logger.warning(
+                    f"Talk note {attach_talk_note_id} already has document attached"
+                )
             else:
                 talk_note.document_id = document.id
-                logger.info(f"Attached talk note {attach_talk_note_id} to document {document.id}")
+                logger.info(
+                    f"Attached talk note {attach_talk_note_id} to document {document.id}"
+                )
 
         for author_id in form.authors.data:
             document_author = DocumentAuthor(
@@ -167,7 +194,9 @@ def new():
 
         # Handle user files
         if user_files_result.user_files:
-            logger.info(f"Uploading {len(user_files_result.user_files)} files to document {document.id}")
+            logger.info(
+                f"Uploading {len(user_files_result.user_files)} files to document {document.id}"
+            )
             for user_file in user_files_result.user_files:
                 document_file = DocumentFile(
                     document_id=document.id,
@@ -177,7 +206,9 @@ def new():
                 db.session.add(document_file)
         db.session.commit()
 
-        logger.info(f"Document {document.id} created successfully by user {current_user.id}")
+        logger.info(
+            f"Document {document.id} created successfully by user {getattr(current_user, 'id', 'anonymous')}"
+        )
         flash("Document was uploaded successfully!", "success")
         if not url:
             url = url_for("document.view", document_id=document.id)
@@ -199,15 +230,19 @@ def upload_files():
     document = db.session.query(Document).get(document_id)
     if not document:
         return abort(404)
-    if not permission_check(document, RolePermission.EDIT):
-        logger.warning(f"Permission denied: user {current_user.id} tried to upload files to document {document_id}")
+    if not security.permission_check(document, RolePermission.EDIT):
+        logger.warning(
+            f"Permission denied: user {getattr(current_user, 'id', 'anonymous')} tried to upload files to document {document_id}"
+        )
         return abort(403)
 
     form = DocumentUploadFilesForm()
     user_files_result = handle_user_file_upload(request)
 
     if form.validate_on_submit():
-        logger.info(f"Uploading {len(user_files_result.user_files)} files to document {document.id} by user {current_user.id}")
+        logger.info(
+            f"Uploading {len(user_files_result.user_files)} files to document {document.id} by user {getattr(current_user, 'id', 'anonymous')}"
+        )
         for user_file in user_files_result.user_files:
             document_file = DocumentFile(
                 document_id=document.id,
@@ -229,3 +264,27 @@ def upload_files():
         user_files=user_files_result.template_args,
         document=document,
     )
+
+
+@blueprint.route("/delete-file/<int:file_id>")
+def delete_file(file_id: int):
+    file = db.session.query(DocumentFile).get(file_id)
+    if not file:
+        logger.warning(f"Document file {file_id} not found")
+        return abort(404)
+
+    if not security.permission_check(file, RolePermission.EDIT):
+        logger.warning(
+            f"Permission denied: user {getattr(current_user, 'id', 'anonymous')} tried to delete document file {file_id}"
+        )
+        return abort(403)
+
+    document_id = file.document_id
+    db.session.delete(file)
+    db.session.commit()
+
+    logger.info(
+        f"Document file {file_id} deleted by user {getattr(current_user, 'id', 'anonymous')}"
+    )
+    flash("File was deleted successfully", "success")
+    return redirect(url_for("document.view", document_id=document_id))

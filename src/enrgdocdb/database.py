@@ -20,8 +20,11 @@ logger.info("Database module initialized")
 
 def register_sql_logging():
     """Register SQL query logging event listeners (must be called after app creation)."""
+
     @event.listens_for(db.engine, "before_cursor_execute")
-    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    def before_cursor_execute(
+        conn, cursor, statement, parameters, context, executemany
+    ):
         """Log SQL queries in debug mode."""
         if logger.level <= 10:  # DEBUG level
             sql_str = str(statement)

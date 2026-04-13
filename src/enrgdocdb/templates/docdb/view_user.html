@@ -1,46 +1,53 @@
 {% extends "docdb/base.html" %}
 {% from "docdb/snippets/moderation.html" import render_moderation_options with context %}
 {% from "docdb/snippets/render_map.html" import render_paginated_result %}
-{% from "docdb/snippets/user.html" import render_user_roles %}
+{% from "docdb/snippets/user.html" import render_user_roles, render_user_table %}
 {% block title %}
-    {{ user.name }} - ENRG DocDB
+    {% if user %}{{ user.name }}{% else %}All Users{% endif %} - ENRG DocDB
 {% endblock title %}
 {% block content %}
-    <h2>View User</h2>
-    {{ render_moderation_options(user) }}
-    <hr>
-    <div class="user-details">
-        <table class="table table-striped table-bordered">
-            <tr>
-                <th style="width: 25%">Name</th>
-                <td>{{ user.name }}</td>
-            </tr>
-            <tr>
-                <th>E-mail</th>
-                <td>{{ user.email }}</td>
-            </tr>
-            <tr>
-                <th>First Name</th>
-                <td>{{ user.first_name }}</td>
-            </tr>
-            <tr>
-                <th>Last Name</th>
-                <td>{{ user.last_name }}</td>
-            </tr>
-            <tr>
-                <th>Roles</th>
-                <td>{{ render_user_roles(user) }}</td>
-            </tr>
-            <tr>
-                <th>Date Registered</th>
-                <td>{{ user.create_datetime.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-            </tr>
-        </table>
-    </div>
-    <hr>
-    <strong>Document(s) uploaded by this user</strong>
-    {{ render_paginated_result(documents) }}
-    <hr>
-    <strong>File(s) uploaded by this user</strong>
-    {{ render_paginated_result(files) }}
+    <h2>{% if user %}View User{% else %}All Users{% endif %}</h2>
+    {% if user %}
+        {{ render_moderation_options(user) }}
+        <hr>
+        <div class="user-details">
+            <table class="table table-striped table-bordered">
+                <tr>
+                    <th style="width: 25%">Name</th>
+                    <td>{{ user.name }}</td>
+                </tr>
+                <tr>
+                    <th>E-mail</th>
+                    <td>{{ user.email }}</td>
+                </tr>
+                <tr>
+                    <th>First Name</th>
+                    <td>{{ user.first_name }}</td>
+                </tr>
+                <tr>
+                    <th>Last Name</th>
+                    <td>{{ user.last_name }}</td>
+                </tr>
+                <tr>
+                    <th>Roles</th>
+                    <td>{{ render_user_roles(user) }}</td>
+                </tr>
+                <tr>
+                    <th>Date Registered</th>
+                    <td>{{ user.create_datetime.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                </tr>
+            </table>
+        </div>
+        <hr>
+        <strong>Document(s) uploaded by this user</strong>
+        {{ render_paginated_result(documents) }}
+        <hr>
+        <strong>File(s) uploaded by this user</strong>
+        {{ render_paginated_result(files) }}
+    {% else %}
+        <hr>
+        <div class="user-list">
+            {{ render_user_table(users.result, users) }}
+        </div>
+    {% endif %}
 {% endblock content %}

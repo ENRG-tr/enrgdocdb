@@ -8,19 +8,21 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
+from markupsafe import Markup
 
 from ..database import db
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
+from ..forms.wiki import WikiPageForm
 from ..models.user import RolePermission
 from ..models.wiki import WikiFile, WikiPage, WikiRevision
 from ..settings import FILE_UPLOAD_FOLDER
+from ..utils import security
 from ..utils.file import handle_user_file_upload
-from ..utils.security import permission_check, secure_blueprint
+from ..utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 blueprint = Blueprint("wiki", __name__, url_prefix="/wiki")
-secure_blueprint(blueprint)
+security.secure_blueprint(blueprint)
 
 
 @blueprint.route("/")
@@ -36,7 +38,9 @@ def index():
         .all()
     )
     # Filter pinned pages by permission
-    pinned_pages = [p for p in pinned_pages if permission_check(p, RolePermission.VIEW)]
+    pinned_pages = [
+        p for p in pinned_pages if security.permission_check(p, RolePermission.VIEW)
+    ]
 
     # Get all non-pinned pages
     all_pages = (
@@ -46,15 +50,19 @@ def index():
         .all()
     )
     # Filter all pages by permission
-    all_pages = [p for p in all_pages if permission_check(p, RolePermission.VIEW)]
+    all_pages = [
+        p for p in all_pages if security.permission_check(p, RolePermission.VIEW)
+    ]
 
     # Build hierarchical structure
     page_tree = build_page_tree(all_pages)
 
     # Check if user can edit any wiki page
-    can_edit = permission_check(None, RolePermission.ADD)
+    can_edit = security.permission_check(None, RolePermission.ADD)
 
-    logger.debug(f"Wiki index: {len(pinned_pages)} pinned, {len(all_pages)} total pages")
+    logger.debug(
+        f"Wiki index: {len(pinned_pages)} pinned, {len(all_pages)} total pages"
+    )
     return render_template(
         "docdb/wiki/index.html",
         pinned_pages=pinned_pages,
@@ -71,18 +79,20 @@ def view_page(slug):
     page = db.session.query(WikiPage).filter_by(slug=slug).first()
     if not page:
         logger.warning(f"Wiki page {slug} not found")
-        return redirect(url_for("errors.error_404"))
+        return abort(404)
 
-    if not permission_check(page, RolePermission.VIEW):
-        logger.warning(f"Permission denied: user {current_user.id} tried to view wiki page {page.id}")
+    if not security.permission_check(page, RolePermission.VIEW):
+        logger.warning(
+            f"Permission denied: user {current_user.id} tried to view wiki page {page.id}"
+        )
         return redirect(url_for("index.no_role"))
 
     breadcrumbs = _get_breadcrumbs(page)
-    can_edit = permission_check(page, RolePermission.EDIT)
-    can_admin = permission_check(page, RolePermission.ADMIN)
+    can_edit = security.permission_check(page, RolePermission.EDIT)
+    can_admin = security.permission_check(page, RolePermission.ADMIN)
 
     sub_pages = [
-        p for p in page.child_pages if permission_check(p, RolePermission.VIEW)
+        p for p in page.child_pages if security.permission_check(p, RolePermission.VIEW)
     ]
 
     logger.info(f"Wiki page {page.id} ({slug}) viewed by user {current_user.id}")
@@ -101,71 +111,136 @@ def view_page(slug):
 def new_page():
     """Create a new wiki page."""
     user_files_result = handle_user_file_upload(request)
+    form = WikiPageForm()
+    pages = _get_all_pages()
+    form.parent_id.choices = [(0, "No Parent")] + [(p.id, p.title) for p in pages]
 
     def render(**kwargs):
         return render_template(
             "docdb/wiki/edit.html",
+            form=form,
             page=None,
-            all_pages=_get_all_pages(),
+            all_pages=pages,
             user_files=user_files_result.template_args,
             **kwargs,
         )
 
     if request.method == "POST":
-        title = request.form.get("title", "").strip()
-        slug = request.form.get("slug", "").strip()
-        parent_id = request.form.get("parent_id", type=int)
-        is_pinned = request.form.get("is_pinned") == "true"
-        content = request.form.get("content", "")
+        if form.validate_on_submit():
+            # Check parent exists if specified
+            parent_id = form.parent_id.data
+            if parent_id:
+                parent_page = db.session.query(WikiPage).get(parent_id)
+                if not parent_page:
+                    parent_id = None
 
-        # Validate required fields
-        if not title or not slug:
-            return render(
-                error="Title and slug are required",
-                title=title,
-                slug=slug,
-                parent_id=parent_id,
-                is_pinned=is_pinned,
-                content=content,
+            # Create page
+            page = WikiPage(
+                title=form.title.data,
+                slug=form.slug.data,
+                is_pinned=form.is_pinned.data,
+                parent_page=parent_page if parent_id else None,
+                content=form.content.data,
+                organization_id=None,
             )
 
-        # Check if slug already exists
-        existing = db.session.query(WikiPage).filter_by(slug=slug).first()
-        if existing:
-            return render(
-                error=f"A page with slug '{slug}' already exists",
-                title=title,
-                slug=slug,
-                parent_id=parent_id,
-                is_pinned=is_pinned,
-                content=content,
+            # Create initial revision
+            revision = WikiRevision(
+                page=page,
+                author_id=current_user.id,
+                content=form.content.data,
+                comment="Initial revision",
             )
 
-        # Check parent exists if specified
-        if parent_id:
-            parent_page = db.session.query(WikiPage).get(parent_id)
-            if not parent_page:
-                parent_id = None
+            db.session.add(page)
+            db.session.add(revision)
 
-        # Create page
-        page = WikiPage(
-            title=title,
-            slug=slug,
-            is_pinned=is_pinned,
-            parent_id=parent_id,
-            content=content,
-            organization_id=None,
+            # Handle user files
+            if user_files_result.user_files:
+                for user_file in user_files_result.user_files:
+                    wiki_file = WikiFile(
+                        page=page,
+                        file_name=user_file.uploaded_file_name,
+                        real_file_name=user_file.file_path,
+                    )
+                    db.session.add(wiki_file)
+
+            db.session.commit()
+
+            return redirect(url_for("wiki.view_page", slug=page.slug))
+        else:
+            return render(
+                error=Markup(
+                    "Page creation failed: <br> - "
+                    + "<br> - ".join(
+                        [f"{k}: {','.join(v)}" for k, v in form.errors.items()]
+                    ),
+                )
+            )
+    # GET request - show form
+    p_id = request.args.get("parent", type=int)
+    if p_id:
+        form.parent_id.data = p_id
+    return render()
+
+
+@blueprint.route("/edit-wiki", methods=["GET", "POST"])
+@login_required
+def edit_wiki_page():
+    """Generic edit page route for wiki pages."""
+    page_slug = request.args.get("slug")
+    if not page_slug:
+        return abort(404)
+
+    page = db.session.query(WikiPage).filter_by(slug=page_slug).first()
+    if not page:
+        return abort(404)
+
+    if not security.permission_check(page, RolePermission.EDIT):
+        return redirect(url_for("index.no_role"))
+
+    user_files_result = handle_user_file_upload(request)
+    form = WikiPageForm(obj=page, page=page)
+
+    def render(**kwargs):
+        return render_template(
+            "docdb/wiki/edit.html",
+            form=form,
+            page=page,
+            breadcrumbs=_get_breadcrumbs(page),
+            all_pages=_get_all_pages(),
+            user_files=user_files_result.template_args,
+            **kwargs,
         )
 
-        # Create initial revision
+    if request.method == "POST" and form.validate_on_submit():
+        # Check for circular parent reference
+        if form.parent_id.data and str(page.id) == form.parent_id.data:
+            form.parent_id.errors.append("Page cannot be its own parent")
+            return render(error="Page cannot be its own parent")
+
+        # Update page
+        page.title = form.title.data
+        page.slug = form.slug.data
+        page.is_pinned = form.is_pinned.data
+        page.content = form.content.data
+
+        # Handle parent_id separately
+        parent_id = form.parent_id.data
+        if parent_id:
+            parent_page = db.session.query(WikiPage).get(parent_id)
+            if parent_page:
+                page.parent_id = parent_page.id
+            else:
+                page.parent_id = None
+
+        # Create revision
         revision = WikiRevision(
             page=page,
             author_id=current_user.id,
-            content=content,
-            comment="Initial revision",
+            content=form.content.data,
+            comment=form.comment.data or "Updated via wiki form",
         )
-
-        db.session.add(page)
         db.session.add(revision)
 
         # Handle user files
@@ -180,11 +255,11 @@ def new_page():
 
         db.session.commit()
 
+        logger.info(f"Wiki page '{page.slug}' updated by user {current_user.id}")
         return redirect(url_for("wiki.view_page", slug=page.slug))
 
-    # GET request - show form
-    parent_id = request.args.get("parent", type=int)
-    return render(parent_id=parent_id)
+    # GET request - show form pre-populated
+    return render()
 
 
 @blueprint.route("/<slug>/edit", methods=["GET", "POST"])
@@ -193,9 +268,9 @@ def edit_page(slug):
     """Edit an existing wiki page."""
     page = db.session.query(WikiPage).filter_by(slug=slug).first()
     if not page:
-        return redirect(url_for("errors.error_404"))
+        return abort(404)
 
-    if not permission_check(page, RolePermission.EDIT):
+    if not security.permission_check(page, RolePermission.EDIT):
         return redirect(url_for("index.no_role"))
 
     user_files_result = handle_user_file_upload(request)
@@ -297,9 +372,9 @@ def history(slug):
     """View revision history for a page."""
     page = db.session.query(WikiPage).filter_by(slug=slug).first()
     if not page:
-        return redirect(url_for("errors.error_404"))
+        return abort(404)
 
-    if not permission_check(page, RolePermission.VIEW):
+    if not security.permission_check(page, RolePermission.VIEW):
         return redirect(url_for("index.no_role"))
 
     breadcrumbs = _get_breadcrumbs(page)
@@ -321,7 +396,7 @@ def download_file(file_id: int):
     if not file:
         return abort(404)
 
-    if not permission_check(file.page, RolePermission.VIEW):
+    if not security.permission_check(file.page, RolePermission.VIEW):
         return abort(403)
 
     if FILE_UPLOAD_FOLDER is None:
@@ -340,9 +415,9 @@ def view_revision(slug, revision_id):
     """View a specific revision of a page."""
     page = db.session.query(WikiPage).filter_by(slug=slug).first()
     if not page:
-        return redirect(url_for("errors.error_404"))
+        return abort(404)
 
-    if not permission_check(page, RolePermission.VIEW):
+    if not security.permission_check(page, RolePermission.VIEW):
         return redirect(url_for("index.no_role"))
 
     revision = (
@@ -351,7 +426,7 @@ def view_revision(slug, revision_id):
         .first()
     )
     if not revision:
-        return redirect(url_for("errors.error_404"))
+        return abort(404)
 
     # Calculate relative revision number
     revision_number = (
@@ -378,9 +453,9 @@ def delete_page(slug):
     """Delete a wiki page."""
     page = db.session.query(WikiPage).filter_by(slug=slug).first()
     if not page:
-        return redirect(url_for("errors.error_404"))
+        return abort(404)
 
-    if not permission_check(page, RolePermission.EDIT):
+    if not security.permission_check(page, RolePermission.EDIT):
         return redirect(url_for("index.no_role"))
 
     # Delete the page and all its children recursively

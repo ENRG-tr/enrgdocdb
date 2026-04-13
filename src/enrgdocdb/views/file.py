@@ -69,12 +69,16 @@ def upload_file():
 def get_file(filename):
     from ..settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_TEMP_FOLDER
 
-    if FILE_UPLOAD_FOLDER and os.path.exists(os.path.join(FILE_UPLOAD_FOLDER, filename)):
+    if FILE_UPLOAD_FOLDER and os.path.exists(
+        os.path.join(FILE_UPLOAD_FOLDER, filename)
+    ):
         return send_from_directory(FILE_UPLOAD_FOLDER, filename)
-    
-    if FILE_UPLOAD_TEMP_FOLDER and os.path.exists(os.path.join(FILE_UPLOAD_TEMP_FOLDER, filename)):
+
+    if FILE_UPLOAD_TEMP_FOLDER and os.path.exists(
+        os.path.join(FILE_UPLOAD_TEMP_FOLDER, filename)
+    ):
         return send_from_directory(FILE_UPLOAD_TEMP_FOLDER, filename)
-    
+
     return abort(404)
 
 

@@ -1,5 +1,5 @@
+import logging
 import math
-
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlencode
@@ -14,6 +14,8 @@ from ..models.topic import Topic
 from ..models.user import RolePermission
 from ..utils.security import _is_super_admin
 from ..utils.url import get_request_base_url
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -37,21 +39,37 @@ def secure_query(query: Query, query_model: Any, user: Any, session: Session) ->
     # Poison the query if the user does not exist
     if user is None or not user.is_authenticated:
         return query.filter(query_model.id == -1)
+
     if _is_super_admin(user):
+        return query
+
+    user_roles = user.roles
+    has_global_view = any(
+        role.organization_id is None and RolePermission.VIEW in role.permissions
+        for role in user_roles
+    )
+
+    # If user has global view, skip organization filtering
+    if has_global_view:
         return query
 
     user_organizations = [
         role.organization_id
-        for role in user.roles
-        if RolePermission.VIEW in role.permissions
+        for role in user_roles
+        if RolePermission.VIEW in role.permissions and role.organization_id is not None
     ]
 
     if hasattr(query_model, "organization_id"):
-        query = query.filter(query_model.organization_id.in_(user_organizations))
+        query = query.filter(
+            (query_model.organization_id.in_(user_organizations))
+            | (query_model.organization_id.is_(None))
+        )
+
     if hasattr(query_model, "document") or hasattr(query_model, "document_id"):
         document_id = (
             getattr(query_model, "document_id", None) or query_model.document.id
         )
+
         # Don't join Document if it's already joined
         if (
             not isinstance(query_model, Document)
@@ -65,6 +83,7 @@ def secure_query(query: Query, query_model: Any, user: Any, session: Session) ->
             )
         ):
             query = query.join(Document, Document.id == document_id)
+
         query = query.filter(Document.organization_id.in_(user_organizations))
 
     return query
@@ -73,6 +92,7 @@ def secure_query(query: Query, query_model: Any, user: Any, session: Session) ->
 def _filter_query(query: Query, query_model: Any) -> Query:
     if hasattr(query_model, "deleted_at"):
         query = query.filter(query_model.deleted_at == None)  # noqa: E711
+
     return query
 
 
@@ -97,14 +117,18 @@ def paginate(
     query = secure_query(query, query_model, current_user, db.session)
     query = _filter_query(query, query_model)
     query = _sort_query(query, query_model)
+
     query_count = query.count()
-    query = query.limit(per_page)
+
     if query_name is None:
         query_name = f"{query_model.__tablename__}_page"
+
     page = request.args.get(query_name, 1, type=int)
-    query = query.offset((page - 1) * per_page)
+
+    results = query.offset((page - 1) * per_page).limit(per_page).all()
+
     return PaginatedQueryResult(
-        result=query.all(),
+        result=results,
         page=page,
         total_count=query_count,
         total_pages=math.ceil(query_count / per_page),

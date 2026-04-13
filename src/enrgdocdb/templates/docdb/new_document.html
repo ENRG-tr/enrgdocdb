@@ -5,7 +5,7 @@
     <h2>New Document</h2>
     <hr>
     <form id="new-document-form" method="post">
-        {{ form.csrf_token() }}
+        {{ form.hidden_tag() }}
         {{ render_field(form.title) }}
         {{ render_field(form.abstract) }}
         {{ render_form_row([form.authors, form.topics, form.organization]) }}
@@ -13,7 +13,7 @@
         <p class="text-muted">
             <i class="fas fa-info-circle"></i>
             Can't find the right author, or the author is not yet registered?
-            <a href="{{ url_for("admin_Author.create_view") }}">Create a new author</a>
+            <a href="{{ try_url_for("admin_Author.create_view") }}">Create a new author</a>
         </p>
         {{ render_field(form.submit) }}
     </form>

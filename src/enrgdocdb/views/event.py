@@ -9,10 +9,10 @@ from icalendar import Event as ICalEvent
 from ..database import db
 from ..models.event import Event
 from ..models.user import RolePermission, User
-from ..utils.security import permission_check, secure_blueprint
+from ..utils import security
 
 blueprint = Blueprint("event", __name__, url_prefix="/events")
-secure_blueprint(blueprint)
+security.secure_blueprint(blueprint)
 
 
 def _get_user_events(user: User):
@@ -29,7 +29,7 @@ def view(event_id: int):
     event = db.session.query(Event).get(event_id)
     if not event:
         return abort(404)
-    if not permission_check(event, RolePermission.VIEW):
+    if not security.permission_check(event, RolePermission.VIEW):
         return abort(403)
 
     return render_template("docdb/view_event.html", event=event)
@@ -37,8 +37,10 @@ def view(event_id: int):
 
 @blueprint.route("/calendar")
 def calendar():
+    if not current_user.is_authenticated:
+        return abort(403)
     jwt_token = jwt.encode({"user_id": current_user.id}, app.config["SECRET_KEY"])
-    icalendar_url = url_for("icalendar_all", jwt_token=jwt_token, _external=True)
+    icalendar_url = url_for("event.icalendar_all", jwt_token=jwt_token, _external=True)
     return render_template(
         "docdb/event_calendar.html",
         events=_get_user_events(current_user),
@@ -46,7 +48,7 @@ def calendar():
     )
 
 
-@app.route("/events/icalendar/all/<string:jwt_token>")
+@blueprint.route("/icalendar/all/<string:jwt_token>")
 def icalendar_all(jwt_token: str):
     try:
         decoded = jwt.decode(jwt_token, app.config["SECRET_KEY"], algorithms=["HS256"])

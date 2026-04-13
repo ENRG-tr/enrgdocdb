@@ -114,5 +114,9 @@ class RichTextField(TextAreaField):
     });
 </script>
         """
-        script = script_template.replace("{{CONTAINER_ID}}", container_id).replace("{{TEXTAREA_ID}}", id_val).replace("{{PREVIEW_ID}}", preview_id)
+        script = (
+            script_template.replace("{{CONTAINER_ID}}", container_id)
+            .replace("{{TEXTAREA_ID}}", id_val)
+            .replace("{{PREVIEW_ID}}", preview_id)
+        )
         return Markup(html + editor_html + script)

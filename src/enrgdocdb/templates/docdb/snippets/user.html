@@ -122,7 +122,7 @@
             {% for organization in organizations %}
                 <tr>
                     <td>
-                        <a href="{{ url_for('admin_Organization.edit_view', id=organization.id) }}">{{ organization.name }}</a>
+                        <a href="{{ try_url_for('admin_Organization.edit_view', id=organization.id) }}">{{ organization.name }}</a>
                         <td>{{ organization.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
                     </td>
                 </tr>

@@ -1,7 +1,6 @@
 from typing import cast
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
-from flask import current_app as app
 from flask_login import current_user
 from flask_security.utils import hash_password
 
@@ -9,42 +8,50 @@ from ..app import user_datastore
 from ..database import db
 from ..forms.user import CreateUserForm, EditUserProfileForm
 from ..models.document import Document, DocumentFile
-from ..models.user import Organization, RolePermission, Role, User
-from ..utils.pagination import paginate
-from ..utils.security import permission_check, secure_blueprint
+from ..models.user import Role, RolePermission, User
+from ..utils import security
 from ..utils.logging import get_logger
+from ..utils.pagination import paginate
 
 logger = get_logger(__name__)
 
 blueprint = Blueprint("user", __name__, url_prefix="/user")
-secure_blueprint(blueprint)
+security.secure_blueprint(blueprint)
 
 
-@app.context_processor
+@blueprint.app_context_processor
 def inject_permission_check():
-    return dict(permission_check=permission_check, RolePermission=RolePermission)
+    return dict(
+        permission_check=security.permission_check, RolePermission=RolePermission
+    )
 
 
 @blueprint.route("/your_account", methods=["GET", "POST"])
 def your_account():
+    if not current_user.is_authenticated:
+        return abort(403)
     form = EditUserProfileForm()
     user = cast(User, current_user)
     form.email.data = user.email
     form.username.data = user.username
 
     if form.validate_on_submit():
-        logger.info(f"User {current_user.id} updating profile")  # type: ignore
+        logger.info(f"User {getattr(current_user, 'id', 'anonymous')} updating profile")  # type: ignore
         user.first_name = form.first_name.data
         user.last_name = form.last_name.data
 
         if form.new_password.data:
             if form.new_password.data == form.confirm_password.data:
-                logger.info(f"User {current_user.id} updated password")  # type: ignore
+                logger.info(
+                    f"User {getattr(current_user, 'id', 'anonymous')} updated password"
+                )  # type: ignore
                 user.password = hash_password(form.new_password.data)
                 flash("Profile and account password updated successfully")
             else:
                 flash("Passwords do not match", "error")
-                logger.warning(f"User {current_user.id} entered mismatched passwords")  # type: ignore
+                logger.warning(
+                    f"User {getattr(current_user, 'id', 'anonymous')} entered mismatched passwords"
+                )  # type: ignore
         else:
             flash("Profile updated successfully")
 
@@ -82,7 +89,7 @@ def view(user_id: int):
 def view_all():
     users = paginate(db.session.query(User), request)
 
-    return render_template("docdb/view_user.html", users=users)
+    return render_template("docdb/view_user.html", users=users, show_all_users=True)
 
 
 @blueprint.route("/create", methods=["GET", "POST"])
@@ -92,7 +99,7 @@ def create():
     def render():
         return render_template("docdb/create_user.html", form=form)
 
-    if not permission_check(None, RolePermission.ADMIN):
+    if not security.permission_check(None, RolePermission.ADMIN):
         return abort(403)
 
     form = CreateUserForm()

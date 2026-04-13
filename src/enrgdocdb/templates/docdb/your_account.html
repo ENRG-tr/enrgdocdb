@@ -39,7 +39,7 @@
     <h2>Your Information</h2>
     <hr>
     <form method="post">
-        {{ form.csrf_token() }}
+        {{ form.hidden_tag() }}
         {{ render_field(form.email, disabled=True) }}
         {{ render_field(form.username, disabled=True) }}
         {% if not form.first_name.data or not form.last_name.data %}

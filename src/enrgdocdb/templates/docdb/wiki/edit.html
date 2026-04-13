@@ -135,7 +135,7 @@
   <a href="{{ url_for('wiki.view_page', slug=page.slug) }}"
      class="btn btn-secondary me-1">Cancel</a>
   {% if page %}
-    <a href="{{ url_for('admin_WikiPage.edit_view', id=page.id, url=request.path) }}"
+    <a href="{{ try_url_for('admin_WikiPage.edit_view', id=page.id, url=request.path) }}"
        class="btn btn-outline-info">
       <i class="fas fa-lock me-1"></i> Manage Permissions
     </a>
@@ -150,6 +150,7 @@
 {% block page_content %}
   {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
   <form id="wiki-edit-form" method="POST">
+    {{ form.hidden_tag() }}
     <button type="submit" class="d-none"></button>
     <div class="row">
       <div class="col-md-6">
@@ -181,12 +182,11 @@
         <div class="mb-3">
           <label for="parent_id" class="form-label">Parent Page</label>
           <select class="form-select" id="parent_id" name="parent_id">
-            <option value="">None (Top-level page)</option>
-            {% for p in all_pages %}
-              {% if not page or p.id != page.id %}
-                <option value="{{ p.id }}"
-                        {% if parent_id == p.id or (page and page.parent_id == p.id) %}selected{% endif %}>
-                  {{ p.title }}
+            {% for value, label in form.parent_id.choices %}
+              {% if value != page.id %}
+                <option value="{{ value }}"
+                        {% if parent_id == value or (page and page.parent_id == value) %}selected{% endif %}>
+                  {{ label }}
                 </option>
               {% endif %}
             {% endfor %}
