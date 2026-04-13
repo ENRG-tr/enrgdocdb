@@ -30,7 +30,7 @@ def add_x_forwarded_headers():
 def index():
     if not current_user.is_authenticated:
         return "You are not logged in", 401
-    response = Response("You are logged in as '{}'".format(current_user.email))
+    response = Response(f"You are logged in as '{current_user.email}'")
     return response
 
 
@@ -40,10 +40,10 @@ def has_role(role):
         role in r.name for r in current_user.roles
     ):
         return Response(
-            status=401, response="You do not have the role '{}'".format(role)
+            status=401, response=f"You do not have the role '{role}'"
         )
 
-    return Response(status=200, response="You have the role '{}'".format(role))
+    return Response(status=200, response=f"You have the role '{role}'")
 
 
 @blueprint.route("/has-role/<role>/with-admin-role/<admin_role>")
@@ -53,7 +53,7 @@ def has_role_with_admin_role(role, admin_role):
     if res.status_code == 401:
         return res
 
-    response = Response(status=200, response="You have the role '{}'".format(role))
+    response = Response(status=200, response=f"You have the role '{role}'")
 
     is_admin = any(admin_role in r.name for r in current_user.roles)
     token_payload = {

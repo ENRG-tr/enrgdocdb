@@ -12,7 +12,7 @@ import json
 import logging as log_module
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from flask import g, request
@@ -82,7 +82,7 @@ class StructuredFormatter(log_module.Formatter):
 
         # Create structured log entry
         log_data = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": message,
@@ -192,7 +192,7 @@ def setup_logging(app) -> log_module.Logger:
     def before_request():
         import uuid
 
-        g.request_id = f"{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
+        g.request_id = f"{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
 
     # Request logging middleware
     @app.after_request

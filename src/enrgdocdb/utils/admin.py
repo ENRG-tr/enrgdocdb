@@ -6,7 +6,7 @@ from wtforms import Field, TextAreaField
 
 
 class EditInlineModelField(Field):
-    class LinkWidget(object):
+    class LinkWidget:
         def __call__(self, field, **kwargs):
             return Markup(
                 render_template(
@@ -21,12 +21,12 @@ class EditInlineModelField(Field):
     widget = LinkWidget()
 
     def __init__(self, edit_view: str, fas_custom_class: str | None = None, **kwargs):
-        super(EditInlineModelField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.edit_view = edit_view
         self.fas_custom_class = fas_custom_class
 
     def process(self, formdata, data=None, **kwargs):
-        super(EditInlineModelField, self).process(formdata, data)
+        super().process(formdata, data)
         self.object_data = data
 
 

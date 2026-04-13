@@ -11,8 +11,6 @@ from flask import (
 from flask_login import current_user
 
 from ..database import db
-from ..utils.logging import get_logger
-
 from ..forms.document import DocumentForm, DocumentUploadFilesForm
 from ..models.author import Author
 from ..models.document import (
@@ -28,6 +26,7 @@ from ..models.user import RolePermission
 from ..settings import FILE_UPLOAD_FOLDER
 from ..utils import security
 from ..utils.file import handle_user_file_upload
+from ..utils.logging import get_logger
 from ..utils.pagination import paginate
 
 blueprint = Blueprint("document", __name__, url_prefix="/documents")

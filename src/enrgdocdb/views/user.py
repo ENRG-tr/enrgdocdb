@@ -21,9 +21,10 @@ security.secure_blueprint(blueprint)
 
 @blueprint.app_context_processor
 def inject_permission_check():
-    return dict(
-        permission_check=security.permission_check, RolePermission=RolePermission
-    )
+    return {
+        "permission_check": security.permission_check,
+        "RolePermission": RolePermission,
+    }
 
 
 @blueprint.route("/your_account", methods=["GET", "POST"])

@@ -104,10 +104,10 @@ def create_app():
 
         @app.context_processor
         def inject_url():
-            return dict(
-                get_request_url=get_request_url,
-                get_request_base_url=get_request_base_url,
-            )
+            return {
+                "get_request_url": get_request_url,
+                "get_request_base_url": get_request_base_url,
+            }
 
         # Register error handlers inside create_app() to ensure they're bound to the
         # correct app instance (not the cached one from module-level @app.errorhandler).
@@ -141,9 +141,7 @@ def create_app():
                 def get_slack_oauth_url():
                     return security.oauthglue.get_redirect("Slack").location  # type: ignore
 
-                return dict(
-                    get_slack_oauth_url=get_slack_oauth_url,
-                )
+                return {"get_slack_oauth_url": get_slack_oauth_url}
         else:
             logger.debug("Slack OAuth not enabled")
 

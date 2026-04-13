@@ -1,6 +1,5 @@
 import logging
 import struct
-from typing import Optional
 
 from flask_security.utils import verify_password
 from ldaptor.inmemory import ReadOnlyInMemoryLDAPEntry
@@ -154,17 +153,17 @@ class DocDBLDAPServer(LDAPServer):
 
         # Add displayName if different from cn
         if user.name and user.name != user.email:
-            attributes["displayName"] = [user.name.encode("utf-8")]
+            attributes["displayName"] = [user.name.encode()]
 
         # Add userPrincipalName (email as UPN)
-        attributes["userPrincipalName"] = [f"{user.email}".encode("utf-8")]
+        attributes["userPrincipalName"] = [f"{user.email}".encode()]
 
         # Add memberOf (group memberships)
         if hasattr(user, "roles") and user.roles:
             member_of = []
             for role in user.roles:
                 role_dn = f"cn={role.name.lower()},{self.groups_ou}"
-                member_of.append(role_dn.encode("utf-8"))
+                member_of.append(role_dn.encode())
             attributes["memberOf"] = member_of
 
         return ReadOnlyInMemoryLDAPEntry(dn, attributes)
@@ -532,7 +531,7 @@ class DocDBLDAPServer(LDAPServer):
     extendedRequest_whoami.oid = b"1.3.6.1.4.1.4203.1.11.3"
 
 
-def create_ldap_server(app, port: Optional[int] = None, use_tls: bool = False):
+def create_ldap_server(app, port: int | None = None, use_tls: bool = False):
     """Create and return an LDAP server endpoint."""
 
     if port is None:
@@ -551,7 +550,7 @@ def create_ldap_server(app, port: Optional[int] = None, use_tls: bool = False):
     return endpoint
 
 
-def run_ldap_server(app, port: Optional[int] = None):
+def run_ldap_server(app, port: int | None = None):
     """Run the LDAP server (blocking)."""
 
     if port is None:

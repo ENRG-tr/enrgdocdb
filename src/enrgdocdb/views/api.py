@@ -1,4 +1,5 @@
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from flask import Blueprint, Response, jsonify, request
 from sqlalchemy import func
