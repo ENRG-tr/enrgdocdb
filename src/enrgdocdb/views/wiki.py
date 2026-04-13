@@ -274,10 +274,12 @@ def edit_page(slug):
         return redirect(url_for("index.no_role"))
 
     user_files_result = handle_user_file_upload(request)
+    form = WikiPageForm(obj=page)
 
     def render(**kwargs):
         return render_template(
             "docdb/wiki/edit.html",
+            form=form,
             page=page,
             breadcrumbs=_get_breadcrumbs(page),
             all_pages=_get_all_pages(),
