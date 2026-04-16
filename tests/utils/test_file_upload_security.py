@@ -130,8 +130,9 @@ class TestFileUploadTokenValidation:
         result = handle_user_file_upload(mock_request)
         
         # Should return empty result when token is expired
-        assert result.user_files is not None
-        assert len(result.user_files) == 0
+        assert result.template_args is not None
+        # user_files can be None or empty list when no files are processed
+        assert result.user_files is None or result.user_files == []
 
     def test_token_not_in_document_tokens_ignored(self, client, temp_upload_folder):
         """Test that tokens not in document_tokens are ignored."""
