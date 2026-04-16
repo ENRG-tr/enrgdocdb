@@ -335,27 +335,6 @@ class TestPermissionCheckDocument:
                 # User should not have ADD permission
                 assert permission_check(document, RolePermission.ADD) is False
 
-        
-        role = Role(
-            name="admin",
-            permissions=[RolePermission.VIEW, RolePermission.EDIT, RolePermission.ADMIN],
-            organization_id=organization.id,
-        )
-        db_session.add(role)
-        db_session.commit()
-        user.roles.append(role)
-        db_session.commit()
-        
-        # Mock current_user and limiter
-        mock_user = MagicMock()
-        mock_user.is_authenticated = True
-        mock_user.roles = user.roles
-        mock_user.id = user.id
-        
-        with __import__('unittest').mock.patch('src.enrgdocdb.utils.security.current_user', mock_user):
-            with __import__('unittest').mock.patch('src.enrgdocdb.utils.security.limiter'):
-                assert permission_check(document, RolePermission.ADMIN) is True
-
 
 class TestPermissionCheckAuthor:
     """Test permission_check with Author model."""

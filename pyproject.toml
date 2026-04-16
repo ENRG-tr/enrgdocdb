@@ -68,3 +68,11 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["enrgdocdb"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:passlib.*",
+    "ignore::DeprecationWarning:pkg_resources.*",
+    "ignore::UserWarning:flask_limiter.*",
+    "ignore::sqlalchemy.exc.LegacyAPIWarning",
+]

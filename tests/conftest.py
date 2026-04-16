@@ -5,9 +5,14 @@ import tempfile
 import secrets
 import string
 from datetime import datetime, timedelta
+import warnings
 import pytest
 import uuid
 from flask_login.test_client import FlaskLoginClient
+
+# Suppress deprecation and user warnings from third-party libraries
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 # Set DATABASE_URL before importing app to force SQLite for tests
 _temp_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)

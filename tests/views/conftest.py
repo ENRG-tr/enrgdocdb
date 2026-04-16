@@ -26,57 +26,6 @@ def generate_uniquifier():
     return ''.join(secrets.choice(chars) for _ in range(64))
 
 
-class AuthenticatedTestClient:
-    """Wrapper for test client that provides authenticated requests."""
-    
-    def __init__(self, client, app, user, db_session):
-        self.client = client
-        self.app = app
-        self.user = user
-        self.db_session = db_session
-    
-    def get(self, *args, **kwargs):
-        return self._with_auth(self.client.get, *args, **kwargs)
-    
-    def post(self, *args, **kwargs):
-        return self._with_auth(self.client.post, *args, **kwargs)
-    
-    def _with_auth(self, method, *args, **kwargs):
-        """Make an authenticated request."""
-        with self.app.app_context():
-            from flask_login import login_user, logout_user
-            user_from_db = self.db_session.query(User).filter_by(id=self.user.id).first()
-            if user_from_db:
-                login_user(user_from_db)
-        
-        # Set session keys AFTER login_user so Flask-Login stores them
-        with self.client.session_transaction() as sess:
-            sess["_user_id"] = str(self.user.id)
-            sess["_fs_uniquifier"] = self.user.fs_uniquifier
-            sess["_fresh"] = True
-            sess["_permanent"] = False
-        
-        try:
-            response = method(*args, **kwargs)
-            return response
-        finally:
-            with self.app.app_context():
-                logout_user()
-    
-    def __getattr__(self, name):
-        return getattr(self.client, name)
-
-
-@pytest.fixture
-def authenticated_client(app, db_session, user):
-    """Create an authenticated test client for view tests.
-    
-    Uses FlaskLoginClient so current_user is properly set to `user`.
-    """
-    with app.test_client(user=user) as client:
-        yield client
-
-
 @pytest.fixture
 def admin_authenticated_client(app, db_session, admin_user):
     """Create an authenticated admin test client for view tests.
