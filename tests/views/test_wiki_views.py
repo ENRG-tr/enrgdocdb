@@ -244,24 +244,21 @@ class TestWikiNewPage:
         with open(test_file_path, "w") as f:
             f.write("test content")
 
-        with patch("src.enrgdocdb.views.wiki.handle_user_file_upload") as mock_upload:
-            mock_result = MagicMock()
-            mock_result.user_files = [MagicMock()]
-            mock_result.user_files[0].uploaded_file_name = "test.pdf"
-            mock_result.user_files[0].file_path = test_file_path
-            mock_result.template_args = {"document_tokens": [], "file_token": "test-token"}
-            mock_upload.return_value = mock_result
-
-            with patch("src.enrgdocdb.utils.security.permission_check") as mock_perm:
-                mock_perm.return_value = True
-                response = authenticated_client.post("/wiki/new", data={
+        # Simulate file upload using multipart/form-data
+        with open(test_file_path, "rb") as f:
+            response = authenticated_client.post(
+                "/wiki/new",
+                data={
                     "title": "Page with Files",
                     "slug": "page-with-files",
                     "content": "Content",
                     "parent_id": "0",
-                }, follow_redirects=True)
-
-                assert response.status_code == 200
+                    "files": (f, "test.pdf"),
+                },
+                content_type="multipart/form-data",
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
 
 
 class TestWikiEditPage:

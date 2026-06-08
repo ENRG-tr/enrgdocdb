@@ -23,9 +23,11 @@ from ..models.document import (
 from ..models.event import TalkNote
 from ..models.topic import Topic
 from ..models.user import RolePermission
+import os
+import uuid
 from ..settings import FILE_UPLOAD_FOLDER
 from ..utils import security
-from ..utils.file import handle_user_file_upload
+
 from ..utils.logging import get_logger
 from ..utils.pagination import paginate
 
@@ -113,20 +115,7 @@ def new():
         )
         return abort(403)
 
-    """
-    Create a new document.
-
-    form_token and document_tokens are a new addition by me, and what we're trying to
-    accomplish with these hidious hacks is to allow user to upload multiple files
-    with base64 to avoid some firewall issues of a particular web hosting service.
-
-    (Also without adding anything to the database, which would be easier, but yeah.)
-
-    The idea is to generate a set of tokens, and allow the user to associate each token
-    with a file. Then, when the user submits the form, we can check if the token is
-    associated with a file, and if so, move the file to the right place and associate
-    it with the document.
-    """
+    """Create a new document."""
     form = DocumentForm()
     form.authors.choices = [
         (author.id, str(author)) for author in db.session.query(Author).all()
@@ -149,7 +138,7 @@ def new():
         }
     )
 
-    user_files_result = handle_user_file_upload(request)
+
     url = request.args.get("url")
 
     if form.validate_on_submit():
@@ -191,18 +180,39 @@ def new():
             document_topic = DocumentTopic(document_id=document.id, topic_id=topic_id)
             db.session.add(document_topic)
 
-        # Handle user files
-        if user_files_result.user_files:
-            logger.info(
-                f"Uploading {len(user_files_result.user_files)} files to document {document.id}"
-            )
-            for user_file in user_files_result.user_files:
-                document_file = DocumentFile(
-                    document_id=document.id,
-                    file_name=user_file.uploaded_file_name,
-                    real_file_name=user_file.file_path,
+        # Handle standard file uploads
+        uploaded_files = request.files.getlist('files')
+        saved_files = []
+        try:
+            for uploaded_file in uploaded_files:
+                if uploaded_file.filename:
+                    from werkzeug.utils import secure_filename
+                    safe_name = secure_filename(uploaded_file.filename)
+                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                    os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+                    file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+                    uploaded_file.save(file_path)
+                    saved_files.append((uploaded_file.filename, unique_name))
+            if saved_files:
+                logger.info(
+                    f"Uploading {len(saved_files)} files to document {document.id}"
                 )
-                db.session.add(document_file)
+                for original_name, saved_name in saved_files:
+                    document_file = DocumentFile(
+                        document_id=document.id,
+                        file_name=original_name,
+                        real_file_name=saved_name,
+                    )
+                    db.session.add(document_file)
+        except Exception:
+            logger.exception("File upload failed, rolling back saved files")
+            for _, saved_name in saved_files:
+                try:
+                    os.remove(os.path.join(FILE_UPLOAD_FOLDER, saved_name))
+                except OSError:
+                    pass
+            db.session.rollback()
+            raise
         db.session.commit()
 
         logger.info(
@@ -216,7 +226,6 @@ def new():
     return render_template(
         "docdb/new_document.html",
         form=form,
-        user_files=user_files_result.template_args,
     )
 
 
@@ -236,23 +245,47 @@ def upload_files():
         return abort(403)
 
     form = DocumentUploadFilesForm()
-    user_files_result = handle_user_file_upload(request)
-
+    # Process standard file uploads
     if form.validate_on_submit():
-        logger.info(
-            f"Uploading {len(user_files_result.user_files)} files to document {document.id} by user {getattr(current_user, 'id', 'anonymous')}"
-        )
-        for user_file in user_files_result.user_files:
-            document_file = DocumentFile(
-                document_id=document.id,
-                file_name=user_file.uploaded_file_name,
-                real_file_name=user_file.file_path,
-            )
-            db.session.add(document_file)
-        db.session.commit()
+        uploaded_files = request.files.getlist('files')
+        saved_files = []
+        try:
+            for uploaded_file in uploaded_files:
+                if uploaded_file.filename:
+                    from werkzeug.utils import secure_filename
+                    safe_name = secure_filename(uploaded_file.filename)
+                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                    os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+                    file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+                    uploaded_file.save(file_path)
+                    saved_files.append((uploaded_file.filename, unique_name))
+            if saved_files:
+                logger.info(
+                    f"Uploading {len(saved_files)} files to document {document.id} by user {getattr(current_user, 'id', 'anonymous')}"
+                )
+                for original_name, saved_name in saved_files:
+                    document_file = DocumentFile(
+                        document_id=document.id,
+                        file_name=original_name,
+                        real_file_name=saved_name,
+                    )
+                    db.session.add(document_file)
+        except Exception:
+            logger.exception("File upload failed, rolling back saved files")
+            for _, saved_name in saved_files:
+                try:
+                    os.remove(os.path.join(FILE_UPLOAD_FOLDER, saved_name))
+                except OSError:
+                    pass
+            db.session.rollback()
+            raise
 
-        logger.info(f"Files uploaded successfully to document {document.id}")
-        flash("Files were uploaded successfully!", "success")
+        db.session.commit()
+        logger.info(
+            f"Uploaded {len(saved_files)} files to document {document.id}"
+        )
+        if saved_files:
+            flash("Files were uploaded successfully!", "success")
         if not redirect_url:
             return redirect(url_for("document.view", document_id=document.id))
         return redirect(redirect_url)
@@ -260,7 +293,6 @@ def upload_files():
     return render_template(
         "docdb/document_upload_files.html",
         form=form,
-        user_files=user_files_result.template_args,
         document=document,
     )
 

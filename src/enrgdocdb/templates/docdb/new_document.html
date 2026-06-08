@@ -1,10 +1,10 @@
 {% extends "docdb/base.html" %}
-{% from "docdb/snippets/user_files.html" import initialize_user_files %}
+
 {% from "bootstrap5/form.html" import render_form, render_field, render_form_row %}
 {% block content %}
     <h2>New Document</h2>
     <hr>
-    <form id="new-document-form" method="post">
+    <form id="new-document-form" method="post" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         {{ render_field(form.title) }}
         {{ render_field(form.abstract) }}
@@ -17,5 +17,5 @@
         </p>
         {{ render_field(form.submit) }}
     </form>
-    {{ initialize_user_files("new-document-form", user_files) }}
+
 {% endblock content %}

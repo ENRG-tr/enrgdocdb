@@ -1,5 +1,5 @@
 {% extends "docdb/wiki/base_wiki.html" %}
-{% from "docdb/snippets/user_files.html" import initialize_user_files %}
+
 {% block title %}{{ "New Wiki Page" if not page else "Edit Wiki Page" }} - ENRG DocDB{% endblock %}
 {% block wiki_head %}
   <!-- Quill Rich Text Editor 2.0 and Table Plugin -->
@@ -149,7 +149,7 @@
 {% endblock header_actions %}
 {% block page_content %}
   {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-  <form id="wiki-edit-form" method="POST">
+  <form id="wiki-edit-form" method="POST" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <button type="submit" class="d-none"></button>
     <div class="row">
@@ -225,42 +225,4 @@
   </form>
 {% endblock page_content %}
 {% block footer %}
-  {{ initialize_user_files("wiki-edit-form", user_files) }}
-  <script>
-    // Custom logic to show "Insert" button for newly uploaded files
-    (function() {
-      const previewContainer = document.getElementById('uploaded-files-preview');
-      const tokenInput = document.querySelector('input[name="token_to_file"]');
-      if (tokenInput) {
-        setInterval(() => {
-          updateUploadedPreview();
-        }, 1000);
-      }
-
-      let lastTokenMap = "{}";
-
-      function updateUploadedPreview() {
-        const tokenInput = document.querySelector('input[name="token_to_file"]');
-        if (!tokenInput) return;
-        const tokenMapStr = tokenInput.value;
-        if (tokenMapStr === lastTokenMap) return;
-        lastTokenMap = tokenMapStr;
-
-        const tokenMap = JSON.parse(tokenMapStr);
-        previewContainer.innerHTML = '';
-
-        Object.entries(tokenMap).forEach(([token, filename]) => {
-          const badge = document.createElement('div');
-          badge.className = 'badge bg-light text-dark border d-flex align-items-center gap-2 p-2';
-          badge.innerHTML = `
-                    <span>${filename}</span>
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="insertFileIntoEditor('${token}', '${filename}')">
-                        Insert
-                    </button>
-                `;
-          previewContainer.appendChild(badge);
-        });
-      }
-    })();
-  </script>
 {% endblock footer %}

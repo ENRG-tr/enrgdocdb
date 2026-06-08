@@ -1,8 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import HiddenField, MultipleFileField
+from wtforms import MultipleFileField
 
 
 class FileForm(FlaskForm):
     files = MultipleFileField("File(s)")
-    token_to_file = HiddenField()
-    file_token = HiddenField()

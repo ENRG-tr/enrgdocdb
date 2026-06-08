@@ -16,7 +16,9 @@ from ..models.user import RolePermission
 from ..models.wiki import WikiFile, WikiPage, WikiRevision
 from ..settings import FILE_UPLOAD_FOLDER
 from ..utils import security
-from ..utils.file import handle_user_file_upload
+import os
+import uuid
+
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -110,7 +112,6 @@ def view_page(slug):
 @login_required
 def new_page():
     """Create a new wiki page."""
-    user_files_result = handle_user_file_upload(request)
     form = WikiPageForm()
     pages = _get_all_pages()
     form.parent_id.choices = [(0, "No Parent")] + [(p.id, p.title) for p in pages]
@@ -121,7 +122,6 @@ def new_page():
             form=form,
             page=None,
             all_pages=pages,
-            user_files=user_files_result.template_args,
             **kwargs,
         )
 
@@ -155,15 +155,28 @@ def new_page():
             db.session.add(page)
             db.session.add(revision)
 
-            # Handle user files
-            if user_files_result.user_files:
-                for user_file in user_files_result.user_files:
-                    wiki_file = WikiFile(
-                        page=page,
-                        file_name=user_file.uploaded_file_name,
-                        real_file_name=user_file.file_path,
-                    )
-                    db.session.add(wiki_file)
+            # Handle standard file uploads
+            uploaded_files = request.files.getlist('files')
+            saved_files = []
+            try:
+                for uploaded_file in uploaded_files:
+                    if uploaded_file.filename:
+                        from werkzeug.utils import secure_filename
+                        safe_name = secure_filename(uploaded_file.filename)
+                        unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                        os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+                        file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+                        uploaded_file.save(file_path)
+                        wiki_file = WikiFile(
+                            page=page,
+                            file_name=uploaded_file.filename,
+                            real_file_name=unique_name,
+                        )
+                        db.session.add(wiki_file)
+            except Exception:
+                logger.exception("File upload failed, rolling back saved files")
+                db.session.rollback()
+                raise
 
             db.session.commit()
 
@@ -199,7 +212,6 @@ def edit_wiki_page():
     if not security.permission_check(page, RolePermission.EDIT):
         return redirect(url_for("index.no_role"))
 
-    user_files_result = handle_user_file_upload(request)
     form = WikiPageForm(obj=page, page=page)
 
     def render(**kwargs):
@@ -209,7 +221,6 @@ def edit_wiki_page():
             page=page,
             breadcrumbs=_get_breadcrumbs(page),
             all_pages=_get_all_pages(),
-            user_files=user_files_result.template_args,
             **kwargs,
         )
 
@@ -243,15 +254,28 @@ def edit_wiki_page():
         )
         db.session.add(revision)
 
-        # Handle user files
-        if user_files_result.user_files:
-            for user_file in user_files_result.user_files:
-                wiki_file = WikiFile(
-                    page=page,
-                    file_name=user_file.uploaded_file_name,
-                    real_file_name=user_file.file_path,
-                )
-                db.session.add(wiki_file)
+        # Handle standard file uploads
+        uploaded_files = request.files.getlist('files')
+        saved_files = []
+        try:
+            for uploaded_file in uploaded_files:
+                if uploaded_file.filename:
+                    from werkzeug.utils import secure_filename
+                    safe_name = secure_filename(uploaded_file.filename)
+                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                    os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+                    file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+                    uploaded_file.save(file_path)
+                    wiki_file = WikiFile(
+                        page=page,
+                        file_name=uploaded_file.filename,
+                        real_file_name=unique_name,
+                    )
+                    db.session.add(wiki_file)
+        except Exception:
+            logger.exception("File upload failed, rolling back saved files")
+            db.session.rollback()
+            raise
 
         db.session.commit()
 
@@ -273,7 +297,6 @@ def edit_page(slug):
     if not security.permission_check(page, RolePermission.EDIT):
         return redirect(url_for("index.no_role"))
 
-    user_files_result = handle_user_file_upload(request)
     form = WikiPageForm(obj=page)
 
     def render(**kwargs):
@@ -283,7 +306,6 @@ def edit_page(slug):
             page=page,
             breadcrumbs=_get_breadcrumbs(page),
             all_pages=_get_all_pages(),
-            user_files=user_files_result.template_args,
             **kwargs,
         )
 
@@ -350,15 +372,27 @@ def edit_page(slug):
         )
         db.session.add(revision)
 
-        # Handle user files
-        if user_files_result.user_files:
-            for user_file in user_files_result.user_files:
-                wiki_file = WikiFile(
-                    page=page,
-                    file_name=user_file.uploaded_file_name,
-                    real_file_name=user_file.file_path,
-                )
-                db.session.add(wiki_file)
+        # Handle standard file uploads
+        uploaded_files = request.files.getlist('files')
+        try:
+            for uploaded_file in uploaded_files:
+                if uploaded_file.filename:
+                    from werkzeug.utils import secure_filename
+                    safe_name = secure_filename(uploaded_file.filename)
+                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                    os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+                    file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+                    uploaded_file.save(file_path)
+                    wiki_file = WikiFile(
+                        page=page,
+                        file_name=uploaded_file.filename,
+                        real_file_name=unique_name,
+                    )
+                    db.session.add(wiki_file)
+        except Exception:
+            logger.exception("File upload failed, rolling back saved files")
+            db.session.rollback()
+            raise
 
         db.session.commit()
 

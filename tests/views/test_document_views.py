@@ -481,16 +481,14 @@ class TestDocumentUploadRoutes:
         with open(test_file_path, "w") as f:
             f.write("test content")
 
-        with patch("src.enrgdocdb.views.document.handle_user_file_upload") as mock_upload:
-            mock_result = MagicMock()
-            mock_result.user_files = [MagicMock()]
-            mock_result.user_files[0].uploaded_file_name = "test.pdf"
-            mock_result.user_files[0].file_path = test_file_path
-            mock_upload.return_value = mock_result
-
-            response = authenticated_client.post(f"/documents/upload_files?id={document.id}", data={
-                "files": "test.pdf",
-            }, follow_redirects=True)
+        # Simulate file upload using multipart/form-data
+        with open(test_file_path, "rb") as f:
+            response = authenticated_client.post(
+                f"/documents/upload_files?id={document.id}",
+                data={"files": (f, "test.pdf")},
+                content_type="multipart/form-data",
+                follow_redirects=True,
+            )
 
             assert response.status_code == 200
             # Check for success message or redirect

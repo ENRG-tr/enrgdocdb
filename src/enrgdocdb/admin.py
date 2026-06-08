@@ -98,7 +98,7 @@ class AdminView(ModelView):
 
         return result
 
-    def on_model_delete(self, form, model):
+    def on_model_delete(self, model):
         """Called after the model is deleted."""
         # Log the deletion to the audit trail
         if current_user.is_authenticated:
@@ -108,7 +108,7 @@ class AdminView(ModelView):
 
             self.audit_logger.delete(resource_type, resource_id, user_email)
 
-        return super().on_model_delete(form, model)
+        return super().on_model_delete(model)
 
     def update_model(self, form, model):
         if not self._on_change(form, model, False):
