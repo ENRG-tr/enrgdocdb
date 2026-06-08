@@ -1,3 +1,6 @@
+import os
+import uuid
+
 from flask import (
     Blueprint,
     abort,
@@ -16,9 +19,6 @@ from ..models.user import RolePermission
 from ..models.wiki import WikiFile, WikiPage, WikiRevision
 from ..settings import FILE_UPLOAD_FOLDER
 from ..utils import security
-import os
-import uuid
-
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -157,7 +157,6 @@ def new_page():
 
             # Handle standard file uploads
             uploaded_files = request.files.getlist('files')
-            saved_files = []
             try:
                 for uploaded_file in uploaded_files:
                     if uploaded_file.filename:
@@ -256,7 +255,6 @@ def edit_wiki_page():
 
         # Handle standard file uploads
         uploaded_files = request.files.getlist('files')
-        saved_files = []
         try:
             for uploaded_file in uploaded_files:
                 if uploaded_file.filename:

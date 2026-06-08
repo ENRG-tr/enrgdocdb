@@ -1,3 +1,6 @@
+import os
+import uuid
+
 from flask import (
     Blueprint,
     abort,
@@ -23,11 +26,8 @@ from ..models.document import (
 from ..models.event import TalkNote
 from ..models.topic import Topic
 from ..models.user import RolePermission
-import os
-import uuid
 from ..settings import FILE_UPLOAD_FOLDER
 from ..utils import security
-
 from ..utils.logging import get_logger
 from ..utils.pagination import paginate
 
