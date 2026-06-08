@@ -114,6 +114,14 @@ def create_app():
         from flask import render_template as _render_template
         from werkzeug.exceptions import HTTPException
 
+        @app.errorhandler(401)
+        def handle_401(e):
+            return _render_template("docdb/errors/401.html"), 401
+
+        @app.errorhandler(403)
+        def handle_403(e):
+            return _render_template("docdb/errors/403.html"), 403
+
         @app.errorhandler(404)
         def handle_404(e):
             return _render_template("docdb/errors/404.html"), 404
@@ -123,14 +131,24 @@ def create_app():
             @app.errorhandler(Exception)
             def handle_all(e: Exception):
                 # Return HTTP exceptions with their proper status codes
-                # (abort(404) should return 404, not 500)
                 if isinstance(e, HTTPException):
+                    # Route to our custom template based on status code
+                    code = e.code
+                    template_map = {
+                        401: "docdb/errors/401.html",
+                        403: "docdb/errors/403.html",
+                        404: "docdb/errors/404.html",
+                        500: "docdb/errors/500.html",
+                    }
+                    tmpl = template_map.get(code)
+                    if tmpl:
+                        return _render_template(tmpl), code
                     return e
                 logger.error(
                     f"Unhandled exception: {e}",
                     exc_info=True,
                 )
-                return _render_template("docdb/errors/all.html", exception=e), 500
+                return _render_template("docdb/errors/500.html"), 500
 
         if SECURITY_OAUTH_ENABLE_SLACK and security.oauthglue:
             logger.info("Enabling Slack OAuth provider")

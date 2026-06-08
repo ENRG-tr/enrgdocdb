@@ -3,9 +3,10 @@
     Error - ENRG DocDB
 {% endblock title %}
 {% block error_title %}
-    Error - {{ exception.name or exception.__class__.__name__ }}
+    {{ exception.name if exception.name else "Error" }}
 {% endblock error_title %}
 {% block error_content %}
-    <p>{{ exception.description or exception.args[0] or "An unknown error has occurred" }}</p>
+    <p>{{ exception.description if exception.description else "An unknown error has occurred." }}</p>
     <p class="fw-bolder mb-0">Please contact the administrator if the problem persists.</p>
+    <p><a href="{{ url_for('index.index') }}" class="btn btn-primary mt-2">Return to Home</a></p>
 {% endblock error_content %}
