@@ -370,10 +370,11 @@ class TestRolePermission:
         assert RolePermission.VIEW in ROLES_PERMISSIONS_BY_ORGANIZATION["guest"]
         assert RolePermission.ADD not in ROLES_PERMISSIONS_BY_ORGANIZATION["guest"]
         
-        # User can view and edit self
+        # User can view, add, edit self, and edit
         assert RolePermission.VIEW in ROLES_PERMISSIONS_BY_ORGANIZATION["user"]
+        assert RolePermission.ADD in ROLES_PERMISSIONS_BY_ORGANIZATION["user"]
         assert RolePermission.EDIT_SELF in ROLES_PERMISSIONS_BY_ORGANIZATION["user"]
-        assert RolePermission.ADD not in ROLES_PERMISSIONS_BY_ORGANIZATION["user"]
+        assert RolePermission.EDIT in ROLES_PERMISSIONS_BY_ORGANIZATION["user"]
         
         # Moderator can do most things
         assert RolePermission.VIEW in ROLES_PERMISSIONS_BY_ORGANIZATION["moderator"]
