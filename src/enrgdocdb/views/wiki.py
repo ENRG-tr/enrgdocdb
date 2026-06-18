@@ -1,5 +1,6 @@
 import os
 import uuid
+from collections import Counter
 
 from flask import (
     Blueprint,
@@ -415,8 +416,11 @@ def _setup_parent_choices(form: WikiPageForm) -> list[WikiPage]:
 
 
 def _get_all_pages() -> list[WikiPage]:
-    """Get all wiki pages for parent selection."""
-    return db.session.query(WikiPage).order_by(WikiPage.title).all()
+    """Get all wiki pages for parent selection, sorted by child count desc."""
+    pages = db.session.query(WikiPage).order_by(WikiPage.title).all()
+    child_counts = Counter(p.parent_id for p in pages if p.parent_id is not None)
+    pages.sort(key=lambda p: (-child_counts.get(p.id, 0), p.title))
+    return pages
 
 
 def _get_breadcrumbs(page: WikiPage) -> list[WikiPage]:

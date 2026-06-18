@@ -2,6 +2,9 @@
 
 {% block title %}{{ "New Wiki Page" if not page else "Edit Wiki Page" }} - ENRG DocDB{% endblock %}
 {% block wiki_head %}
+  <!-- Tom Select: searchable select dropdown -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
   <!-- Quill Rich Text Editor 2.0 and Table Plugin -->
   <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/quill-table-better@1/dist/quill-table-better.js"></script>
@@ -22,6 +25,15 @@
           .replace(/-+/g, '-')
           .trim()
           .substring(0, 40);
+      }
+
+      // Initialize searchable parent page select
+      const parentSelect = document.getElementById('parent_id');
+      if (parentSelect) {
+        new TomSelect(parentSelect, {
+          placeholder: 'Search for a parent page...',
+          maxOptions: null,
+        });
       }
 
       // Auto-generate slug from title
@@ -181,7 +193,7 @@
       <div class="col-md-6">
         <div class="mb-3">
           <label for="parent_id" class="form-label">Parent Page</label>
-          <select class="form-select" id="parent_id" name="parent_id">
+          <select class="form-select" id="parent_id" name="parent_id" placeholder="Select a parent page...">
             {% for value, label in form.parent_id.choices %}
               {% if value != page.id %}
                 <option value="{{ value }}"
