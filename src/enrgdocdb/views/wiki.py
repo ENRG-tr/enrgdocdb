@@ -12,6 +12,7 @@ from flask import (
 )
 from flask_login import current_user, login_required
 from markupsafe import Markup
+from werkzeug.utils import secure_filename
 
 from ..database import db
 from ..forms.wiki import WikiPageForm
@@ -78,10 +79,7 @@ def index():
 def view_page(slug):
     """View a specific wiki page."""
     logger.debug(f"Viewing wiki page: {slug} by user {current_user.id}")
-    page = db.session.query(WikiPage).filter_by(slug=slug).first()
-    if not page:
-        logger.warning(f"Wiki page {slug} not found")
-        return abort(404)
+    page = _get_page_by_slug(slug)
 
     if not security.permission_check(page, RolePermission.VIEW):
         logger.warning(
@@ -113,8 +111,7 @@ def view_page(slug):
 def new_page():
     """Create a new wiki page."""
     form = WikiPageForm()
-    pages = _get_all_pages()
-    form.parent_id.choices = [(0, "No Parent")] + [(p.id, p.title) for p in pages]
+    pages = _setup_parent_choices(form)
 
     def render(**kwargs):
         return render_template(
@@ -156,26 +153,7 @@ def new_page():
             db.session.add(revision)
 
             # Handle standard file uploads
-            uploaded_files = request.files.getlist('files')
-            try:
-                for uploaded_file in uploaded_files:
-                    if uploaded_file.filename:
-                        from werkzeug.utils import secure_filename
-                        safe_name = secure_filename(uploaded_file.filename)
-                        unique_name = f"{uuid.uuid4().hex}_{safe_name}"
-                        os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
-                        file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
-                        uploaded_file.save(file_path)
-                        wiki_file = WikiFile(
-                            page=page,
-                            file_name=uploaded_file.filename,
-                            real_file_name=unique_name,
-                        )
-                        db.session.add(wiki_file)
-            except Exception:
-                logger.exception("File upload failed, rolling back saved files")
-                db.session.rollback()
-                raise
+            _handle_file_uploads(page)
 
             db.session.commit()
 
@@ -196,106 +174,29 @@ def new_page():
     return render()
 
 
-@blueprint.route("/edit-wiki", methods=["GET", "POST"])
+@blueprint.route("/edit-wiki", methods=["GET"])
 @login_required
 def edit_wiki_page():
-    """Generic edit page route for wiki pages."""
+    """Redirect to the canonical edit page route."""
     page_slug = request.args.get("slug")
     if not page_slug:
         return abort(404)
-
-    page = db.session.query(WikiPage).filter_by(slug=page_slug).first()
-    if not page:
-        return abort(404)
-
-    if not security.permission_check(page, RolePermission.EDIT):
-        return redirect(url_for("index.no_role"))
-
-    form = WikiPageForm(obj=page, page=page)
-
-    def render(**kwargs):
-        return render_template(
-            "docdb/wiki/edit.html",
-            form=form,
-            page=page,
-            breadcrumbs=_get_breadcrumbs(page),
-            all_pages=_get_all_pages(),
-            **kwargs,
-        )
-
-    if request.method == "POST" and form.validate_on_submit():
-        # Check for circular parent reference
-        if form.parent_id.data and str(page.id) == form.parent_id.data:
-            form.parent_id.errors.append("Page cannot be its own parent")
-            return render(error="Page cannot be its own parent")
-
-        # Update page
-        page.title = form.title.data
-        page.slug = form.slug.data
-        page.is_pinned = form.is_pinned.data
-        page.content = form.content.data
-
-        # Handle parent_id separately
-        parent_id = form.parent_id.data
-        if parent_id:
-            parent_page = db.session.query(WikiPage).get(parent_id)
-            if parent_page:
-                page.parent_id = parent_page.id
-            else:
-                page.parent_id = None
-
-        # Create revision
-        revision = WikiRevision(
-            page=page,
-            author_id=current_user.id,
-            content=form.content.data,
-            comment=form.comment.data or "Updated via wiki form",
-        )
-        db.session.add(revision)
-
-        # Handle standard file uploads
-        uploaded_files = request.files.getlist('files')
-        try:
-            for uploaded_file in uploaded_files:
-                if uploaded_file.filename:
-                    from werkzeug.utils import secure_filename
-                    safe_name = secure_filename(uploaded_file.filename)
-                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
-                    os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
-                    file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
-                    uploaded_file.save(file_path)
-                    wiki_file = WikiFile(
-                        page=page,
-                        file_name=uploaded_file.filename,
-                        real_file_name=unique_name,
-                    )
-                    db.session.add(wiki_file)
-        except Exception:
-            logger.exception("File upload failed, rolling back saved files")
-            db.session.rollback()
-            raise
-
-        db.session.commit()
-
-        logger.info(f"Wiki page '{page.slug}' updated by user {current_user.id}")
-        return redirect(url_for("wiki.view_page", slug=page.slug))
-
-    # GET request - show form pre-populated
-    return render()
+    return redirect(url_for("wiki.edit_page", slug=page_slug))
 
 
 @blueprint.route("/<slug>/edit", methods=["GET", "POST"])
 @login_required
 def edit_page(slug):
     """Edit an existing wiki page."""
-    page = db.session.query(WikiPage).filter_by(slug=slug).first()
-    if not page:
-        return abort(404)
+    page = _get_page_by_slug(slug)
 
     if not security.permission_check(page, RolePermission.EDIT):
         return redirect(url_for("index.no_role"))
 
     form = WikiPageForm(obj=page)
+    pages = _setup_parent_choices(form)
+    if page.parent_id is None:
+        form.parent_id.data = 0
 
     def render(**kwargs):
         return render_template(
@@ -303,7 +204,7 @@ def edit_page(slug):
             form=form,
             page=page,
             breadcrumbs=_get_breadcrumbs(page),
-            all_pages=_get_all_pages(),
+            all_pages=pages,
             **kwargs,
         )
 
@@ -371,26 +272,7 @@ def edit_page(slug):
         db.session.add(revision)
 
         # Handle standard file uploads
-        uploaded_files = request.files.getlist('files')
-        try:
-            for uploaded_file in uploaded_files:
-                if uploaded_file.filename:
-                    from werkzeug.utils import secure_filename
-                    safe_name = secure_filename(uploaded_file.filename)
-                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
-                    os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
-                    file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
-                    uploaded_file.save(file_path)
-                    wiki_file = WikiFile(
-                        page=page,
-                        file_name=uploaded_file.filename,
-                        real_file_name=unique_name,
-                    )
-                    db.session.add(wiki_file)
-        except Exception:
-            logger.exception("File upload failed, rolling back saved files")
-            db.session.rollback()
-            raise
+        _handle_file_uploads(page)
 
         db.session.commit()
 
@@ -404,9 +286,7 @@ def edit_page(slug):
 @login_required
 def history(slug):
     """View revision history for a page."""
-    page = db.session.query(WikiPage).filter_by(slug=slug).first()
-    if not page:
-        return abort(404)
+    page = _get_page_by_slug(slug)
 
     if not security.permission_check(page, RolePermission.VIEW):
         return redirect(url_for("index.no_role"))
@@ -447,9 +327,7 @@ def download_file(file_id: int):
 @login_required
 def view_revision(slug, revision_id):
     """View a specific revision of a page."""
-    page = db.session.query(WikiPage).filter_by(slug=slug).first()
-    if not page:
-        return abort(404)
+    page = _get_page_by_slug(slug)
 
     if not security.permission_check(page, RolePermission.VIEW):
         return redirect(url_for("index.no_role"))
@@ -485,9 +363,7 @@ def view_revision(slug, revision_id):
 @login_required
 def delete_page(slug):
     """Delete a wiki page."""
-    page = db.session.query(WikiPage).filter_by(slug=slug).first()
-    if not page:
-        return abort(404)
+    page = _get_page_by_slug(slug)
 
     if not security.permission_check(page, RolePermission.EDIT):
         return redirect(url_for("index.no_role"))
@@ -497,6 +373,45 @@ def delete_page(slug):
     db.session.commit()
 
     return redirect(url_for("wiki.index"))
+
+
+def _get_page_by_slug(slug: str) -> WikiPage:
+    """Look up a wiki page by slug or abort with 404."""
+    page = db.session.query(WikiPage).filter_by(slug=slug).first()
+    if not page:
+        logger.warning(f"Wiki page {slug} not found")
+        abort(404)
+    return page
+
+
+def _handle_file_uploads(page: WikiPage) -> None:
+    """Process uploaded files from request and attach them to the wiki page."""
+    uploaded_files = request.files.getlist('files')
+    try:
+        for uploaded_file in uploaded_files:
+            if uploaded_file.filename:
+                safe_name = secure_filename(uploaded_file.filename)
+                unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+                file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+                uploaded_file.save(file_path)
+                wiki_file = WikiFile(
+                    page=page,
+                    file_name=uploaded_file.filename,
+                    real_file_name=unique_name,
+                )
+                db.session.add(wiki_file)
+    except Exception:
+        logger.exception("File upload failed, rolling back saved files")
+        db.session.rollback()
+        raise
+
+
+def _setup_parent_choices(form: WikiPageForm) -> list[WikiPage]:
+    """Populate parent_id choices for the form and return all pages."""
+    pages = _get_all_pages()
+    form.parent_id.choices = [(0, "No Parent")] + [(p.id, p.title) for p in pages]
+    return pages
 
 
 def _get_all_pages() -> list[WikiPage]:
