@@ -19,8 +19,9 @@ from ..database import db
 from ..forms.wiki import WikiPageForm
 from ..models.user import RolePermission
 from ..models.wiki import WikiFile, WikiPage, WikiRevision
-from ..settings import FILE_UPLOAD_FOLDER
+from ..settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_MAX_FILE_SIZE
 from ..utils import security
+from ..utils.file import is_allowed_upload_filename
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -370,6 +371,16 @@ def delete_page(slug):
         return redirect(url_for("index.no_role"))
 
     # Delete the page and all its children recursively
+    # Remove physical files first (DB cascade removes the WikiFile rows).
+    for f in page.files:
+        try:
+            file_path = os.path.join(FILE_UPLOAD_FOLDER, f.real_file_name)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except OSError:
+            logger.exception(
+                f"Failed to remove physical file for WikiFile {f.id}"
+            )
     db.session.delete(page)
     db.session.commit()
 
@@ -388,20 +399,34 @@ def _get_page_by_slug(slug: str) -> WikiPage:
 def _handle_file_uploads(page: WikiPage) -> None:
     """Process uploaded files from request and attach them to the wiki page."""
     uploaded_files = request.files.getlist('files')
+    if (
+        request.content_length
+        and request.content_length > FILE_UPLOAD_MAX_FILE_SIZE + 1024 * 1024
+    ):
+        abort(413)
     try:
         for uploaded_file in uploaded_files:
-            if uploaded_file.filename:
-                safe_name = secure_filename(uploaded_file.filename)
-                unique_name = f"{uuid.uuid4().hex}_{safe_name}"
-                os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
-                file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
-                uploaded_file.save(file_path)
-                wiki_file = WikiFile(
-                    page=page,
-                    file_name=uploaded_file.filename,
-                    real_file_name=unique_name,
+            if not uploaded_file.filename:
+                continue
+            if not is_allowed_upload_filename(uploaded_file.filename):
+                logger.warning(
+                    f"Rejected file with disallowed extension: {uploaded_file.filename}"
                 )
-                db.session.add(wiki_file)
+                continue
+            safe_name = secure_filename(uploaded_file.filename)
+            unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+            os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+            file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+            uploaded_file.save(file_path)
+            if os.path.getsize(file_path) > FILE_UPLOAD_MAX_FILE_SIZE:
+                os.remove(file_path)
+                abort(413)
+            wiki_file = WikiFile(
+                page=page,
+                file_name=uploaded_file.filename,
+                real_file_name=unique_name,
+            )
+            db.session.add(wiki_file)
     except Exception:
         logger.exception("File upload failed, rolling back saved files")
         db.session.rollback()

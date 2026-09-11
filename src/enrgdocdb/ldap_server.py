@@ -1,5 +1,7 @@
+import hmac
 import logging
 import struct
+import time
 
 from flask_security.utils import verify_password
 from ldaptor.inmemory import ReadOnlyInMemoryLDAPEntry
@@ -9,7 +11,7 @@ from ldaptor.protocols.ldap.ldapserver import LDAPServer
 from sqlalchemy.orm import joinedload
 from twisted.internet import defer, reactor
 from twisted.internet.endpoints import serverFromString
-from twisted.internet.protocol import ServerFactory
+from twisted.internet.protocol import ServerFactory, connectionDone
 
 from src.enrgdocdb.database import db
 from src.enrgdocdb.models.user import Role, User
@@ -220,6 +222,17 @@ class DocDBLDAPServer(LDAPServer):
         return ReadOnlyInMemoryLDAPEntry(dn, attributes)
 
     def handle_LDAPSearchRequest(self, request, controls, reply):
+        # Security: only authenticated clients may search. Without this,
+        # anyone could dump the whole directory anonymously.
+        if not self.bound_dn:
+            logger.warning("LDAP search rejected: client is not bound")
+            return defer.succeed(
+                pureldap.LDAPSearchResultDone(
+                    resultCode=ldaperrors.LDAPInsufficientAccessRights.resultCode,
+                    matchedDN=b"",
+                    errorMessage=b"Search requires a successful bind",
+                )
+            )
         try:
             base_dn_str = request.baseObject.decode("utf-8")
             logger.debug(f"LDAP Search: base={base_dn_str}, filter={request.filter!r}")
@@ -387,14 +400,26 @@ class DocDBLDAPServer(LDAPServer):
     def handle_LDAPBindRequest(self, request, controls, reply):
         logger.debug(f"LDAP Bind: DN={request.dn!r}, has_auth={bool(request.auth)}")
 
-        if not request.dn and not request.auth:
-            self.bound_dn = b""
-            logger.debug("Anonymous bind successful")
+        # Rate-limit failed binds per client address (online brute-force).
+        if self._is_bind_limited():
+            logger.warning("LDAP bind rejected: too many recent failures")
             return defer.succeed(
                 pureldap.LDAPBindResponse(
-                    resultCode=ldaperrors.Success.resultCode,
+                    resultCode=ldaperrors.LDAPBusy.resultCode,
                     matchedDN=b"",
-                    errorMessage=b"",
+                    errorMessage=b"Too many failed bind attempts, retry later",
+                )
+            )
+
+        if not request.dn and not request.auth:
+            # Anonymous binds are not allowed: every search/bind must be
+            # authenticated to prevent unauthenticated directory reads.
+            logger.warning("LDAP anonymous bind rejected")
+            return defer.succeed(
+                pureldap.LDAPBindResponse(
+                    resultCode=ldaperrors.LDAPInvalidCredentials.resultCode,
+                    matchedDN=b"",
+                    errorMessage=b"Anonymous bind is not allowed",
                 )
             )
 
@@ -424,8 +449,9 @@ class DocDBLDAPServer(LDAPServer):
 
         admin_password = self.app.config.get("LDAP_ADMIN_PASSWORD")
         if admin_password and dn == f"cn=admin,{self.base_dn}":
-            if password == admin_password:
+            if hmac.compare_digest(password, admin_password):
                 self.bound_dn = request.dn
+                self._clear_bind_failures()
                 logger.info(f"Admin bind successful from DN: {dn}")
                 return defer.succeed(
                     pureldap.LDAPBindResponse(
@@ -435,6 +461,7 @@ class DocDBLDAPServer(LDAPServer):
                     )
                 )
             else:
+                self._register_bind_failure()
                 logger.warning(f"Failed admin bind attempt from DN: {dn}")
                 return defer.succeed(
                     pureldap.LDAPBindResponse(
@@ -500,6 +527,7 @@ class DocDBLDAPServer(LDAPServer):
                     is_valid = verify_password(password, user.password)
                     if is_valid:
                         self.bound_dn = request.dn
+                        self._clear_bind_failures()
                         logger.info(f"User bind successful: {user.email}")
                         return defer.succeed(
                             pureldap.LDAPBindResponse(
@@ -509,8 +537,10 @@ class DocDBLDAPServer(LDAPServer):
                             )
                         )
                     else:
+                        self._register_bind_failure()
                         logger.warning(f"Invalid password for user: {user.email}")
 
+        self._register_bind_failure()
         logger.warning(f"Bind failed for DN: {dn}")
         return defer.succeed(
             pureldap.LDAPBindResponse(
@@ -530,6 +560,59 @@ class DocDBLDAPServer(LDAPServer):
 
     extendedRequest_whoami.oid = b"1.3.6.1.4.1.4203.1.11.3"
 
+    # ------------------------------------------------------------------
+    # Connection & bind-failure limiting helpers
+    # ------------------------------------------------------------------
+
+    def _get_peer_host(self):
+        """Return the client address, or None when unavailable."""
+        try:
+            return self.transport.getPeer().host
+        except Exception:
+            return None
+
+    def _register_bind_failure(self):
+        factory = getattr(self, "factory", None)
+        host = self._get_peer_host()
+        if factory is None or host is None:
+            return
+        window = self.app.config.get("LDAP_BIND_FAILURE_WINDOW_SECONDS", 300)
+        now = time.time()
+        failures = factory.bind_failures.setdefault(host, [])
+        failures = [t for t in failures if now - t < window]
+        failures.append(now)
+        factory.bind_failures[host] = failures
+
+    def _is_bind_limited(self):
+        factory = getattr(self, "factory", None)
+        host = self._get_peer_host()
+        if factory is None or host is None:
+            return False
+        window = self.app.config.get("LDAP_BIND_FAILURE_WINDOW_SECONDS", 300)
+        limit = self.app.config.get("LDAP_MAX_BIND_FAILURES", 10)
+        now = time.time()
+        failures = [t for t in factory.bind_failures.get(host, []) if now - t < window]
+        return len(failures) >= limit
+
+    def _clear_bind_failures(self):
+        factory = getattr(self, "factory", None)
+        host = self._get_peer_host()
+        if factory is None or host is None:
+            return
+        factory.bind_failures.pop(host, None)
+
+    def connectionMade(self):
+        factory = getattr(self, "factory", None)
+        if factory is not None:
+            factory.protocols.add(self)
+        return super().connectionMade()
+
+    def connectionLost(self, reason=connectionDone):
+        factory = getattr(self, "factory", None)
+        if factory is not None:
+            factory.protocols.discard(self)
+        return super().connectionLost(reason)
+
 
 def create_ldap_server(app, port: int | None = None, use_tls: bool = False):
     """Create and return an LDAP server endpoint."""
@@ -537,8 +620,20 @@ def create_ldap_server(app, port: int | None = None, use_tls: bool = False):
     if port is None:
         port = app.config.get("LDAP_PORT", 10389)
 
+    max_connections = app.config.get("LDAP_MAX_CONNECTIONS", 100)
+
     class LDAPFactory(ServerFactory):
+        def __init__(self):
+            self.protocols = set()
+            self.bind_failures: dict[str, list[float]] = {}
+
         def buildProtocol(self, addr):
+            if max_connections and len(self.protocols) >= max_connections:
+                logger.warning(
+                    f"LDAP max connections ({max_connections}) reached; "
+                    "rejecting new connection"
+                )
+                return None
             proto = DocDBLDAPServer(app)
             proto.factory = self
             return proto

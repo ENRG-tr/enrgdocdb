@@ -1,3 +1,5 @@
+import datetime
+
 import jwt
 import pytz
 from flask import Blueprint, Response, abort, render_template, url_for
@@ -39,7 +41,16 @@ def view(event_id: int):
 def calendar():
     if not current_user.is_authenticated:
         return abort(403)
-    jwt_token = jwt.encode({"user_id": current_user.id}, app.config["SECRET_KEY"])
+    jwt_token = jwt.encode(
+        {
+            "user_id": current_user.id,
+            # Short-lived: a leaked calendar URL must not grant permanent
+            # access to a user's events.
+            "exp": datetime.datetime.now(datetime.UTC)
+            + datetime.timedelta(days=7),
+        },
+        app.config["SECRET_KEY"],
+    )
     icalendar_url = url_for("event.icalendar_all", jwt_token=jwt_token, _external=True)
     return render_template(
         "docdb/event_calendar.html",

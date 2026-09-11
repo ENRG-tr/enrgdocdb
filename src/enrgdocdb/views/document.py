@@ -26,8 +26,9 @@ from ..models.document import (
 from ..models.event import TalkNote
 from ..models.topic import Topic
 from ..models.user import RolePermission
-from ..settings import FILE_UPLOAD_FOLDER
+from ..settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_MAX_FILE_SIZE
 from ..utils import security
+from ..utils.file import is_allowed_upload_filename
 from ..utils.logging import get_logger
 from ..utils.pagination import paginate
 
@@ -115,6 +116,12 @@ def new():
         )
         return abort(403)
 
+    if (
+        request.content_length
+        and request.content_length > FILE_UPLOAD_MAX_FILE_SIZE + 1024 * 1024
+    ):
+        return abort(413)
+
     """Create a new document."""
     form = DocumentForm()
     form.authors.choices = [
@@ -185,14 +192,24 @@ def new():
         saved_files = []
         try:
             for uploaded_file in uploaded_files:
-                if uploaded_file.filename:
-                    from werkzeug.utils import secure_filename
-                    safe_name = secure_filename(uploaded_file.filename)
-                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
-                    os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
-                    file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
-                    uploaded_file.save(file_path)
-                    saved_files.append((uploaded_file.filename, unique_name))
+                if not uploaded_file.filename:
+                    continue
+                if not is_allowed_upload_filename(uploaded_file.filename):
+                    logger.warning(
+                        f"Rejected file with disallowed extension: {uploaded_file.filename}"
+                    )
+                    continue
+                from werkzeug.utils import secure_filename
+
+                safe_name = secure_filename(uploaded_file.filename)
+                unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+                file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+                uploaded_file.save(file_path)
+                if os.path.getsize(file_path) > FILE_UPLOAD_MAX_FILE_SIZE:
+                    os.remove(file_path)
+                    abort(413)
+                saved_files.append((uploaded_file.filename, unique_name))
             if saved_files:
                 logger.info(
                     f"Uploading {len(saved_files)} files to document {document.id}"
@@ -244,6 +261,12 @@ def upload_files():
         )
         return abort(403)
 
+    if (
+        request.content_length
+        and request.content_length > FILE_UPLOAD_MAX_FILE_SIZE + 1024 * 1024
+    ):
+        return abort(413)
+
     form = DocumentUploadFilesForm()
     # Process standard file uploads
     if form.validate_on_submit():
@@ -251,14 +274,24 @@ def upload_files():
         saved_files = []
         try:
             for uploaded_file in uploaded_files:
-                if uploaded_file.filename:
-                    from werkzeug.utils import secure_filename
-                    safe_name = secure_filename(uploaded_file.filename)
-                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
-                    os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
-                    file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
-                    uploaded_file.save(file_path)
-                    saved_files.append((uploaded_file.filename, unique_name))
+                if not uploaded_file.filename:
+                    continue
+                if not is_allowed_upload_filename(uploaded_file.filename):
+                    logger.warning(
+                        f"Rejected file with disallowed extension: {uploaded_file.filename}"
+                    )
+                    continue
+                from werkzeug.utils import secure_filename
+
+                safe_name = secure_filename(uploaded_file.filename)
+                unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                os.makedirs(FILE_UPLOAD_FOLDER, exist_ok=True)
+                file_path = os.path.join(FILE_UPLOAD_FOLDER, unique_name)
+                uploaded_file.save(file_path)
+                if os.path.getsize(file_path) > FILE_UPLOAD_MAX_FILE_SIZE:
+                    os.remove(file_path)
+                    abort(413)
+                saved_files.append((uploaded_file.filename, unique_name))
             if saved_files:
                 logger.info(
                     f"Uploading {len(saved_files)} files to document {document.id} by user {getattr(current_user, 'id', 'anonymous')}"
@@ -311,6 +344,16 @@ def delete_file(file_id: int):
         return abort(403)
 
     document_id = file.document_id
+    # Remove the physical file as well; the DB row is the source of truth
+    # and stale files must not remain downloadable after revocation.
+    try:
+        file_path = os.path.join(FILE_UPLOAD_FOLDER, file.real_file_name)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    except OSError:
+        logger.exception(
+            f"Failed to remove physical file for DocumentFile {file_id}"
+        )
     db.session.delete(file)
     db.session.commit()
 

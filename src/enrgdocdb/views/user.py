@@ -100,7 +100,7 @@ def create():
     def render():
         return render_template("docdb/create_user.html", form=form)
 
-    if not security.permission_check(None, RolePermission.ADMIN):
+    if not security.is_global_admin(current_user):
         return abort(403)
 
     form = CreateUserForm()

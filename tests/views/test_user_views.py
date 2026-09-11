@@ -69,7 +69,7 @@ class TestUserYourAccount:
 
         assert response.status_code == 200
         assert b"Profile updated successfully" in response.data
-        
+
         user = db_session.query(User).get(user.id)
         assert user.first_name == "Updated"
         assert user.last_name == "Name"
@@ -108,26 +108,26 @@ class TestUserCreate:
 
     def test_create_requires_admin(self, authenticated_client, user):
         """Test that creating users requires admin permission."""
-        with patch("src.enrgdocdb.utils.security.permission_check") as mock_perm:
+        with patch("src.enrgdocdb.utils.security.is_global_admin") as mock_perm:
             mock_perm.return_value = False
-            
+
             response = authenticated_client.get("/user/create")
             assert response.status_code == 403
 
     def test_create_get_shows_form(self, authenticated_client, user):
         """Test that creating users shows the form (with admin permission)."""
-        with patch("src.enrgdocdb.utils.security.permission_check") as mock_perm:
+        with patch("src.enrgdocdb.utils.security.is_global_admin") as mock_perm:
             mock_perm.return_value = True
-            
+
             response = authenticated_client.get("/user/create")
             assert response.status_code == 200
             assert b"Create User" in response.data or b"New User" in response.data or b"email" in response.data.lower()
 
     def test_create_post_requires_admin(self, authenticated_client, user):
         """Test that creating users POST requires admin permission."""
-        with patch("src.enrgdocdb.utils.security.permission_check") as mock_perm:
+        with patch("src.enrgdocdb.utils.security.is_global_admin") as mock_perm:
             mock_perm.return_value = False
-            
+
             response = authenticated_client.post("/user/create", data={
                 "email": "newuser@example.com",
                 "password": "password123",
@@ -139,9 +139,9 @@ class TestUserCreate:
 
     def test_create_post_validates_email(self, authenticated_client, user):
         """Test that creating user validates email."""
-        with patch("src.enrgdocdb.utils.security.permission_check") as mock_perm:
+        with patch("src.enrgdocdb.utils.security.is_global_admin") as mock_perm:
             mock_perm.return_value = True
-            
+
             response = authenticated_client.post("/user/create", data={
                 "email": "",
                 "password": "password123",
@@ -154,9 +154,9 @@ class TestUserCreate:
 
     def test_create_post_validates_password(self, authenticated_client, user):
         """Test that creating user validates password."""
-        with patch("src.enrgdocdb.utils.security.permission_check") as mock_perm:
+        with patch("src.enrgdocdb.utils.security.is_global_admin") as mock_perm:
             mock_perm.return_value = True
-            
+
             response = authenticated_client.post("/user/create", data={
                 "email": "newuser@example.com",
                 "password": "",
@@ -169,9 +169,9 @@ class TestUserCreate:
 
     def test_create_post_creates_user(self, authenticated_client, user, db_session):
         """Test that creating user creates new user."""
-        with patch("src.enrgdocdb.utils.security.permission_check") as mock_perm:
+        with patch("src.enrgdocdb.utils.security.is_global_admin") as mock_perm:
             mock_perm.return_value = True
-            
+
             response = authenticated_client.post("/user/create", data={
                 "email": "newuser@example.com",
                 "password": "password123",
@@ -183,7 +183,7 @@ class TestUserCreate:
 
             assert response.status_code == 200
             assert b"User created successfully" in response.data
-            
+
             new_user = db_session.query(User).filter_by(email="newuser@example.com").first()
             assert new_user is not None
             assert new_user.first_name == "New"
@@ -191,9 +191,9 @@ class TestUserCreate:
 
     def test_create_post_validates_duplicate_email(self, authenticated_client, user, db_session):
         """Test that creating user validates duplicate email."""
-        with patch("src.enrgdocdb.utils.security.permission_check") as mock_perm:
+        with patch("src.enrgdocdb.utils.security.is_global_admin") as mock_perm:
             mock_perm.return_value = True
-            
+
             response = authenticated_client.post("/user/create", data={
                 "email": user.email,
                 "password": "password123",

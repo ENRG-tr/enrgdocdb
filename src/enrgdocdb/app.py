@@ -6,6 +6,7 @@ from flask_limiter import Limiter
 from flask_login import current_user
 from flask_security.core import Security
 from flask_security.datastore import FSQLALiteUserDatastore
+from flask_wtf import CSRFProtect
 from werkzeug.routing import BuildError
 
 from .database import Model, db, register_sql_logging
@@ -22,6 +23,7 @@ user_datastore = FSQLALiteUserDatastore(db, User, Role)
 security: Security = Security()
 babel: Babel = Babel()
 bootstrap: Bootstrap5 = Bootstrap5()
+csrf: CSRFProtect = CSRFProtect()
 
 
 def limiter_keyfunc():
@@ -64,6 +66,11 @@ def create_app():
         for plugin in [db, alembic, babel, bootstrap]:
             logger.debug(f"Initializing plugin: {type(plugin).__name__}")
             plugin.init_app(app)
+
+        # Global CSRF protection for all state-changing requests (including
+        # wiki edit/delete and flask-admin actions). Disabled in tests via
+        # WTF_CSRF_ENABLED=False.
+        csrf.init_app(app)
 
         # Register SQL logging after db is initialized
         logger.debug("Registering SQL query logging")

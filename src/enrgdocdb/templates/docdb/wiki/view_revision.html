@@ -24,7 +24,7 @@
         <strong>Comment:</strong> {{ revision.comment or '(No comment)' }}
     </div>
     <hr>
-    <div class="wiki-content">{{ revision.content | safe }}</div>
+    <div class="wiki-content">{{ revision.content | sanitize_html }}</div>
 {% endblock page_content %}
 {% block footer %}
 {% endblock footer %}

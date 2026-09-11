@@ -8,7 +8,7 @@ from ..app import limiter
 from ..database import db
 from ..models.author import Author
 from ..models.document import Document
-from ..models.user import RolePermission, User
+from ..models.user import Role, RolePermission, User
 from ..models.wiki import WikiPage
 
 RATELIMIT_NON_VIEW_ACTIONS = "180/minute"
@@ -78,6 +78,34 @@ def _is_super_admin(user: User):
         if role.organization_id is None and RolePermission.ADMIN in role.permissions:
             return True
     return False
+
+
+def _is_super_admin_role(role: Role) -> bool:
+    """True if granting this role would make a user a super admin."""
+    if getattr(role, "organization_id", None) is not None:
+        return False
+    return RolePermission.ADMIN in (getattr(role, "permissions", None) or [])
+
+
+def can_assign_roles(actor: User | None, roles) -> bool:
+    """True if actor may grant the given roles.
+
+    Non-super-admins may never grant Super Admin roles."""
+    if (
+        actor is not None
+        and getattr(actor, "is_authenticated", False)
+        and _is_super_admin(actor)
+    ):
+        return True
+    return not any(_is_super_admin_role(r) for r in (roles or []))
+
+
+def is_global_admin(user: User | None = None) -> bool:
+    """Return True if the user holds a global (org-less) ADMIN role."""
+    user = user if user is not None else current_user  # type: ignore
+    if not user or not user.is_authenticated:
+        return False
+    return _is_super_admin(user)
 
 
 def _has_wiki_page_permission(
@@ -157,12 +185,30 @@ def permission_check(model: Any, action: RolePermission):
                 if document:
                     organization_id = document.organization_id
         elif isinstance(model, User):
-            has_permission = False
-            for target_role in model.roles:
-                if _roles_have_permission(user, target_role.organization_id, action):
-                    has_permission = True
-
-            return has_permission
+            # User records are privileged. Self-service edits (profile,
+            # own password) are allowed with EDIT/EDIT_SELF.
+            if getattr(model, "id", None) == user.id:
+                return _roles_have_permission(
+                    user, None, RolePermission.EDIT
+                ) or _roles_have_permission(user, None, RolePermission.EDIT_SELF)
+            # Super admin accounts are untouchable for non-super-admins.
+            # (Super admins already returned True above.)
+            if _is_super_admin(model):
+                return False
+            # Organization moderators (org role with REMOVE/ADMIN) may
+            # manage other non-super-admin users. Granting Super Admin
+            # roles stays forbidden (see can_assign_roles, enforced in
+            # UserAdminView).
+            if action in (
+                RolePermission.VIEW,
+                RolePermission.EDIT,
+                RolePermission.EDIT_SELF,
+            ) and (
+                _roles_have_permission(user, None, RolePermission.REMOVE)
+                or _roles_have_permission(user, None, RolePermission.ADMIN)
+            ):
+                return True
+            return False
 
         # If no organization_id is found, only allow VIEW
         if not organization_id and action == RolePermission.VIEW:

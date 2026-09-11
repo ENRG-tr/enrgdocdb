@@ -1,13 +1,14 @@
 """ Test configuration and fixtures for ENRG DocDB. """
 import os
-import shutil
-import tempfile
 import secrets
+import shutil
 import string
-from datetime import datetime, timedelta
-import warnings
-import pytest
+import tempfile
 import uuid
+import warnings
+from datetime import datetime, timedelta
+
+import pytest
 from flask_login.test_client import FlaskLoginClient
 
 # Suppress deprecation and user warnings from third-party libraries
@@ -18,6 +19,15 @@ warnings.filterwarnings("ignore", category=UserWarning)
 _temp_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
 _temp_db_file.close()
 os.environ["DATABASE_URL"] = f"sqlite:///{_temp_db_file.name}"
+
+# Provide secure signing keys before importing the app: settings.py now
+# refuses to boot with missing or placeholder secrets.
+os.environ.setdefault(
+    "FLASK_SECRET_KEY", "test-secret-key-for-unit-tests-only"
+)
+os.environ.setdefault(
+    "FLASK_SECURITY_PASSWORD_SALT", "test-password-salt-for-unit-tests"
+)
 
 from src.enrgdocdb.app import create_app
 from src.enrgdocdb.database import Model, db

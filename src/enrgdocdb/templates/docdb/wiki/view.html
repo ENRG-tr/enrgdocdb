@@ -27,6 +27,7 @@
           action="{{ url_for('wiki.delete_page', slug=page.slug) }}"
           style="display:inline"
           onsubmit="return confirm('Are you sure you want to delete this page and all its children?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-danger">
         <i class="fas fa-trash me-1"></i> Delete
       </button>

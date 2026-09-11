@@ -2,11 +2,11 @@ import os
 import secrets
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from glob import glob
 
 import jwt
-from flask import Request, json
+from flask import Request, current_app, json
 
 
 @dataclass
@@ -21,8 +21,22 @@ class UserFileUploadResult:
     user_files: list[UserFile] | None
 
 
+def get_file_extension(filename: str) -> str:
+    """Return the lowercase extension of a filename (without the dot)."""
+    if not filename or "." not in filename:
+        return ""
+    return filename.rsplit(".", 1)[-1].lower()
+
+
+def is_allowed_upload_filename(filename: str) -> bool:
+    """Check that a filename has an allowlisted extension."""
+    from ..settings import FILE_UPLOAD_ALLOWED_EXTENSIONS
+
+    return get_file_extension(filename) in FILE_UPLOAD_ALLOWED_EXTENSIONS
+
+
 def handle_user_file_upload(request: Request) -> UserFileUploadResult:
-    from ..settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_TEMP_FOLDER, SECRET_KEY
+    from ..settings import FILE_UPLOAD_FOLDER, FILE_UPLOAD_TEMP_FOLDER
 
     """
     Handles file upload for user.
@@ -46,9 +60,9 @@ def handle_user_file_upload(request: Request) -> UserFileUploadResult:
                 "file_token": jwt.encode(
                     {
                         "document_tokens": document_tokens,
-                        "exp": datetime.now() + timedelta(minutes=30),
+                        "exp": datetime.now(UTC) + timedelta(minutes=30),
                     },
-                    SECRET_KEY,
+                    current_app.config["SECRET_KEY"],
                 ),
                 "document_tokens": document_tokens,
             },
@@ -62,7 +76,9 @@ def handle_user_file_upload(request: Request) -> UserFileUploadResult:
 
         # Try to parse file_token jwt and get document_tokens
         try:
-            file_token = jwt.decode(file_token, SECRET_KEY, algorithms=["HS256"])
+            file_token = jwt.decode(
+                file_token, current_app.config["SECRET_KEY"], algorithms=["HS256"]
+            )
             document_tokens = file_token["document_tokens"]
         except Exception:
             return _get_result()

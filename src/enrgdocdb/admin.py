@@ -23,9 +23,10 @@ from .models.user import (
     User,
 )
 from .models.wiki import WikiPage, WikiPagePermission
+from .settings import FILE_UPLOAD_FOLDER
 from .utils.admin import EditInlineModelField, RichTextField
 from .utils.logging import AuditLogger, get_logger
-from .utils.security import permission_check
+from .utils.security import can_assign_roles, is_global_admin, permission_check
 
 admin = Admin(
     name="ENRG DocDB Admin",
@@ -169,6 +170,17 @@ class DocumentAdminView(AdminView):
         )
         return form
 
+    def on_model_delete(self, model):
+        # Remove the physical files from disk alongside the DB rows.
+        for file in model.files:
+            try:
+                file_path = os.path.join(FILE_UPLOAD_FOLDER, file.real_file_name)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except OSError:
+                pass
+        return super().on_model_delete(model)
+
 
 class TopicAdminView(AdminView):
     form_columns = ["name", "parent_topic"]
@@ -227,7 +239,38 @@ class UserAdminView(AdminView):
         "password_again": PasswordField("Password Again"),
     }
 
+    def is_accessible(self):
+        return_url = request.args.get("url") or url_for("index.index")
+        if request.path.endswith("/edit/"):
+            id = request.args.get("id")
+            if id is None:
+                return redirect(return_url)
+            model = self.get_one(id)
+            # Super admin accounts are untouchable for non-super-admins.
+            if (
+                model is not None
+                and is_global_admin(model)
+                and not is_global_admin(current_user)
+            ):
+                return False
+            return permission_check(model, RolePermission.EDIT)
+        # Creating or deleting users is restricted to global admins: a user
+        # with only an org-scoped role must never be able to create an
+        # account with a global admin role (privilege escalation).
+        if request.path.endswith("/new/") or request.path.endswith("/delete/"):
+            return is_global_admin(current_user)
+        return permission_check(None, RolePermission.ADMIN)
+
     def _on_change(self, form, model, is_created):
+        # Non-super-admins may never grant Super Admin roles, and may
+        # not change their own roles (no self-escalation). Moderators
+        # may otherwise assign org-scoped roles when editing others.
+        if not is_created and model is not None and not is_global_admin(current_user):
+            if getattr(model, "id", None) == getattr(current_user, "id", None):
+                form.roles.data = list(model.roles)
+            elif not can_assign_roles(current_user, form.roles.data):
+                flash("You are not allowed to grant Super Admin roles.", "error")
+                return False
         if form.password.data is None or form.password.data == "":
             return True
         if form.password.data != form.password_again.data:
